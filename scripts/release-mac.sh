@@ -59,7 +59,8 @@ npm test
 # entitlements.plist.
 npx tauri build --target universal-apple-darwin --bundles app
 
-app="target/universal-apple-darwin/release/bundle/macos/Good For.app"
+# A full path, since the R tests below run from inside their own crate.
+app="$PWD/target/universal-apple-darwin/release/bundle/macos/Good For.app"
 
 # Without this entitlement on ark, R fails to start in the signed app.
 codesign -d --entitlements - "$app/Contents/MacOS/ark" 2>&1 | grep -q "disable-library-validation"
