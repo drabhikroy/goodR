@@ -1,7 +1,7 @@
 {
   "name": "goodr",
   "productName": "goodR",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "private": true,
   "description": "R: What Is It Good For? A desktop workspace for R.",
   "author": "Abhik Roy",

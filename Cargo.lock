@@ -58,7 +58,7 @@ dependencies = [
 
 [[package]]
 name = "assistant"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "futures-util",
@@ -1465,7 +1465,7 @@ dependencies = [
 
 [[package]]
 name = "goodr"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "assistant",
@@ -3090,7 +3090,7 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "render"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "libc",
  "serde",
@@ -3162,7 +3162,7 @@ dependencies = [
 
 [[package]]
 name = "rsession"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "base64 0.22.1",

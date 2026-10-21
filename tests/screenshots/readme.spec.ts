@@ -18,6 +18,8 @@ async function start(page: Page, info: TestInfo) {
   await page.getByRole("button", { name: "Settings" }).click();
   await page.getByRole("radio", { name: info.project.name === "dark" ? "Dark" : "Light", exact: true }).check();
   await page.keyboard.press("Escape");
+  // Closing Settings puts focus back on its button, which would show a ring.
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
 }
 
 /** Opens the penguins project at analysis.R, with R ready. */

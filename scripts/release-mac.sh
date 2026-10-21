@@ -71,7 +71,7 @@ GOODFOR_ARK="$app/Contents/MacOS/ark" cargo test -p rsession --test integration
 work="$(mktemp -d)"
 trap 'hdiutil detach "$work/mount" > /dev/null 2>&1; rm -rf "$work"' EXIT
 ditto -c -k --keepParent "$app" "$work/app.zip"
-xcrun notarytool submit "$work/app.zip" --keychain-profile "$profile" --wait
+xcrun notarytool submit "$work/app.zip" --keychain-profile "$profile" --wait --timeout 20m
 xcrun stapler staple "$app"
 
 # Then the disk image: the app beside a link to Applications, to drag
@@ -85,7 +85,7 @@ ln -s /Applications "$work/stage/Applications"
 rm -f goodR.dmg
 hdiutil create -volname "goodR" -srcfolder "$work/stage" -format UDZO goodR.dmg
 codesign --sign "$APPLE_SIGNING_IDENTITY" --timestamp goodR.dmg
-xcrun notarytool submit goodR.dmg --keychain-profile "$profile" --wait
+xcrun notarytool submit goodR.dmg --keychain-profile "$profile" --wait --timeout 20m
 xcrun stapler staple goodR.dmg
 
 xcrun stapler validate goodR.dmg

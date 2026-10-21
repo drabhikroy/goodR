@@ -142,11 +142,6 @@ web files.
 
 ## Install
 
-The first public release is being prepared. Until it is published, run the
-app from source as described under [Running from source](#running-from-source).
-
-Once it is published:
-
 1. Download [goodR.dmg](https://github.com/drabhikroy/goodR/releases/latest/download/goodR.dmg).
    One universal disk image runs on both Apple Silicon and Intel Macs.
 2. Open the downloaded `.dmg`.
@@ -583,6 +578,13 @@ scripts/release-mac.sh
 
 It runs the checks, then builds, signs, notarizes, and staples the app and
 `goodR.dmg`, and writes `goodR.dmg.sha256` beside it.
+
+Release notes live in `docs/release-notes`, one file per version tag. To
+make the draft release from them:
+
+```bash
+gh release create v1.0.0 goodR.dmg goodR.dmg.sha256 --draft --title "goodR 1.0.0" --notes-file docs/release-notes/v1.0.0.md
+```
 
 Installed copies update themselves through Tauri's updater, which checks
 each download against a public key built into the app. To turn this on,

@@ -173,7 +173,7 @@ jobs:
           files="goodR.dmg goodR.dmg.sha256"
           if [ -f latest.json ]; then files="$files goodR.app.tar.gz latest.json"; fi
           if [ -f "$notes" ]; then
-            gh release create "$GITHUB_REF_NAME" $files --draft --title "$GITHUB_REF_NAME" --notes-file "$notes"
+            gh release create "$GITHUB_REF_NAME" $files --draft --title "goodR ${GITHUB_REF_NAME#v}" --notes-file "$notes"
           else
-            gh release create "$GITHUB_REF_NAME" $files --draft --title "$GITHUB_REF_NAME" --notes ""
+            gh release create "$GITHUB_REF_NAME" $files --draft --title "goodR ${GITHUB_REF_NAME#v}" --notes ""
           fi
