@@ -72,7 +72,10 @@ async function main() {
   // A universal Mac build compiles each chip on its own before joining
   // them, and Tauri looks for ark under each chip's name as well.
   const triples = triple === "universal-apple-darwin" ? [triple, "aarch64-apple-darwin", "x86_64-apple-darwin"] : [triple];
-  const missing = triples.filter((each) => !placed(each));
+  // The notices are checked too: they sit in a folder of their own, which a
+  // clean copy of the project can leave out while keeping the binaries.
+  const noticesPlaced = existsSync(join(notices, "LICENSE")) && existsSync(join(notices, "NOTICE"));
+  const missing = triples.filter((each) => !noticesPlaced || !placed(each));
   if (!missing.length) {
     console.log(`ark ${ARK_VERSION} is already in place for ${triple}`);
     return;

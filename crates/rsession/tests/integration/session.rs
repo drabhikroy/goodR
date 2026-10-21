@@ -397,7 +397,12 @@ async fn a_run_can_be_undone_and_timed() {
     collect(&mut rx, &run).await;
     let step = parse_helper_json(&session.query(&rsession::helpers::step_call(false, true, true, true)).await.unwrap()).unwrap();
     assert!(step["profile"].is_null());
-    let run = session.execute("x <- 2; y <- 3; z <- sum(sqrt(seq_len(2e6)))").await.unwrap();
+    // Busy for a set time rather than a set amount of work, so a fast
+    // computer still leaves the profiler samples to summarize.
+    let run = session
+        .execute("x <- 2; y <- 3; z <- local({ t0 <- proc.time()[[3]]; s <- 0; while (proc.time()[[3]] - t0 < 0.3) s <- s + sum(sqrt(seq_len(1e5))); s })")
+        .await
+        .unwrap();
     collect(&mut rx, &run).await;
     let step = parse_helper_json(&session.query(&rsession::helpers::step_call(true, false, false, false)).await.unwrap()).unwrap();
     assert!(step["profile"]["calls"].is_array(), "{step}");
