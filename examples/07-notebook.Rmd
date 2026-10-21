@@ -1,0 +1,33 @@
+---
+title: "Sixty years of space launches"
+output: html_document
+---
+
+This is an R Markdown document, the older sibling of Quarto. Chunks run
+the same way, and Render makes the finished page.
+
+Every launch toward orbit from 1957 to 2018, from Jonathan McDowell's
+launch vehicle database, as prepared by *The Economist*.
+
+```{r}
+launches <- read.csv("data/launches.csv")
+table(launches$outcome)
+```
+
+Who launches has changed. Until the 1990s almost every launch was a
+government's. Companies came later, then start ups.
+
+```{r}
+per_year <- table(launches$agency_type, launches$year)
+barplot(per_year, col = c("#C8601F", "#3A8F5C", "#1F5F8B"), border = NA, las = 2,
+        cex.names = 0.6, legend.text = c("Private", "Start up", "State"),
+        args.legend = list(x = "topright", bty = "n"), ylab = "Launches")
+```
+
+Launches have also become far more reliable. The share that failed, in
+percent, by decade:
+
+```{r}
+launches$decade <- floor(launches$year / 10) * 10
+round(100 * prop.table(table(launches$decade, launches$outcome), 1)[, "failure"], 1)
+```

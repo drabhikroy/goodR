@@ -59,8 +59,11 @@ impl ConnectionInfo {
     /// owner.
     pub fn write(&self, path: &Path) -> Result<()> {
         use std::io::Write;
+        // Anything already at the path, such as a link to another file, is
+        // removed and a new file made, so the key never lands somewhere else.
+        let _ = std::fs::remove_file(path);
         let mut options = std::fs::OpenOptions::new();
-        options.write(true).create(true).truncate(true);
+        options.write(true).create_new(true);
         // Created private from the first byte, rather than written and then
         // restricted, so there is no moment when another user could read it.
         #[cfg(unix)]

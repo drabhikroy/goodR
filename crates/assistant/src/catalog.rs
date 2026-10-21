@@ -1,13 +1,9 @@
 //! Models offered in the setup steps, each with what it does well and what
 //! it does poorly for help with R, and a fit check against this computer.
 //!
-//! The list is short on purpose. More choices make a first choice slower
-//! and harder (Hick 1952; Iyengar and Lepper 2000), and every model here
-//! answers a different need: a small one for any Mac, a larger one for
-//! better code, and general models that explain things in plainer words.
-//! The suggestion is worked out from fit alone, never from the maker, so
-//! the list stays even handed. Any other Ollama model the person installs
-//! themselves is found and can be used too.
+//! Only code models are listed, one per size of Mac, since general models
+//! write less reliable R. The suggestion is the largest that fits. Any
+//! other model already installed in Ollama shows up and works too.
 
 use crate::specs::Specs;
 use serde::Serialize;
@@ -23,7 +19,7 @@ pub struct Model {
     /// The download size in gigabytes, rounded. Ollama reports the exact
     /// size once a model is installed.
     pub size_gb: f64,
-    /// The least memory it runs well with, for when the person chose not
+    /// The least memory it runs well with, for when the user chose not
     /// to let the app read this computer's specs.
     pub memory_floor_gb: u32,
     pub pros: &'static [&'static str],
@@ -53,26 +49,6 @@ pub const MODELS: &[Model] = &[
         pros: &["Clearly better code and error fixes than the small model", "Still quick on a Mac with 16 GB of memory"],
         cons: &["Slow on a Mac with 8 GB of memory", "Explanations lean technical unless asked to keep them plain"],
         thinks: false,
-    },
-    Model {
-        id: "gemma3:4b",
-        name: "Gemma 3 4B",
-        kind: "General model",
-        size_gb: 3.3,
-        memory_floor_gb: 8,
-        pros: &["Explains output and statistics in clear, everyday words", "Fits a Mac with 8 GB of memory"],
-        cons: &["Writes less reliable R than the code models, especially longer code"],
-        thinks: false,
-    },
-    Model {
-        id: "qwen3:8b",
-        name: "Qwen3 8B",
-        kind: "General model",
-        size_gb: 5.2,
-        memory_floor_gb: 16,
-        pros: &["Good at walking through why an error happened", "Balances explanation and code well"],
-        cons: &["Larger download than the code models of similar skill", "Can be wordy, though the app asks for short answers"],
-        thinks: true,
     },
     Model {
         id: "qwen2.5-coder:14b",

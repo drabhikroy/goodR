@@ -12,7 +12,7 @@ export async function openExample(page: Page) {
 
 /** Waits until R has started and is idle. */
 export async function expectReady(page: Page) {
-  await expect(page.locator(".r-status")).toHaveText("R 4.5.1");
+  await expect(page.getByRole("status").filter({ hasText: /^R is ready$/ })).toHaveCount(1);
 }
 
 /** Opens a fresh untitled file holding `code`, with the cursor at the top. */

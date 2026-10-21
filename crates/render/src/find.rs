@@ -3,7 +3,7 @@
 //! Apps opened from the Dock or Finder on a Mac do not see the PATH a
 //! terminal sets up, so Quarto is looked for in the places its installer
 //! and the IDEs that bundle it put it, as well as on the PATH. R is never
-//! searched for here: the app already knows which R the person chose, and a
+//! searched for here: the app already knows which R the user chose, and a
 //! report renders with that same R.
 
 use std::path::{Path, PathBuf};
@@ -18,6 +18,10 @@ pub struct Tools {
     /// The folder holding a Pandoc that R Markdown can use, when one was
     /// found. Quarto carries its own, which serves both.
     pub pandoc_dir: Option<PathBuf>,
+    /// The folder of the LaTeX to use, when there is one.
+    pub latex: Option<PathBuf>,
+    /// Whether Render as PDF uses LaTeX rather than Typst.
+    pub pdf_with_latex: bool,
 }
 
 impl Tools {
@@ -25,7 +29,7 @@ impl Tools {
     pub fn locate(r_home: &Path) -> Tools {
         let quarto = find_quarto();
         let pandoc_dir = quarto.as_deref().and_then(pandoc_dir);
-        Tools { quarto, rscript: rscript(r_home), pandoc_dir }
+        Tools { quarto, rscript: rscript(r_home), pandoc_dir, latex: None, pdf_with_latex: false }
     }
 }
 
@@ -111,7 +115,10 @@ mod tests {
     #[test]
     fn pandoc_is_found_beside_a_linked_quarto() {
         let dir = tempfile::tempdir().unwrap();
-        let bin = dir.path().join("quarto/bin");
+        // On a Mac the temporary folder is reached through a link, and the
+        // answer comes back with the link followed.
+        let root = std::fs::canonicalize(dir.path()).unwrap();
+        let bin = root.join("quarto/bin");
         let tools = bin.join("tools").join(if cfg!(target_arch = "aarch64") { "aarch64" } else { "x86_64" });
         std::fs::create_dir_all(&tools).unwrap();
         std::fs::write(bin.join("quarto"), "").unwrap();

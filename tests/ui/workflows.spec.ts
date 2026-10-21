@@ -1,6 +1,16 @@
 import { expect, test, type Page } from "@playwright/test";
 import { appState, expectReady, newFileWith, openExample, runLine } from "./helpers";
 
+/** The stage, where the output in front is shown. */
+function feed(page: Page) {
+  return page.getByRole("region", { name: "Stage" });
+}
+
+/** The timeline of every output under the stage. */
+function timeline(page: Page) {
+  return page.getByRole("listbox", { name: "Earlier results" });
+}
+
 /** Chooses where results appear from the Results menu. */
 async function showResults(page: Page, where: RegExp) {
   await page.getByRole("button", { name: /^Results/ }).click();
@@ -20,7 +30,7 @@ test("first run asks which R to use when there are two, then remembers it", asyn
 test("scripts open one at a time from the Open dialog, and R starts beside the first", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Use this R" }).click();
-  // Stands in for the person choosing two files in the system dialog.
+  // Stands in for the user choosing two files in the system dialog.
   await page.evaluate(() => (window.goodforPick = ["/Users/demo/Documents/penguins/cleaning.R", "/Users/demo/Documents/penguins/analysis.R"]));
   await page.getByRole("button", { name: "Open script" }).click();
   await expect(page.getByRole("tab", { name: /cleaning\.R/ })).toBeVisible();
@@ -29,15 +39,18 @@ test("scripts open one at a time from the Open dialog, and R starts beside the f
   await expect.poll(() => appState<string>(page, "state.r.workingDir")).toBe("/Users/demo/Documents/penguins");
 });
 
-test("R follows the script being run into its folder, and says so", async ({ page }) => {
+test("a script outside any project gets its own R, in its own folder, and says so", async ({ page }) => {
   await openExample(page);
   await page.evaluate(() => (window.goodforPick = ["/Users/demo/Desktop/quick.R"]));
   await page.keyboard.press("Control+o");
   await expect(page.getByRole("tab", { name: /quick\.R/ })).toHaveAttribute("aria-selected", "true");
+  // Run straight away, while its R may still be starting: the line waits
+  // and runs once R is ready.
   await runLine(page);
-  await expect(page.locator(".cm-output-block").getByText("[1] 3")).toBeVisible();
+  await expect(feed(page).getByText("[1] 3")).toBeVisible();
   expect(await appState<string>(page, "state.r.workingDir")).toBe("/Users/demo/Desktop");
-  await expect(page.getByRole("log")).toContainText("Working folder is now ~/Desktop, where quick.R is");
+  expect(await appState<string>(page, "state.activeSession")).toBe("file:/Users/demo/Desktop/quick.R");
+  expect(await appState<string[]>(page, "state.console.map(e => e.text)")).toContainEqual(expect.stringContaining("started in ~/Desktop, for quick.R on its own"));
 });
 
 test("a recent script can be removed from the list without touching the file", async ({ page }) => {
@@ -53,6 +66,35 @@ test("closing the last script returns to the opening screen", async ({ page }) =
   await page.keyboard.press("Control+w");
   await expect(page.getByRole("button", { name: "New script" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Scripts", exact: true })).toBeVisible();
+});
+
+test("Home shows the opening screen without closing anything, and Continue working returns to it unchanged", async ({ page }) => {
+  await openExample(page);
+  await newFileWith(page, "mass_by_species <- aggregate(body_mass ~ species,\n  data = penguins, FUN = mean)\nmass_by_species\n");
+  await runLine(page);
+  await runLine(page);
+  await expect(feed(page).getByRole("cell", { name: "Gentoo" })).toBeVisible();
+  expect(await appState<number>(page, "state.tabs.length")).toBe(2);
+  // The objects list is read from R a short moment after the run finishes.
+  await expect.poll(() => appState<number>(page, "state.objects.length")).toBeGreaterThan(0);
+
+  await page.getByRole("button", { name: "Show the start screen" }).click();
+  await expect(page.getByRole("button", { name: "New project" })).toBeVisible();
+  // Nothing closed: both tabs, the output, and R's objects are still there.
+  await expect(page.getByRole("tab", { name: "Untitled 1" })).toHaveCount(0);
+  expect(await appState<number>(page, "state.tabs.length")).toBe(2);
+  expect(await appState<number>(page, "state.objects.length")).toBeGreaterThan(0);
+
+  await page.getByRole("button", { name: "Continue working" }).click();
+  await expect(page.getByRole("tab", { name: "Untitled 1" })).toHaveAttribute("aria-selected", "true");
+  await expect(feed(page).getByRole("cell", { name: "Gentoo" })).toBeVisible();
+
+  // The keyboard shortcut does the same, and Escape returns the same way
+  // as Continue working.
+  await page.keyboard.press("Shift+Control+h");
+  await expect(page.getByRole("button", { name: "New project" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("tab", { name: "Untitled 1" })).toHaveAttribute("aria-selected", "true");
 });
 
 test("a new script is named when it is first saved", async ({ page }) => {
@@ -74,7 +116,7 @@ test("run line sends the whole statement under the cursor and moves on", async (
   await expect(page.locator(".cm-ran-marker")).toHaveCount(1);
   // The cursor moved to the next statement, so pressing again prints it.
   await runLine(page);
-  await expect(page.locator(".cm-output-block").getByText("Gentoo")).toBeVisible();
+  await expect(feed(page).getByRole("cell", { name: "Gentoo" })).toBeVisible();
 });
 
 test("pointing at a result lights up the lines that made it", async ({ page }) => {
@@ -82,7 +124,8 @@ test("pointing at a result lights up the lines that made it", async ({ page }) =
   await newFileWith(page, "mass_by_species <- aggregate(body_mass ~ species,\n  data = penguins, FUN = mean)\nmass_by_species\n");
   await runLine(page);
   await runLine(page);
-  await page.locator(".cm-output-block .output-card").filter({ hasText: "Gentoo" }).hover();
+  await feed(page).getByRole("button", { name: "Show as printed" }).click();
+  await feed(page).locator(".output-card").filter({ hasText: "Gentoo" }).hover();
   await expect(page.locator(".cm-line-linked")).toHaveCount(1);
   await expect(page.locator(".cm-line-linked")).toHaveText("mass_by_species");
 });
@@ -92,7 +135,10 @@ test("run file stops at the first error and marks the rest as not run", async ({
   await newFileWith(page, "x <- 1\nstop('boom')\ny <- 2\n");
   await page.keyboard.press("Shift+Control+Enter");
   await expect(page.locator(".output-card.status-error").getByText("This line did not run")).toBeVisible();
-  await expect(page.locator(".output-card").getByText("Did not run, because an earlier line stopped")).toBeVisible();
+  const skipped = timeline(page).getByRole("option").filter({ hasText: /^Not run/ });
+  await expect(skipped).toHaveCount(1);
+  await skipped.click();
+  await expect(feed(page).getByText("Did not run, because an earlier line stopped")).toBeVisible();
 });
 
 test("a misspelled column gets a plain explanation and a working fix", async ({ page }) => {
@@ -109,12 +155,37 @@ test("a misspelled column gets a plain explanation and a working fix", async ({ 
   await expect(page.locator(".output-card.status-error")).toHaveCount(0);
 });
 
+test("a failed line becomes a forum question with the lines behind it and a sample of the data", async ({ page }) => {
+  await openExample(page);
+  await newFileWith(page, "data(penguins)\nunused <- 1\nlm(body_mass ~ flipper_length_mm, data = penguins)\n");
+  await runLine(page);
+  await runLine(page);
+  await runLine(page);
+  await page.locator(".output-card.status-error").getByRole("button", { name: "Ask for help online" }).click();
+  const dialog = page.getByRole("dialog", { name: "Ask for help online" });
+  const question = dialog.getByRole("textbox", { name: "The question" });
+  await expect(question).toHaveValue(/penguins <- structure\(list\(species/);
+  await expect(question).toHaveValue(/lm\(body_mass ~ flipper_length_mm, data = penguins\)/);
+  await expect(question).toHaveValue(/object 'flipper_length_mm' not found/);
+  await expect(question).toHaveValue(/dplyr 1\.1\.4/);
+  await expect(question).not.toHaveValue(/unused/);
+  await dialog.getByRole("checkbox", { name: /Include a sample of penguins/ }).uncheck();
+  await expect(question).toHaveValue(/data\(penguins\)/);
+  await expect(question).not.toHaveValue(/structure/);
+});
+
 test("missing packages are offered for install before anyone hits the error", async ({ page }) => {
   await openExample(page);
   const banner = page.getByRole("status").filter({ hasText: "Line 19 uses gt, which is not installed yet." });
   await expect(banner).toBeVisible();
   await banner.getByRole("button", { name: "Install gt" }).click();
-  await expect(page.getByRole("log")).toContainText('install.packages(c("gt"))');
+  // The install shows as a list of packages with where each stands, and
+  // R's own log is one press away.
+  const card = page.getByRole("region", { name: "Installing packages" });
+  await expect(card).toContainText("Done. One package installed.");
+  await expect(card.locator(".package-item.is-done")).toContainText("gt");
+  await card.getByRole("button", { name: "Show what R printed" }).click();
+  await expect(feed(page)).toContainText('install.packages(c("gt"))');
   await expect(banner).toHaveCount(0);
 });
 
@@ -128,7 +199,7 @@ test("run becomes stop while R works, and the session keeps working after", asyn
   await expect(page.locator(".output-card.status-stopped")).toBeVisible();
   await expect(page.locator(".cm-line-running")).toHaveCount(0);
   await runLine(page);
-  await expect(page.locator(".cm-output-block").getByText("[1] 2")).toBeVisible();
+  await expect(feed(page).getByText("[1] 2")).toBeVisible();
 });
 
 test("a readline prompt is answered from the console", async ({ page }) => {
@@ -140,28 +211,37 @@ test("a readline prompt is answered from the console", async ({ page }) => {
   await expect(asking).toBeFocused();
   await asking.fill("Ada");
   await asking.press("Enter");
-  await expect(page.getByRole("log")).toContainText("hi Ada");
+  await expect(feed(page)).toContainText("hi Ada");
 });
 
-test("results from the editor stay beside the code and out of the console", async ({ page }) => {
+test("results from the script land in the canvas as a card with a link back to their line", async ({ page }) => {
+  await openExample(page);
+  await newFileWith(page, "x <- 5\n1 + 1\n");
+  await page.keyboard.press("Shift+Control+Enter");
+  const card = feed(page).locator(".output-card").filter({ hasText: "[1] 2" });
+  await expect(card).toBeVisible();
+  // The quiet assignment shows by its gutter check alone, not as a card.
+  await expect(feed(page).locator(".output-card")).toHaveCount(1);
+  await card.getByRole("button", { name: "Go to line 2" }).click();
+  await expect(page.locator(".editor-host .cm-activeLine")).toHaveText("1 + 1");
+  // Running the line again moves its card to the bottom rather than
+  // leaving a second copy.
+  await runLine(page);
+  await expect(feed(page).locator(".output-card")).toHaveCount(1);
+});
+
+test("results can sit in the canvas or under each line", async ({ page }) => {
   await openExample(page);
   await newFileWith(page, "1 + 1\n");
   await runLine(page);
+  await expect(feed(page).getByText("[1] 2")).toBeVisible();
+  await showResults(page, /Under each line/);
   await expect(page.locator(".cm-output-block").getByText("[1] 2")).toBeVisible();
-  expect(await appState<string[]>(page, "state.console.map(e => e.text)")).not.toContain("[1] 2");
-});
-
-test("results can sit under each line, beside, or below the code", async ({ page }) => {
-  await openExample(page);
-  await newFileWith(page, "1 + 1\n");
-  await runLine(page);
-  await expect(page.locator(".cm-output-block").getByText("[1] 2")).toBeVisible();
-  await showResults(page, /Beside the code/);
-  await expect(page.locator(".layout-side .output-column").getByText("[1] 2")).toBeVisible();
-  await expect(page.locator(".cm-output-block").getByText("[1] 2")).toHaveCount(0);
-  await showResults(page, /Below the code/);
-  await expect(page.locator(".layout-stacked .output-column").getByText("[1] 2")).toBeVisible();
-  expect(await appState<string>(page, "state.settings.outputLayout")).toBe("stacked");
+  // The stage keeps showing it too, at its full size.
+  await expect(feed(page).getByText("[1] 2")).toBeVisible();
+  expect(await appState<string>(page, "state.settings.outputLayout")).toBe("inline");
+  await showResults(page, /In the canvas/);
+  await expect(feed(page).getByText("[1] 2")).toBeVisible();
 });
 
 test("the section menu says where the cursor is and jumps elsewhere", async ({ page }) => {
@@ -177,7 +257,7 @@ test("the command palette finds and runs commands from the keyboard", async ({ p
   await page.keyboard.press("Control+k");
   const search = page.getByRole("combobox");
   await expect(search).toBeFocused();
-  await search.fill("clear console");
+  await search.fill("clear all results");
   await search.press("Enter");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   // The palette runs its command just after closing, so this waits for it.
@@ -233,7 +313,7 @@ test("results update as you type when asked, and file changes never run that way
   await page.keyboard.press("Control+Home");
   await page.keyboard.press("End");
   await page.keyboard.type("0");
-  await expect(page.locator(".cm-output-block").getByText("[1] 11")).toBeVisible();
+  await expect(feed(page).getByText("[1] 11")).toBeVisible();
   await page.keyboard.press("Control+a");
   await page.keyboard.type("install.packages('x')");
   await page.waitForTimeout(900);
@@ -246,8 +326,9 @@ test("R is ready on the opening screen, before anything is opened", async ({ pag
   await expect(page.getByText("R 4.5.1 is ready, CRAN installer")).toBeVisible();
 });
 
-test("a statement with output becomes one card, input above output", async ({ page }) => {
+test("under each line, a statement with output becomes one card, input above output", async ({ page }) => {
   await openExample(page);
+  await showResults(page, /Under each line/);
   await newFileWith(page, "x <- 1\n1 + 1\n");
   await page.keyboard.press("Shift+Control+Enter");
   await expect(page.locator(".cm-output-block").getByText("[1] 2")).toBeVisible();
@@ -309,23 +390,16 @@ test("the data viewer shows columns, sorts, and pages through rows", async ({ pa
   await expect(page.locator(".editor-host .cm-content")).toBeVisible();
 });
 
-test("the console can be resized from the keyboard and remembers its height", async ({ page }) => {
+test("the canvas can be resized from the keyboard and remembers its width", async ({ page }) => {
   await openExample(page);
-  const edge = page.getByRole("separator", { name: "Console height" });
+  const edge = page.getByRole("separator", { name: "Canvas width" });
   const before = Number(await edge.getAttribute("aria-valuenow"));
   await edge.focus();
-  await page.keyboard.press("ArrowUp");
-  await page.keyboard.press("ArrowUp");
-  await expect(edge).toHaveAttribute("aria-valuenow", String(before + 48));
-  expect(await appState<number>(page, "state.settings.consoleHeight")).toBe(before + 48);
-  // The typing box has its own edge, so a long statement gets room.
-  const box = page.getByRole("separator", { name: "Console typing box height" });
-  const typing = Number(await box.getAttribute("aria-valuenow"));
-  await box.focus();
-  await page.keyboard.press("ArrowUp");
-  await expect(box).toHaveAttribute("aria-valuenow", String(typing + 20));
-  const height = await page.locator(".console-input-row").evaluate((element) => element.getBoundingClientRect().height);
-  expect(Math.round(height)).toBe(typing + 20);
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowLeft");
+  const after = Number(await edge.getAttribute("aria-valuenow"));
+  expect(after).not.toBe(before);
+  expect(await appState<number>(page, "state.settings.inspectorWidth")).toBe(after);
 });
 
 test("names complete from R in the editor and the console", async ({ page }) => {
@@ -348,11 +422,108 @@ test("names complete from R in the editor and the console", async ({ page }) => 
   await expect(page.getByRole("option", { name: /^summary/ })).toBeVisible();
 });
 
+test("a plot fills the stage and opens full size, with every plot a press away in the timeline", async ({ page }) => {
+  await openExample(page);
+  await newFileWith(page, "x <- 1:10\nplot(x)\nhist(x)\n");
+  await page.keyboard.press("Shift+Control+Enter");
+  // The latest plot is on the stage, as wide as the canvas allows.
+  const figure = feed(page).locator(".plot-figure");
+  await expect(figure).toHaveCount(1);
+  await expect(feed(page)).toContainText("Line 3");
+  const box = await figure.boundingBox();
+  const canvas = await page.getByRole("complementary", { name: "Canvas" }).boundingBox();
+  expect(box?.width ?? 0).toBeGreaterThan((canvas?.width ?? 0) * 0.8);
+  expect(box?.height ?? 0).toBeGreaterThan(300);
+  // Both plots are in the timeline, and choosing the first shows it.
+  const items = timeline(page).getByRole("option").filter({ has: page.locator("img") });
+  await expect(items).toHaveCount(2);
+  await items.first().click();
+  await expect(feed(page)).toContainText("Line 2");
+  await expect(items.first()).toHaveAttribute("aria-selected", "true");
+  // The arrow keys move along the timeline.
+  await items.first().focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(feed(page)).toContainText("Line 3");
+  // The objects sit as cards along the canvas's top.
+  await expect(page.getByRole("region", { name: "Objects in R" }).getByRole("button", { name: /^x / })).toBeVisible();
+  // Full size, with the arrows moving between plots.
+  await figure.getByRole("button", { name: "Full size", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: /Plot 2 of 2/ })).toBeVisible();
+  await page.keyboard.press("ArrowLeft");
+  await expect(page.getByRole("dialog", { name: /Plot 1 of 2/ })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  // The title bar's toggle hides and brings back the whole canvas.
+  const toggle = page.getByRole("button", { name: "Show the canvas" });
+  await toggle.click();
+  await expect(page.getByRole("complementary", { name: "Canvas" })).toBeHidden();
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await toggle.click();
+  await expect(page.getByRole("complementary", { name: "Canvas" })).toBeVisible();
+});
+
+test("the stage follows the cursor, and a pinned output stays for comparing", async ({ page }) => {
+  await openExample(page);
+  await newFileWith(page, "1 + 1\nplot(1:10)\n2 * 3\n");
+  await page.keyboard.press("Shift+Control+Enter");
+  await expect(feed(page)).toContainText("[1] 6");
+  // Moving the cursor onto the plot's line brings the plot back.
+  await page.locator(".editor-host .cm-content").click();
+  await page.keyboard.press("Control+Home");
+  await page.keyboard.press("ArrowDown");
+  await expect(feed(page).locator(".plot-figure")).toBeVisible();
+  // Pinned, it stays above whatever the cursor shows next.
+  await feed(page).getByRole("button", { name: "Pin" }).click();
+  await page.locator(".editor-host .cm-content").focus();
+  await page.keyboard.press("ArrowUp");
+  await expect(feed(page).getByRole("group", { name: "Pinned output" }).locator(".plot-figure")).toBeVisible();
+  await expect(feed(page).getByRole("group", { name: "Output", exact: true })).toContainText("[1] 2");
+  await feed(page).getByRole("button", { name: "Unpin" }).click();
+  await expect(feed(page).getByRole("group", { name: "Pinned output" })).toHaveCount(0);
+});
+
+test("a data frame shown by its name is a table on the stage", async ({ page }) => {
+  await openExample(page);
+  await newFileWith(page, "mass_by_species <- aggregate(body_mass ~ species,\n  data = penguins, FUN = mean)\nmass_by_species\n");
+  await runLine(page);
+  await runLine(page);
+  await expect(feed(page).getByRole("region", { name: /Data viewer, mass_by_species/ })).toContainText("3 rows");
+  await feed(page).getByRole("button", { name: "Show as printed" }).click();
+  await expect(feed(page).locator(".output-card")).toContainText("Gentoo");
+});
+
+test("under each line, a plot is a small preview that opens full size", async ({ page }) => {
+  await openExample(page);
+  await showResults(page, /Under each line/);
+  await newFileWith(page, "plot(1:10, main = 'Mass')\n");
+  await page.keyboard.press("Control+Enter");
+  const plot = page.locator(".output-plot");
+  await expect(plot).toBeVisible();
+  const box = await plot.boundingBox();
+  expect(box?.height ?? 0).toBeLessThan(120);
+  await plot.click();
+  await expect(page.getByRole("dialog", { name: /Plot 1 of 1/ })).toBeVisible();
+});
+
+test("the canvas never grows wider than the window allows, even at a size remembered from a wider one", async ({ page }) => {
+  await openExample(page);
+  const splitter = page.getByRole("separator", { name: "Canvas width" });
+  await splitter.focus();
+  await page.keyboard.press("End");
+  const wide = await page.locator(".canvas").boundingBox();
+  expect(wide?.width ?? 0).toBeGreaterThan(700);
+  // The window narrows, as it would on a smaller screen or a resize, with
+  // no further change to the remembered width.
+  await page.setViewportSize({ width: 760, height: 900 });
+  await expect.poll(async () => (await page.locator(".canvas").boundingBox())?.width ?? 0).toBeLessThan((wide?.width ?? 0) - 100);
+});
+
 test("a plot exports at a chosen size and format, redrawn by R", async ({ page }) => {
   await openExample(page);
   await newFileWith(page, "plot(1:10, main = 'Mass')\n");
   await page.keyboard.press("Shift+Control+Enter");
-  await page.getByRole("button", { name: "Export" }).click();
+  // Export sits on the plot's own card in the canvas.
+  await feed(page).locator(".plot-figure").getByRole("button", { name: "Export" }).click();
   const dialog = page.getByRole("dialog", { name: "Export plot" });
   // A journal preset fills in its size and switches to a format that stays
   // sharp at any zoom.
@@ -375,7 +546,7 @@ test("exporting a plot made with random numbers says the sample will differ", as
   await openExample(page);
   await newFileWith(page, "hist(rnorm(100))\n");
   await page.keyboard.press("Shift+Control+Enter");
-  await expect(page.getByText("Plot 1 of 1")).toBeVisible();
+  await expect(feed(page).locator(".plot-figure")).toBeVisible();
   await page.keyboard.press("Shift+Control+E");
   const dialog = page.getByRole("dialog", { name: "Export plot" });
   await expect(dialog.getByRole("note")).toContainText("does not call set.seed()");
@@ -399,7 +570,7 @@ test("?topic and F1 open R help in the Help pane, and links between pages work",
   await input.click();
   await page.keyboard.type("?mean");
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("tab", { name: "Help" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("button", { name: "R help" })).toHaveAttribute("aria-pressed", "true");
   const frame = page.getByRole("article");
   await expect(frame.getByRole("heading", { name: "Arithmetic Mean" })).toBeVisible();
   // Scripts, handlers, images, and outside links in a help file never
@@ -429,7 +600,7 @@ test("history sends commands back to the console or into the script", async ({ p
   await input.click();
   await page.keyboard.type("1 + 1");
   await page.keyboard.press("Enter");
-  await page.getByRole("tab", { name: "History" }).click();
+  await page.getByRole("button", { name: "History", exact: true }).click();
   const history = page.getByRole("region", { name: "Console history" });
   await expect(history.locator(".history-code")).toHaveText(["1 + 1"]);
   await history.getByRole("button", { name: "To console" }).click();
@@ -441,13 +612,16 @@ test("history sends commands back to the console or into the script", async ({ p
 
 test("the Packages pane lists installed packages and attaches through the console", async ({ page }) => {
   await openExample(page);
-  await page.getByRole("tab", { name: "Packages" }).click();
+  await page.getByRole("button", { name: "Packages", exact: true }).click();
   const pane = page.getByRole("region", { name: "Packages" });
   await expect(pane.getByRole("checkbox", { name: "Attach dplyr" })).not.toBeChecked();
   await pane.getByRole("searchbox", { name: "Search packages" }).fill("grammar");
   await expect(pane.locator(".package-row")).toHaveCount(2);
   await pane.getByRole("checkbox", { name: "Attach dplyr" }).check();
-  await expect(page.getByRole("log")).toContainText("library(dplyr)");
+  // The sheet stays open, and the command is in the feed behind it.
+  await expect(pane).toBeVisible();
+  await page.getByRole("navigation", { name: "Canvas views" }).getByRole("button", { name: "Canvas", exact: true }).click();
+  await expect(feed(page)).toContainText("library(dplyr)");
 });
 
 test("RStudio's insert shortcuts type a pipe, an assignment, and a section", async ({ page }) => {
@@ -489,13 +663,14 @@ test("Import data previews a file through R, writes the code, and runs it", asyn
   await dialog.getByRole("textbox", { name: "Name in R" }).fill("birds");
   await dialog.getByRole("button", { name: "Import", exact: true }).click();
   await expect(dialog).toBeHidden();
-  await expect(page.getByRole("log")).toContainText('birds <- read.csv("data/penguins.csv", sep = ";"');
+  await expect(feed(page)).toContainText('birds <- read.csv("data/penguins.csv", sep = ";"');
   // The code also went into the script, so the import reruns with it.
   await expect(page.locator(".editor-host .cm-content")).toContainText("birds <- read.csv(");
 });
 
 test("a line that adds to a plot, such as abline, updates that plot and shows its own card", async ({ page }) => {
   await openExample(page);
+  await showResults(page, /Under each line/);
   await newFileWith(page, "plot(1:10)\nabline(a = 0, b = 1)\n");
   await runLine(page);
   await expect.poll(() => appState<number>(page, "state.plots.length")).toBe(1);
@@ -503,8 +678,9 @@ test("a line that adds to a plot, such as abline, updates that plot and shows it
   // The second line is the last statement. It must still run and show.
   await expect(page.locator(".cm-output-block")).toHaveCount(2);
   // The plot is redrawn in place, not added a second time, and keeps both lines of code.
+  // A card appears when its line is queued, so the update is waited for.
+  await expect.poll(() => appState<string>(page, "state.plots[0].code")).toContain("abline(a = 0, b = 1)");
   expect(await appState<number>(page, "state.plots.length")).toBe(1);
-  expect(await appState<string>(page, "state.plots[0].code")).toContain("abline(a = 0, b = 1)");
   expect(await appState<string>(page, "state.plots[0].code")).toContain("plot(1:10)");
 });
 
@@ -512,7 +688,7 @@ test("abline before any plot explains that there is no plot to add to", async ({
   await openExample(page);
   await newFileWith(page, "abline(a = 0, b = 1)\n");
   await runLine(page);
-  await expect(page.locator(".cm-output-block")).toContainText(/plot/i);
+  await expect(feed(page)).toContainText(/plot/i);
 });
 
 test("selected lines are visibly highlighted, including the line the cursor is on", async ({ page }) => {
@@ -570,7 +746,7 @@ test("a console error is written in plain words with carets under the failing pa
   // The stand-in R fails on a bare unknown name, as real R does.
   await page.keyboard.type("nosuchthing");
   await page.keyboard.press("Enter");
-  const log = page.getByRole("log");
+  const log = feed(page);
   await expect(log).toContainText("R could not find “nosuchthing”");
   await expect(log).toContainText("^^^^^^^^^^^");
   await expect(log).toContainText("Try this:");
@@ -585,4 +761,194 @@ test("a syntax error is placed by asking R's parser, since the console message h
   await expect(card.locator(".error-title")).toHaveText("R did not expect a name here");
   await expect(card.locator(".error-where mark")).toHaveText("total");
   await expect(page.locator(".editor-host .cm-problem")).toHaveText("total");
+});
+
+test("Help opens over the workspace without closing anything, one topic at a time", async ({ page }) => {
+  await openExample(page);
+  // Help lives in the menu bar and the search, not as a button.
+  await page.keyboard.press("Control+k");
+  await page.keyboard.insertText("Help for this app");
+  await page.keyboard.press("Enter");
+  const article = page.getByRole("article");
+  await expect(page.getByRole("heading", { name: "Start here" })).toBeVisible();
+  const topics = page.getByRole("navigation", { name: "Help topics" });
+  const canvas = topics.getByRole("button", { name: "The canvas" });
+  await canvas.click();
+  await expect(canvas).toHaveAttribute("aria-current", "page");
+  await expect(article).toContainText("shows one result at a time");
+  // Another topic replaces the first, and Next walks on through them.
+  await topics.getByRole("button", { name: "Keyboard shortcuts" }).click();
+  await expect(article).toContainText("Run line or selection");
+  await article.getByRole("button", { name: /^Next: Settings/ }).click();
+  await expect(page.getByRole("heading", { name: "Settings and accessibility" })).toBeVisible();
+  // Searching narrows the topics, and Return opens the first match.
+  const search = page.getByRole("searchbox", { name: "Search help" });
+  await search.fill("reactive");
+  await expect(topics.getByRole("button")).toHaveText(["Shiny apps"]);
+  await search.press("Enter");
+  await expect(page.getByRole("heading", { name: "Shiny apps" })).toBeVisible();
+  await search.fill("zzzz");
+  await expect(topics).toContainText("Nothing matches that");
+  // Escape first clears the search, then returns to the workspace as it was.
+  await page.keyboard.press("Escape");
+  await expect(search).toHaveValue("");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("tab", { name: /analysis\.R/ })).toHaveAttribute("aria-selected", "true");
+  await page.keyboard.press("Shift+Control+/");
+  await expect(page.getByRole("heading", { name: "Start here" })).toBeVisible();
+  await page.getByRole("button", { name: "Back" }).click();
+  await expect(page.getByRole("tab", { name: /analysis\.R/ })).toBeVisible();
+});
+
+test("the example project opens with every example, and its first script runs", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Use this R" }).click();
+  await page.getByRole("button", { name: "Open the examples" }).click();
+  const sidebar = page.getByRole("navigation", { name: "Project" });
+  await expect(sidebar).toContainText("R Examples");
+  for (const name of ["01-first-steps.R", "03-plots.R", "05-when-things-go-wrong.R", "06-report.qmd", "07-notebook.Rmd", "08-rmarkdown-basics.Rmd"]) {
+    await expect(sidebar.getByRole("button", { name })).toBeVisible();
+  }
+  // Four Shiny apps, each in a folder of its own.
+  await expect(sidebar.getByRole("button", { name: "app.R" })).toHaveCount(4);
+  for (const name of ["meteorites.csv", "exoplanets.csv", "launches.csv", "bright_stars.csv"]) {
+    await expect(sidebar.getByRole("button", { name: `Import ${name}` })).toBeVisible();
+  }
+  await expect(page.getByRole("tab", { name: /01-first-steps\.R/ })).toHaveAttribute("aria-selected", "true");
+  await expectReady(page);
+  // The first statement is 1 + 1, on line 8.
+  await page.locator(".editor-host .cm-content").click();
+  await page.keyboard.press("Control+Home");
+  for (let line = 0; line < 7; line += 1) await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Control+Enter");
+  await expect(feed(page).getByText("[1] 2")).toBeVisible();
+});
+
+test("the tour steps through the workspace, and Show me points at each part in place", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Use this R" }).click();
+  await page.getByRole("button", { name: "Take the tour" }).click();
+  const tour = page.getByRole("dialog", { name: "Where things go" });
+  await expect(tour).toBeVisible();
+  await expect(page.getByRole("tab", { name: /01-first-steps\.R/ })).toBeVisible();
+  await tour.getByRole("button", { name: "Next" }).click();
+  const run = page.getByRole("dialog", { name: "Running a line" });
+  await expect(run).toBeVisible();
+  // Show me sets the card aside, rings the Run button, then brings it back.
+  await run.getByRole("button", { name: "Show me" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.locator(".beacon")).toContainText("Run");
+  await expect(page.locator(".beacon-ring")).toHaveCount(3);
+  await expect(run).toBeVisible({ timeout: 8000 });
+  await expect(page.locator(".beacon")).toHaveCount(0);
+  // The arrow keys move between steps, and the last one starts work.
+  await page.keyboard.press("ArrowLeft");
+  await expect(tour).toBeVisible();
+  for (let step = 0; step < 10; step += 1) await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("dialog", { name: "When something goes wrong" })).toBeVisible();
+  await page.getByRole("button", { name: "Start working" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect(await appState<boolean>(page, "state.settings.tourSeen")).toBe(true);
+});
+
+test("Show me in Help closes Help and rings the part of the app it names", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Use this R" }).click();
+  await page.getByRole("button", { name: "Help", exact: true }).click();
+  // With nothing open, the examples open first so there is something to show.
+  await page.getByRole("group", { name: "Show me in the app" }).first().getByRole("button", { name: "The R prompt" }).click();
+  await expect(page.getByRole("heading", { name: "Start here" })).toHaveCount(0);
+  await expect(page.locator(".beacon")).toContainText("The R prompt");
+  // A click anywhere clears the rings early.
+  await page.mouse.click(5, 300);
+  await expect(page.locator(".beacon")).toHaveCount(0);
+});
+
+test("the opening screen groups starting and opening, and offers a Shiny app", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Use this R" }).click();
+  await page.getByRole("button", { name: "New Shiny app" }).click();
+  const dialog = page.getByRole("dialog", { name: "New project" });
+  await expect(dialog.getByRole("radio", { name: /Shiny/ })).toBeChecked();
+});
+
+test("results under each line still show large on the stage", async ({ page }) => {
+  await openExample(page);
+  await showResults(page, /Under each line/);
+  await newFileWith(page, "plot(1:10)\n");
+  await page.keyboard.press("Control+Enter");
+  await expect(page.locator(".cm-output-block .output-plot")).toBeVisible();
+  await expect(feed(page).locator(".plot-figure")).toBeVisible();
+});
+
+test("the search in the title bar looks names up in R help", async ({ page }) => {
+  await openExample(page);
+  await page.getByRole("button", { name: "Search help and commands" }).click();
+  const search = page.getByRole("combobox");
+  await search.fill("sd");
+  await page.getByRole("option", { name: /Look up sd in R help/ }).click();
+  await expect(page.getByRole("button", { name: "R help" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("article").getByRole("heading", { name: "Standard Deviation" })).toBeVisible();
+});
+
+test("pressing an output in the timeline puts the cursor on its line, and the line shows where the stage came from", async ({ page }) => {
+  await openExample(page);
+  await newFileWith(page, "1 + 1\nplot(1:10)\n2 * 3\n");
+  await page.keyboard.press("Shift+Control+Enter");
+  await expect(feed(page)).toContainText("[1] 6");
+  await expect(page.locator(".editor-host .cm-line-staged")).toHaveText("2 * 3");
+  await timeline(page).getByRole("option").filter({ hasText: "Line 2" }).click();
+  await expect(page.locator(".editor-host .cm-activeLine")).toHaveText("plot(1:10)");
+  await expect(page.locator(".editor-host .cm-line-staged")).toHaveText("plot(1:10)");
+  // The stage's own line link goes there too.
+  await timeline(page).getByRole("option").filter({ hasText: "Line 1" }).click();
+  await feed(page).getByRole("button", { name: "Line 1", exact: true }).click();
+  await expect(page.locator(".editor-host .cm-activeLine")).toHaveText("1 + 1");
+});
+
+test("a long run's outputs can be filtered, and are grouped by section", async ({ page }) => {
+  await openExample(page);
+  await newFileWith(page, "# Numbers ----\n1 + 1\n2 + 2\n3 + 3\n# Pictures ----\nplot(1:3)\nplot(1:4)\nstop('no')\n4 + 4\n");
+  await page.keyboard.press("Shift+Control+Enter");
+  const filters = page.getByRole("radiogroup", { name: "Show in earlier results" });
+  await expect(filters).toBeVisible();
+  await expect(filters.getByRole("radio", { name: /Plots 2/ })).toBeVisible();
+  await filters.getByRole("radio", { name: /Plots/ }).click();
+  await expect(timeline(page).getByRole("option")).toHaveCount(2);
+  await filters.getByRole("radio", { name: /Problems/ }).click();
+  await expect(timeline(page).getByRole("option")).toHaveCount(2);
+  await filters.getByRole("radio", { name: /All/ }).click();
+  await expect(page.locator(".timeline-section")).toHaveText(["Numbers", "Pictures"]);
+});
+
+test("the R prompt sits under the script", async ({ page }) => {
+  await openExample(page);
+  const prompt = await page.locator(".composer").boundingBox();
+  const script = await page.locator(".sheet").boundingBox();
+  const canvas = await page.locator(".canvas").boundingBox();
+  expect(prompt!.x).toBeLessThan(canvas!.x);
+  expect(prompt!.y).toBeGreaterThan(script!.y + script!.height - 1);
+});
+
+test("everything that can be updated is listed on one page, and the app updates in place", async ({ page }) => {
+  await openExample(page);
+  // The Packages sheet's check opens the same page as Check for updates.
+  await page.getByRole("button", { name: "Packages", exact: true }).click();
+  await page.getByRole("button", { name: "Check for updates" }).click();
+  const dialog = page.getByRole("dialog", { name: "Settings" });
+  await expect(dialog.getByRole("navigation", { name: "Settings sections" }).getByRole("button", { name: "Updates", exact: true })).toHaveAttribute("aria-current", "page");
+  const list = dialog.locator(".update-list");
+  await expect(list).toContainText("2 with newer versions");
+  await expect(list).toContainText("ggplot2 3.5.0 to 3.5.2");
+  await expect(list.getByRole("button", { name: "Get R 4.5.2" })).toBeVisible();
+  await list.getByRole("button", { name: "Update to 0.3.0" }).click();
+  await expect(list.getByRole("button", { name: "Restart to finish" })).toBeVisible();
+  // Updating packages leaves the page open, and it looks again after.
+  page.once("dialog", (question) => question.accept());
+  await list.getByRole("button", { name: "Update all" }).click();
+  await expect(dialog).toBeVisible();
+  await expect(list).toContainText("2 with newer versions");
+  // Choosing to look only when asked is remembered.
+  await dialog.getByRole("radio", { name: "Only when I ask" }).check();
+  expect(await appState<string>(page, "state.settings.updateChecks")).toBe("manual");
 });

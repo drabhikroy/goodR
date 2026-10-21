@@ -1,6 +1,6 @@
 //! Talks to a running Ollama server on this computer over its local HTTP
 //! interface. Downloads report progress as they go, and answers stream in
-//! word by word, so the person always sees that something is happening.
+//! word by word, so the user always sees that something is happening.
 
 use anyhow::{anyhow, Context, Result};
 use futures_util::StreamExt;
@@ -13,7 +13,7 @@ use std::time::Duration;
 /// Where the system's own Ollama listens.
 pub const SYSTEM_URL: &str = "http://127.0.0.1:11434";
 /// Where the app's private copy listens. A port of its own keeps it from
-/// clashing with an Ollama the person runs separately.
+/// clashing with an Ollama the user runs separately.
 pub const PRIVATE_URL: &str = "http://127.0.0.1:11435";
 
 #[derive(Clone)]
@@ -68,7 +68,7 @@ impl Client {
         Ok(reply["version"].as_str().unwrap_or_default().to_string())
     }
 
-    /// The models already downloaded, including any the person pulled with
+    /// The models already downloaded, including any the user pulled with
     /// Ollama outside this app, so they can be chosen here too.
     pub async fn installed(&self) -> Result<Vec<Installed>> {
         let reply: Value = self.http.get(self.url("/api/tags")).timeout(Duration::from_secs(10)).send().await?.error_for_status()?.json().await?;
@@ -117,7 +117,7 @@ impl Client {
             "options": { "temperature": 0.2, "num_ctx": 8192 },
         });
         // A model that reasons out loud is asked to skip it. The reasoning
-        // is slow to read and the answer is what the person came for.
+        // is slow to read and the answer is what the user came for.
         if thinks {
             body["think"] = json!(false);
         }
@@ -161,7 +161,7 @@ pub fn parse_installed(reply: &Value) -> Vec<Installed> {
         .filter_map(|model| {
             let id = model["name"].as_str().or_else(|| model["model"].as_str())?.to_string();
             // Ollama counts bytes in powers of ten, as its own model pages do,
-            // so sizes here match what the person sees on ollama.com.
+            // so sizes here match what the user sees on ollama.com.
             let size = model["size"].as_u64().unwrap_or(0) as f64 / 1_000_000_000.0;
             let parameters = model["details"]["parameter_size"].as_str().unwrap_or_default().to_string();
             Some(Installed { id, size_gb: (size * 10.0).round() / 10.0, parameters })

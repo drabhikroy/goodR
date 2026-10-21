@@ -77,3 +77,13 @@ describe("guessing a text file's layout", () => {
     expect(guessLayout(["just one column", "no separators"])).toEqual({ sep: ",", dec: "." });
   });
 });
+
+describe("names that R reserves", () => {
+  it("refuses ... and ..1, and backticks a name R cannot take plainly", () => {
+    expect(isValidName("...")).toBe(false);
+    expect(isValidName("..1")).toBe(false);
+    expect(isValidName("NA_real_")).toBe(false);
+    const code = importCode({ ...base, path: "a.rds", name: "my data", format: "rds" });
+    expect(code).toBe('`my data` <- readRDS("a.rds")');
+  });
+});

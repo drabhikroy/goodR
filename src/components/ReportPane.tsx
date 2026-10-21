@@ -9,11 +9,13 @@
 // full size view, and Word files always open there.
 
 import { useState } from "react";
-import { baseName, openFile } from "../lib/app";
+import { baseName, openFile, updateSettings } from "../lib/app";
+import { headingId } from "../lib/chunks";
 import * as editor from "../lib/editor";
 import { explainRender, openOutput, previewUrl, renderReport, runRenderAction, stopRender } from "../lib/report";
 import { useStore, type ReportState } from "../lib/store";
 import { FolderIcon, ReportIcon, StopIcon, TriangleIcon } from "./Icons";
+import { LatexPanel } from "./LatexPanel";
 
 const FORMAT_NAMES: Record<string, string> = { html: "HTML", docx: "Word", pdf: "PDF" };
 
@@ -24,6 +26,7 @@ function formatOf(path: string) {
 
 export function ReportPane() {
   const report = useStore((state) => state.report);
+  const renderOnSave = useStore((state) => state.settings.renderOnSave);
   const platform = useStore((state) => state.info?.platform);
   const [showLog, setShowLog] = useState(false);
   if (!report) return null;
@@ -44,6 +47,15 @@ export function ReportPane() {
           </button>
         )}
       </div>
+      {/* Rendering after each save keeps the preview in step with the
+          code. It applies to web pages, which preview here; Word and PDF
+          files open in other apps, so they render only when asked. */}
+      {report.target !== "word" && report.target !== "pdf" && (
+        <label className="check report-follow">
+          <input type="checkbox" checked={renderOnSave} onChange={(event) => updateSettings({ renderOnSave: event.target.checked })} />
+          <span>Render again each time the file is saved</span>
+        </label>
+      )}
       {running && <Progress report={report} />}
       {report.status === "done" && <Finished report={report} platform={platform} />}
       {(report.status === "failed" || report.status === "stopped") && report.failure && <Problem report={report} />}
@@ -73,7 +85,7 @@ function Progress({ report }: { report: ReportState }) {
     <div className="report-progress">
       <p role="status">{words}</p>
       <progress max={progress?.total ?? 1} value={progress ? progress.done : undefined} aria-label={`Rendering ${baseName(report.file)}`} />
-      <p className="muted">Rendering runs in its own R, so the console stays free and your objects are not changed.</p>
+      <p className="muted">The report is made in a separate copy of R, so you can keep using the console and your objects are left alone.</p>
     </div>
   );
 }
@@ -81,14 +93,21 @@ function Progress({ report }: { report: ReportState }) {
 /** The finished report: a preview of HTML or PDF, and Open for the rest. */
 function Finished({ report, platform }: { report: ReportState; platform?: string }) {
   const outputs = report.outputs;
+  const sectionHere = useStore((state) => {
+    if (state.active !== report.file) return null;
+    return [...state.outline].reverse().find((item) => item.line <= state.cursorLine && !item.label.endsWith("()"))?.label ?? null;
+  });
   const preferred = outputs.find((path) => formatOf(path) === "html") ?? outputs.find((path) => formatOf(path) === "pdf") ?? outputs[0];
   const [chosen, setChosen] = useState<string | null>(null);
   const shown = chosen && outputs.includes(chosen) ? chosen : preferred;
   if (!shown) {
-    return <p className="pane-empty muted">The render finished but did not name a file. The render log below shows what it printed.</p>;
+    return <p className="pane-empty muted">Rendering finished, but it did not say which file it made. The render log below shows what it printed.</p>;
   }
   const format = formatOf(shown);
   const seconds = Math.max(1, Math.round((report.finished - report.started) / 1000));
+  // The preview opens at the section the cursor is in, by the id Pandoc
+  // gives each heading, so the part being edited is the part on show.
+  const section = format === "html" && sectionHere ? `#${headingId(sectionHere)}` : "";
   const reveal = platform === "macos" ? "Show in Finder" : "Show in folder";
   return (
     <div className="report-done">
@@ -96,7 +115,7 @@ function Finished({ report, platform }: { report: ReportState; platform?: string
         {outputs.length > 1 && (
           <div className="report-formats" role="group" aria-label="Rendered files">
             {outputs.map((path) => (
-              <button key={path} type="button" className={`chip ${path === shown ? "is-on" : ""}`} aria-pressed={path === shown} onClick={() => setChosen(path)}>
+              <button key={path} type="button" className={`quick-button ${path === shown ? "is-on" : ""}`} aria-pressed={path === shown} onClick={() => setChosen(path)}>
                 {FORMAT_NAMES[formatOf(path)] ?? formatOf(path).toUpperCase()}
               </button>
             ))}
@@ -121,7 +140,7 @@ function Finished({ report, platform }: { report: ReportState; platform?: string
           key={`${shown}-${report.finished}`}
           className="report-frame"
           title={`Preview of ${baseName(shown)}`}
-          src={previewUrl(shown)}
+          src={`${previewUrl(shown)}${section}`}
           sandbox={format === "html" ? "allow-scripts allow-popups allow-popups-to-escape-sandbox" : undefined}
         />
       ) : (
@@ -179,9 +198,12 @@ function Problem({ report }: { report: ReportState }) {
           <strong>Try this:</strong> {explained.hint}
         </p>
       )}
+      {/* LaTeX can be installed right here, and the report renders again
+          as soon as it is ready. */}
+      {report.failure.kind === "latex" && <LatexPanel compact onInstalled={() => renderReport(report.target, report.file)} />}
       <div className="button-row">
         {explained.action && (
-          <button type="button" className="button primary" onClick={() => explained.action && runRenderAction(explained.action)}>
+          <button type="button" className={`button ${report.failure.kind === "latex" ? "" : "primary"}`} onClick={() => explained.action && runRenderAction(explained.action)}>
             {explained.action.label}
           </button>
         )}

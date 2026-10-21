@@ -1,23 +1,24 @@
-// One run's result. Under each line it is a recessed well that sits right
-// below the statement's code, joined to it by a shared rule down the left
-// edge, so input and output read as one unit (Palmer 1992, common region)
-// while the change of surface keeps them apart. Earlier versions framed each
-// result as a card with a title bar, labels, and three text buttons. That
-// put five rows of controls around a one line answer, and visual complexity
-// of that kind lowers both first impressions and measured usability (Tuch
-// et al. 2009; Reinecke et al. 2013). The controls now appear on pointer hover
-// or keyboard focus, and the status line appears only when there is
-// something to say: running, stopped, failed, or slow. In the results
-// column, beside or below the code, the well carries a short copy of its
-// code and a link back to it.
+// One run's result. Under a line, it sits in a well below the code with a
+// rule down the left joining the two. Its buttons show on hover or focus,
+// and the status line only when there is something to say (running,
+// stopped, failed, slow). On the canvas it also carries a copy of its code
+// and a link back to the line.
 
 import { useLayoutEffect, useState } from "react";
-import { applyFix, copyResult, installPackages, runBlockAgain, showPlot, toggleResult } from "../lib/app";
+import type { RunProfile } from "../lib/types";
+import { plotKind, readLabels, type PlotKind, type PlotLabels } from "../lib/plotEdit";
+import { plotColors } from "../theme/theme";
+import { applyFix, copyResult, editPlotCode, installPackages, openExportPlot, runBlockAgain, showPlot, toggleResult, viewPlot } from "../lib/app";
 import { askAssistantAboutError } from "../lib/assistant";
 import * as editor from "../lib/editor";
 import { explainError, userFrames } from "../lib/errors";
-import { useStore, type Block, type OutputItem } from "../lib/store";
-import { CopyIcon, EyeIcon, HollowIcon, PauseIcon, PlayIcon, RingIcon, SparkIcon, StopIcon, TriangleIcon } from "./Icons";
+import { openAskOnline } from "../lib/trace";
+import { isQuiet, SLOW_MS, useStore, type Block, type OutputItem } from "../lib/store";
+import { ExerciseResult } from "./ExerciseResult";
+import { StatsWriteUp } from "./StatsWriteUp";
+import { StreamText } from "./StreamText";
+import { WhatChanged } from "./WhatChanged";
+import { ChartIcon, CopyIcon, ExpandIcon, EyeIcon, HollowIcon, PauseIcon, PlayIcon, RingIcon, PencilIcon, SaveIcon, SparkIcon, StopIcon, TriangleIcon, UndoIcon } from "./Icons";
 
 function seconds(ms: number) {
   if (ms < 1000) return `${(ms / 1000).toFixed(2)} s`;
@@ -25,8 +26,6 @@ function seconds(ms: number) {
   return `${Math.floor(ms / 60000)} min ${Math.round((ms % 60000) / 1000)} s`;
 }
 
-// A run this long is worth a note. Shorter ones would only add noise.
-const SLOW_MS = 1000;
 
 function lineLabel(block: Block, line: number) {
   const span = block.toLine - block.fromLine;
@@ -53,7 +52,7 @@ export function OutputCard({ blockId, showLine = false }: { blockId: string; sho
   if (!block) return null;
   // A statement that ran and printed nothing shows as a check in the gutter
   // instead. Rendering nothing leaves the container empty, which CSS hides.
-  if (block.status === "ok" && block.items.length === 0 && !block.paused) return null;
+  if (isQuiet(block)) return null;
   const line = editor.blockLines(block.file).get(blockId) ?? block.toLine;
   const label = lineLabel(block, line);
   const span = block.toLine - block.fromLine;
@@ -65,22 +64,33 @@ export function OutputCard({ blockId, showLine = false }: { blockId: string; sho
   };
   const quiet = block.status === "queued" || block.status === "skipped";
   const collapsed = Boolean(block.collapsed);
+  const [showTime, setShowTime] = useState(false);
   const done = block.status !== "running" && block.status !== "queued";
   const slow = done && !quiet && block.duration >= SLOW_MS;
-  const words = STATE_WORDS[block.status];
+  const words = block.undone
+    ? "Undone. The objects this run changed are back as they were."
+    : block.restored
+      ? "From last time. Run it again to work with what it made."
+      : STATE_WORDS[block.status];
 
   return (
     <section
-      className={`output-card status-${block.status} ${showLine ? "is-standalone" : ""} ${quiet ? "is-quiet" : ""}`}
+      className={`output-card status-${block.status} ${showLine ? "is-standalone" : ""} ${quiet ? "is-quiet" : ""} ${block.restored ? "is-restored" : ""}`}
       aria-label={`Result of ${label.toLowerCase()}`}
       title={done && !quiet ? `${label}, took ${seconds(block.duration)}` : undefined}
       {...link}
     >
       {showLine && (
         <div className="cell-in">
-          <button type="button" className="cell-line" onClick={() => editor.goToLine(block.file, line)}>
-            Go to {label.toLowerCase()}
-          </button>
+          {/* On the stage there is room, so Run again, Copy, and Hide sit
+              in this row, always in view, rather than floating over the
+              result, where they would cover a plot. */}
+          <div className="cell-in-head">
+            <button type="button" className="cell-line" onClick={() => editor.goToLine(block.file, line)}>
+              Go to {label.toLowerCase()}
+            </button>
+            {done && !quiet && <ResultActions blockId={blockId} block={block} inline />}
+          </div>
           <pre className="cell-code">{block.code.split("\n").slice(0, 4).join("\n") + (block.code.split("\n").length > 4 ? "\n..." : "")}</pre>
         </div>
       )}
@@ -91,16 +101,23 @@ export function OutputCard({ blockId, showLine = false }: { blockId: string; sho
             {block.status === "error" && <TriangleIcon size={14} label="Did not run" />}
             {block.status === "stopped" && <StopIcon size={14} label="Stopped" />}
             {quiet && <HollowIcon size={14} />}
+            {block.undone && <UndoIcon size={14} />}
             {words && <span className="output-state">{words}</span>}
             {collapsed && <span className="output-state muted">Result hidden</span>}
-            {slow && <span className="output-meta">{seconds(block.duration)}</span>}
+            {slow && !block.profile && <span className="output-meta">{seconds(block.duration)}</span>}
+            {slow && block.profile && (
+              <button type="button" className="output-meta is-link" aria-expanded={showTime} onClick={() => setShowTime(!showTime)}>
+                {seconds(block.duration)}, see where the time went
+              </button>
+            )}
           </header>
         )}
-        {done && !quiet && <ResultActions blockId={blockId} block={block} />}
+        {slow && block.profile && showTime && <TimeSpent profile={block.profile} duration={block.duration} />}
+        {done && !quiet && !showLine && <ResultActions blockId={blockId} block={block} />}
         {block.paused && (
           <div className="output-paused">
             <PauseIcon size={14} />
-            <span>Left out of live updates because it took {seconds(block.duration)}.</span>
+            <span>This took {seconds(block.duration)}, so live output skips it.</span>
             <button type="button" className="button quiet" onClick={() => runBlockAgain(blockId)}>
               Run once
             </button>
@@ -109,12 +126,50 @@ export function OutputCard({ blockId, showLine = false }: { blockId: string; sho
         {block.items.length > 0 && !collapsed && (
           <div className="output-body">
             {block.items.map((item, index) => (
-              <Item key={index} item={item} blockId={blockId} />
+              <Item key={index} item={item} blockId={blockId} large={showLine} />
             ))}
           </div>
         )}
+        {block.exercise && !collapsed && <ExerciseResult block={block} />}
+        {block.compared && !collapsed && (showLine || !block.compared.same) && <WhatChanged diff={block.compared} />}
+        {block.stats && !collapsed && <StatsWriteUp report={block.stats} />}
       </div>
     </section>
+  );
+}
+
+/**
+ * Where a slow run spent its time, from R's own sampling while it ran.
+ * Each function's time includes the functions it called, so the first is
+ * usually the call in the script and the next ones say what inside it was
+ * slow. When R was sampled working for only a small part of the time, it
+ * was mostly waiting, for a download, a file, or Sys.sleep(), and no
+ * function list would explain that, so it says so instead.
+ */
+function TimeSpent({ profile, duration }: { profile: RunProfile; duration: number }) {
+  const waiting = profile.sampled < (duration / 1000) * 0.3;
+  return (
+    <div className="time-spent" role="group" aria-label="Where the time went">
+      {waiting && <p>R spent most of this time waiting rather than working, such as for a download, a large file, or Sys.sleep(). Faster code would not change that much.</p>}
+      {profile.calls.length > 0 && (
+        <>
+          <p className="muted">{waiting ? "While it was working:" : "Time spent in each function, including the functions it called:"}</p>
+          <ul>
+            {profile.calls.map((call) => (
+              <li key={call.name}>
+                <code>{call.name}</code>
+                <span className="time-bar" aria-hidden="true">
+                  <span style={{ width: `${Math.round(call.share * 100)}%` }} />
+                </span>
+                <span className="time-share">
+                  {Math.round(call.share * 100)} percent, {seconds(call.seconds * 1000)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -124,10 +179,10 @@ export function OutputCard({ blockId, showLine = false }: { blockId: string; sho
  * is inside it, so they cost nothing to look at the rest of the time and
  * are never more than one move away.
  */
-function ResultActions({ blockId, block }: { blockId: string; block: Block }) {
+function ResultActions({ blockId, block, inline = false }: { blockId: string; block: Block; inline?: boolean }) {
   const hasText = block.items.some((item) => item.type !== "plot");
   return (
-    <div className="result-actions" role="group" aria-label="Result actions">
+    <div className={`result-actions ${inline ? "is-inline" : ""}`} role="group" aria-label="Result actions">
       <button type="button" className="result-action" aria-label="Run again" title="Run again" onClick={() => runBlockAgain(blockId)}>
         <PlayIcon size={12} />
       </button>
@@ -151,31 +206,121 @@ function ResultActions({ blockId, block }: { blockId: string; block: Block }) {
   );
 }
 
-function Item({ item, blockId }: { item: OutputItem; blockId: string }) {
-  const inspector = useStore((state) => state.ui.inspector);
+function Item({ item, blockId, large }: { item: OutputItem; blockId: string; large: boolean }) {
   switch (item.type) {
     case "stream":
-      return <pre className={`output-text stream-${item.name}`}>{item.text.replace(/\n$/, "")}</pre>;
+      return <StreamText text={item.text} name={item.name} />;
     case "value":
       return <pre className="output-text">{item.text}</pre>;
     case "plot":
-      // With the Plots pane open, the full picture is already on screen
-      // there, so the result shows a small copy that leads to it. Showing
-      // the same large plot twice doubles what the eye has to scan.
+      // On the stage a plot fills the space it has. Under a line of the
+      // script it is a small copy, so a tall picture never pushes the
+      // rest of the script out of view. Either opens full size.
+      if (large) return <PlotFigure index={item.plot} png={item.png} blockId={blockId} />;
       return (
-        <button
-          type="button"
-          className={`output-plot ${inspector ? "is-thumb" : ""}`}
-          onClick={() => showPlot(item.plot)}
-          aria-label={`Plot ${item.plot + 1}, show in the Plots pane`}
-        >
+        <button type="button" className="output-plot" onClick={() => viewPlot(item.plot)} aria-label={`Plot ${item.plot + 1}, view full size`}>
           <img src={`data:image/png;base64,${item.png}`} alt="" />
-          {inspector && <span className="output-plot-note">Plot {item.plot + 1}, shown in Plots</span>}
+          <span className="output-plot-note">
+            Plot {item.plot + 1} <ChartIcon size={12} /> View full size
+          </span>
         </button>
       );
     case "error":
       return <ErrorItem message={item.message} traceback={item.traceback} parsed={item.parsed ?? ""} blockId={blockId} />;
   }
+}
+
+/** A plot at the canvas's width, with the things done with a plot,
+ * looking closer, changing its labels, and exporting, on its own bar.
+ * Labels can be changed only for a plot from the script whose code this
+ * can read, since the change is made in that code. */
+export function PlotFigure({ index, png, blockId }: { index: number; png: string; blockId?: string }) {
+  const code = useStore((state) => (blockId ? (state.blocks[blockId]?.code ?? "") : ""));
+  const kind = code ? plotKind(code) : null;
+  const [editing, setEditing] = useState(false);
+  return (
+    <figure className="plot-figure">
+      <button type="button" className="plot-figure-image" onClick={() => viewPlot(index)} aria-label={`Plot ${index + 1}, view full size`}>
+        <img src={`data:image/png;base64,${png}`} alt="" />
+      </button>
+      <figcaption className="plot-figure-bar">
+        <span className="muted">Plot {index + 1}</span>
+        {kind && blockId && (
+          <button type="button" className="button small quiet push-end" aria-expanded={editing} onClick={() => setEditing(!editing)}>
+            <PencilIcon size={14} /> Edit labels
+          </button>
+        )}
+        <button type="button" className={`button small quiet ${kind && blockId ? "" : "push-end"}`} onClick={() => viewPlot(index)}>
+          <ExpandIcon size={14} /> Full size
+        </button>
+        <button type="button" className="button small quiet" onClick={() => (showPlot(index), openExportPlot())}>
+          <SaveIcon size={14} /> Export
+        </button>
+      </figcaption>
+      {editing && kind && blockId && <PlotLabelsForm blockId={blockId} code={code} kind={kind} onDone={() => setEditing(false)} />}
+    </figure>
+  );
+}
+
+/**
+ * The title, the axis labels, and for a base R plot the color, as fields
+ * filled in from the code. Apply changes the code and draws the plot
+ * again. An empty field goes back to the plot's own default.
+ */
+function PlotLabelsForm({ blockId, code, kind, onDone }: { blockId: string; code: string; kind: PlotKind; onDone: () => void }) {
+  const palette = useStore((state) => state.settings.palette);
+  const [labels, setLabels] = useState<PlotLabels>(() => readLabels(code));
+  const colors = plotColors(palette);
+  const set = (key: keyof PlotLabels) => (event: React.ChangeEvent<HTMLInputElement>) => setLabels({ ...labels, [key]: event.target.value });
+  return (
+    <form
+      className="plot-labels"
+      aria-label="Plot labels"
+      onSubmit={(event) => {
+        event.preventDefault();
+        editPlotCode(blockId, labels);
+        onDone();
+      }}
+    >
+      <label>
+        <span>Title</span>
+        <input value={labels.title} onChange={set("title")} autoFocus />
+      </label>
+      <label>
+        <span>Horizontal axis</span>
+        <input value={labels.x} onChange={set("x")} />
+      </label>
+      <label>
+        <span>Vertical axis</span>
+        <input value={labels.y} onChange={set("y")} />
+      </label>
+      {kind.kind === "base" && kind.colorEditable && (
+        <fieldset className="plot-colors">
+          <legend>Color</legend>
+          <label className="plot-color">
+            <input type="radio" name={`color-${blockId}`} checked={!labels.color} onChange={() => setLabels({ ...labels, color: "" })} />
+            <span>As it is now</span>
+          </label>
+          {colors.map((color, at) => (
+            <label key={color} className="plot-color">
+              <input type="radio" name={`color-${blockId}`} checked={labels.color.toLowerCase() === color.toLowerCase()} onChange={() => setLabels({ ...labels, color })} />
+              <span className="plot-swatch" style={{ background: color }} aria-hidden="true" />
+              <span className="visually-hidden">Color {at + 1} of the palette, {color}</span>
+            </label>
+          ))}
+        </fieldset>
+      )}
+      <p className="hint">{kind.kind === "ggplot" ? "This changes labs() in the code that drew the plot, then draws it again." : "This changes the code that drew the plot, then draws it again."}</p>
+      <div className="button-row">
+        <button type="submit" className="button primary">
+          Apply
+        </button>
+        <button type="button" className="button quiet" onClick={onDone}>
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
 }
 
 function ErrorItem({ message, traceback, parsed, blockId }: { message: string; traceback: string[]; parsed: string; blockId: string }) {
@@ -239,6 +384,9 @@ function ErrorItem({ message, traceback, parsed, blockId }: { message: string; t
             <SparkIcon size={14} /> Ask the assistant
           </button>
         )}
+        <button type="button" className="button quiet" onClick={() => openAskOnline(blockId)}>
+          Ask for help online
+        </button>
         <button type="button" className="button quiet" aria-expanded={showOriginal} onClick={() => setShowOriginal(!showOriginal)}>
           {showOriginal ? "Hide the R message" : "Show the R message"}
         </button>

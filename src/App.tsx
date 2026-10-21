@@ -1,19 +1,40 @@
 import { useEffect } from "react";
-import { getState, useStore } from "./lib/store";
+import { getState, setState, useStore } from "./lib/store";
 import { init, runCommand } from "./lib/app";
 import { backend } from "./lib/backend";
 import { COMMANDS, matchesCombo } from "./lib/commands";
 import { Dialogs } from "./components/Dialogs";
+import { HelpScreen } from "./components/HelpScreen";
 import { OpeningScreen } from "./components/OpeningScreen";
+import { Beacon, Tour } from "./components/Tour";
+import { setTour } from "./lib/app";
 import { Workspace } from "./components/Workspace";
+import { FirstProject } from "./components/FirstProject";
 
 let started = false;
+let tourOffered = false;
 
 export function App() {
   const loaded = useStore((state) => state.loaded);
   // The workspace appears with the first open file. With none, the
-  // opening screen offers new, open, and recent scripts.
+  // opening screen offers new, open, and recent scripts. Home, in the
+  // title bar, can also bring the opening screen forward over an open
+  // workspace without closing anything; opening or starting anything
+  // from it returns to the workspace exactly as it was.
   const hasFiles = useStore((state) => state.tabs.length > 0 || state.project !== null);
+  const showStart = useStore((state) => state.ui.showStart);
+  // Help shows over either screen the same way, closing nothing.
+  const showHelp = useStore((state) => state.ui.showHelp);
+  const tourSeen = useStore((state) => state.settings.tourSeen);
+  const dialog = useStore((state) => state.ui.dialog);
+
+  // The tour opens by itself once, on the first run, after any question
+  // the app asks first, such as which R to use.
+  useEffect(() => {
+    if (!loaded || tourSeen || dialog || tourOffered) return;
+    tourOffered = true;
+    setTour(0);
+  }, [loaded, tourSeen, dialog]);
 
   useEffect(() => {
     // React runs effects twice in development. Starting twice would open
@@ -67,7 +88,10 @@ export function App() {
   if (!loaded) return <div className="splash" aria-busy="true" />;
   return (
     <>
-      <div className="window">{hasFiles ? <Workspace /> : <OpeningScreen />}</div>
+      <div className="window">{showHelp ? <HelpScreen /> : hasFiles && !showStart ? <Workspace /> : <OpeningScreen />}</div>
+      {!showHelp && <Tour />}
+      {!showHelp && hasFiles && !showStart && <FirstProject />}
+      <Beacon />
       <DropOverlay />
       <Dialogs />
       <Notice />
@@ -82,6 +106,11 @@ function Notice() {
   return (
     <div className={`notice tone-${notice.tone}`} role={notice.tone === "error" ? "alert" : "status"}>
       {notice.text}
+      {notice.action && (
+        <button type="button" className="button small notice-action" onClick={() => (setState({ notice: null }), notice.action!.run())}>
+          {notice.action.label}
+        </button>
+      )}
     </div>
   );
 }

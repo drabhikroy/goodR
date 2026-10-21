@@ -14,7 +14,7 @@
 import type { Backend } from "./backend";
 import * as editor from "./editor";
 import { explainRender as explainWith, type RenderAction, type RenderExplained } from "./renderErrors";
-import { announce, baseName, installPackages, notify, openDialog, saveFile, showBottomPane, togglePane } from "./app";
+import { announce, baseName, installPackages, notify, openDialog, saveFile, showPanel, togglePane, updateSettings } from "./app";
 import { getState, setState, type ReportState } from "./store";
 import type { RenderEvent, RenderFailure, RenderTarget } from "./types";
 
@@ -34,9 +34,10 @@ export async function initReports(backend: Backend) {
   await api.onRender(onEvent);
 }
 
-/** Whether a file is a report the editor can render. */
+/** Whether a file is a report the editor can render. A new document that
+ * has not been saved yet counts, and is saved when it first renders. */
 export function isReport(path: string | null | undefined): boolean {
-  return Boolean(path && !path.startsWith("untitled:") && !path.startsWith("data:") && /\.(qmd|Rmd|rmd)$/.test(path));
+  return Boolean(path && !path.startsWith("data:") && /\.(qmd|Rmd|rmd)$/.test(path));
 }
 
 /** Changes the latest render's state, if it is still the one with `id`. */
@@ -60,7 +61,8 @@ const TARGET_WORDS: Record<RenderTarget, string> = { asWritten: "", html: " as H
  * Render button renders it as its header says. The Render menu can ask for
  * HTML, Word, or PDF instead.
  */
-export async function renderReport(target: RenderTarget = "asWritten", active: string | null = getState().active) {
+export async function renderReport(target: RenderTarget = "asWritten", file: string | null = getState().active, background = false) {
+  let active = file;
   const { report } = getState();
   if (!active || !isReport(active)) {
     notify("Rendering works on Quarto (.qmd) and R Markdown (.Rmd) files. Open one, then render it.");
@@ -70,17 +72,29 @@ export async function renderReport(target: RenderTarget = "asWritten", active: s
     notify("A report is already rendering. Stop it first, or wait for it to finish.");
     return;
   }
-  // The render reads the file from disk, so unsaved changes are saved.
-  if (editor.isDirty(active)) {
-    await saveFile(active);
+  // The render reads the file from disk, so unsaved changes are saved. A
+  // new document is saved for the first time, which asks for its name.
+  // These saves are part of rendering, so they do not count as a save that
+  // starts another render.
+  if (active.startsWith("untitled:")) {
+    const saved = await saveFile(active, false, true);
+    if (!saved || saved.startsWith("untitled:")) return;
+    active = saved;
+  } else if (editor.isDirty(active)) {
+    await saveFile(active, false, true);
     if (editor.isDirty(active)) return;
   }
   editor.clearProblems(active);
   const id = crypto.randomUUID();
   setState({ report: { id, file: active, target, status: "running", progress: null, log: [], outputs: [], failure: null, started: Date.now(), finished: 0 } });
-  if (!getState().ui.inspector) togglePane("inspector");
-  showBottomPane("report");
-  announce(`Rendering ${baseName(active)}${TARGET_WORDS[target]}.`);
+  // A render the user asked for brings the report forward. One that
+  // follows a save happens in the background, so whatever they are
+  // looking at stays in front, and the Report button shows it working.
+  if (!background) {
+    if (!getState().ui.inspector) togglePane("inspector");
+    showPanel("report");
+    announce(`Rendering ${baseName(active)}${TARGET_WORDS[target]}.`);
+  }
   try {
     const result = await api.renderStart(id, active, target);
     patch(id, () => ({ status: result.status, outputs: result.outputs, failure: result.failure, finished: Date.now() }));
@@ -126,7 +140,12 @@ export function runRenderAction(action: RenderAction) {
   if (action.kind === "install") installPackages([action.name]);
   else if (action.kind === "quarto") getQuarto();
   else if (action.kind === "chooseR") openDialog("chooseR");
-  else if (action.kind === "pdf") renderReport("pdf", getState().report?.file);
+  else if (action.kind === "pdf") {
+    // Typst this time and from now on, unless LaTeX is set up later: the
+    // automatic choice uses LaTeX only when there is one.
+    if (getState().settings.pdfEngine === "latex") updateSettings({ pdfEngine: "auto" });
+    renderReport("pdf", getState().report?.file);
+  }
   else renderReport(getState().report?.target ?? "asWritten", getState().report?.file);
 }
 

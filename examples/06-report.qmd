@@ -1,0 +1,90 @@
+---
+title: "A field guide to the night sky"
+format: html
+---
+
+## About this report
+
+This is a Quarto document. Its R code sits in chunks, the shaded blocks
+below. Run a chunk with the button on its header, or render the whole
+report with Render above the document. The finished report opens beside
+the code.
+
+On a clear night away from city lights, a few thousand stars are in
+view. From a town, it is closer to nine hundred. This report looks at
+those nine hundred: how far away they are, why they differ in color, and
+which of them are giants.
+
+## The stars you can see
+
+```{r}
+stars <- read.csv("data/bright_stars.csv")
+nrow(stars)
+summary(stars$distance_ly)
+```
+
+```{r}
+#| echo: false
+near <- sum(stars$distance_ly < 100)
+far <- sum(stars$distance_ly > 1000)
+```
+
+Only `r near` of them are within 100 light years. `r far` are more than
+1,000 light years away, so the light we see from them left before the
+first printed book.
+
+```{r}
+#| fig-cap: "The whole sky, flattened. Brighter stars are drawn larger, in their own colors."
+par(bg = "#0B1020", fg = "#8A93A8", col.axis = "#8A93A8", col.lab = "#C9D1E0", mar = c(4, 4, 1, 1))
+plot(dec_degrees ~ ra_hours, data = stars, pch = 16, col = stars$color,
+     cex = 0.25 + (4.6 - stars$magnitude) * 0.42, xlim = c(24, 0), ylim = c(-90, 90),
+     xaxs = "i", yaxs = "i", xlab = "Right ascension, hours", ylab = "Declination, degrees")
+brightest <- subset(stars, magnitude < 1)
+text(brightest$ra_hours, brightest$dec_degrees, brightest$name, pos = 3, cex = 0.6, col = "#C9D1E0")
+```
+
+## Why stars differ in color
+
+A star's color is its temperature. The hottest burn blue-white and the
+coolest glow orange.
+
+```{r}
+#| fig-cap: "How many bright stars there are at each temperature, each bar in the color of that temperature."
+bands <- cut(stars$temperature_k, breaks = seq(2000, 32000, by = 1000))
+counts <- table(bands)
+middle <- seq(2500, 31500, by = 1000)
+shade <- stars$color[sapply(middle, function(t) which.min(abs(stars$temperature_k - t)))]
+par(bg = "#0B1020", fg = "#8A93A8", col.axis = "#8A93A8", col.lab = "#C9D1E0", mar = c(4, 4, 1, 1))
+barplot(counts[counts > 0], col = shade[counts > 0], border = NA, las = 2,
+        names.arg = format(middle[counts > 0], big.mark = ","), ylab = "Stars", cex.names = 0.7)
+```
+
+## Giants and ordinary stars
+
+```{r}
+table(stars$kind)
+```
+
+```{r}
+#| echo: false
+giants <- subset(stars, kind %in% c("giant", "supergiant"))
+share <- round(100 * nrow(giants) / nrow(stars))
+```
+
+Most stars in the galaxy are small and dim, yet `r share` percent of the
+stars bright enough to see from a town are giants or supergiants. They
+shine so strongly that we see them from far away, while ordinary stars
+at the same distance are too faint for the eye.
+
+## The closest bright stars
+
+```{r}
+closest <- stars[order(stars$distance_ly), c("name", "constellation", "distance_ly", "kind")]
+head(closest, 8)
+```
+
+## Source
+
+The star data comes from the HYG Database, version 4.1, by David Nash,
+under the Creative Commons Attribution-ShareAlike 4.0 license. Temperature
+is worked out from each star's color index (Ballesteros 2012).

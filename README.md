@@ -6,172 +6,40 @@
 ![Intel](https://img.shields.io/badge/Intel-x86__64-black?logo=apple&logoColor=white)
 [![Release](https://img.shields.io/github/v/release/drabhikroy/goodR)](https://github.com/drabhikroy/goodR/releases)
 
-R: What Is It Good For? is a desktop workspace for R. It puts every result
-right beside the code that made it, explains errors in plain words and
-marks the exact spot that went wrong, and keeps the window quiet until you
-ask for more. It is
-written for people who are new to R as much as for people who use it every
-day, and it is built for the Mac first, with Windows and Linux to follow.
+R: What Is It Good For? is a desktop app for writing R. Your script is on
+the left; every plot, table, and printed result shows up on a canvas on the
+right, linked to the line that made it. It is meant for people new to R and
+for people who use it every day. Mac first; Windows and Linux later.
 
 Absolutely everything, as the opening screen says. Clean your data, run the
 analysis, write the report, and build the Shiny app in one place.
 
-![The opening screen in dark mode. The app icon, a white R and two orange
-dots on a dark blue tile, sits above the name and the tagline. Below are a
-large New project button, smaller buttons to open a project, start a
-script, or open one, and a line confirming that R is ready. On the right
-are recent projects and recent scripts grouped by
-day.](docs/images/opening-dark.png)
-
-Your code and data stay on your computer. The app has no accounts and no
-telemetry. It reaches the network only when R itself does, such as when
-you install a package from CRAN, and, if you set up the optional assistant,
-to download Ollama and the models you choose.
+![Opening screen in dark mode: new and open choices on the left, the examples, tour, and recent work on the right](docs/images/opening-dark.png)
 
 ## What it does
 
-- **Each result under its code.** Run a line, a selection, or a whole file.
-  A statement that prints something has its code lightly tinted and its
-  result in a well right below, joined by one rule down the left. Tables,
-  printed values, messages, and plots all land in place. Run Again, Copy,
-  and Hide appear when you point at a result or tab into it. Statements
-  that print nothing, such as an assignment, stay plain code with a small
-  check in the gutter. A line that adds to a plot, such as `abline()` or
-  `legend()`, redraws that plot in place
-- **Cards, or plain text.** The tinted code and result wells are the
-  default look. If you prefer a more traditional page, Plain text in
-  Settings prints each result straight under its code with nothing around
-  it, and In the console sends results to the console as R itself does
-- **Copy as much as you select.** Drag or press Select All across any
-  number of lines and results, and the copy holds the code and each result
-  in order, as it would read in a console. Settings can limit copies to the
-  code alone
-- **Four familiar areas, on a calm workbench.** The script sits above the
-  console, Environment and History are at the top right, and Plots, Help,
-  and Packages at the bottom right, each a rounded panel with room around
-  it and one toolbar across the top. Every edge can be dragged, and
-  RStudio's shortcuts work, from Control and a number to move between
-  panes to Shift Command M for a pipe
-- **Text you can read, set your way.** The interface text is larger by
-  default and scales from 90 to 150 percent. Code has its own settings:
-  six typefaces, each shown in a live sample, a size from 11 to 24 points,
-  three line spacings, and joined symbols for typefaces that have them.
-  Line numbers, the current line band, wrapping, closing brackets,
-  brackets colored by depth, and indent width are each one switch
-- **Completion and help from R.** Names, a function's arguments, and a data
-  frame's columns complete in the script and the console, from the engine
-  R ships for its own console. Typing ?mean, searching the Help pane, or
-  pressing F1 shows R's own help page, with links between pages
-- **Import data with the code in view.** Choose a CSV, Excel, SPSS, Stata,
-  SAS, R, Parquet, Feather, or JSON file, see its first rows as R reads
-  them, adjust how it is read, and see the exact code before it runs. The
-  separator and decimal mark of a text file are guessed for you, and the
-  code can go straight into your script
-- **Four places for results.** Under each line, beside the code in a
-  column of its own, below the code, or in the console. Choose from the
-  Results menu, the View menu, or Settings
-- **Reports rendered beside the code.** A Quarto (.qmd) or R Markdown
-  (.Rmd) file gets a Render button. The report renders in its own fresh R,
-  so it shows exactly what its code makes from a clean start, and the
-  console stays free. Progress shows chunk by chunk, and the finished HTML
-  or PDF appears in the Report pane beside the code, ready to read while
-  you edit. Render as HTML, Word, or PDF from the arrow beside the button.
-  PDF is made with Typst, which comes with Quarto, so no LaTeX install is
-  needed. When a chunk fails, the report says why in the same plain words
-  as the console and underlines the failing line in your script
-- **Results as you type.** An optional mode that reruns the statement you
-  are editing after a short pause. Anything that writes files, installs
-  packages, or changes the session is left alone until you run it yourself
-- **Plain language errors, at the exact spot.** When a statement fails, the
-  result says what happened in a headline, explains why in everyday words,
-  and gives one thing to try. It shows the failing line with the part that
-  went wrong marked by carets, underlines the same part in your script, and
-  Go to the Spot selects it. A misspelled name gets a one click fix with the
-  name you probably meant. Console errors get the same treatment. R's own
-  message is one click away
-- **An optional assistant on your own computer.** Set it up in three
-  steps: use the Ollama already on your Mac or a private copy kept inside
-  the app, let the app check your Mac's memory and disk if you wish, and
-  choose a model from a short list that says what each is good and weaker
-  at. It explains errors and code in plain words, adds comments, suggests a
-  clearer version, and writes R from a description. Its code goes into your
-  script only when you press Insert or Replace, after R's parser has
-  checked that it can read it. Nothing leaves your computer
-- **Projects.** Start a project from a template, an analysis, a Quarto
-  report, or a Shiny app, or turn a folder you already have into one. Git
-  history and renv package records are a checkbox each. Projects use the
-  standard `.Rproj` file, so they also open in RStudio. A sidebar lists the
-  project's scripts and its data files
-- **Scripts on their own.** Outside a project, open R scripts, R Markdown,
-  and Quarto files one at a time from the Open dialog, from Finder, by
-  dropping them on the window, or from the recent list. R follows the
-  script into its folder, so `"data.csv"` means the file beside it, and the
-  console says each time R moves
-- **Data you can see.** Choose a data frame in the Environment pane and it opens
-  in a tab. Every column header shows its type, a small chart of its
-  values, its range or most common value, and how many values are missing.
-  Choose a column for its details, sort by it, or plot it in one click.
-  Rows load a hundred at a time, so large data stays quick
-- **Packages and history.** The Packages pane lists what is installed and
-  attaches a package with a checkbox. The History pane lists what was typed
-  in the console and sends any of it back to the console or into the script
-- **Plots exported properly.** Export a plot for a slide, a document, or a
-  journal's one or two column width, as PNG, PDF, or SVG. R draws the plot
-  again at that size, so text stays in proportion and a PDF stays sharp at
-  any zoom
-- **R ready when you are.** R starts with the app, before anything is
-  opened, and if the window reloads, the app reconnects to the R already
-  running, so your objects and unsaved edits are kept. The console is a
-  drawer you can drag taller or shorter, and its typing box has its own
-  edge to make it as tall as you need. It keeps history, continues
-  incomplete statements, and answers `readline()` prompts
-- **Plots and objects at a glance.** The Plots pane shows the latest plot,
-  rendered at the size of the pane, with earlier plots a click away. The
-  Environment pane describes objects in words, such as "data frame, 344
-  rows, 8 columns" or "linear model, R squared 0.76"
-- **Packages found as you type.** The app reads `library()`, `require()`,
-  and `pkg::` calls, checks which packages are missing, and offers to
-  install them. You can have it ask every time or install automatically
-- **Menus that grow with you.** Essentials shows what a new R user needs.
-  Everything adds advanced tools such as Run to Here and Restart and Run
-  All. A command palette finds any command by name
-- **Every R on the machine.** The app looks in the standard install folders
-  for every R version, lists the newest first, and lets you switch
+- **Script on the left, results on the right.** Each plot, table, or printed
+  result lands on a canvas beside the script and links back to its line.
+- **Earlier results** sit in a strip under the canvas. Click one to jump to
+  the line that made it, or pin one to compare.
+- **Errors in plain English**, with the failing spot marked and a one-click
+  fix when the fix is obvious. Fix problems updates retired package code.
+- **Ask for help online** writes a forum-ready question: the lines that led
+  to the error, a small data sample, and your versions.
+- **R Markdown, Quarto, and Shiny** run and render beside the code.
+- **An R for each project**, so work in one never leaks into another.
+- **Undo the last run**, unsaved work that survives a crash, and earlier
+  versions of every script with what changed since.
+- **Statistics written up** in APA style, with the assumptions checked.
+- **Where did this come from?** traces an object back through the script.
+- **Teaching tools**: turn a script into exercises that check themselves.
+- **An optional assistant** that runs on your own Mac through Ollama.
+- **Layout and look**: hide any part of the window, sixteen code fonts,
+  light, dark, and paper themes, and color vision palettes.
+- **Updates in one place** for the app, R, packages, Ollama, and models.
 
-![The workspace in dark mode with a project open. The script, the console,
-and the two right hand areas are rounded panels on a darker backdrop, with
-one toolbar across the top. The sidebar on the left lists the project's
-scripts and data. In the editor, lines that printed
-something are lightly tinted, with the result in a well below them: a
-table, then a bar chart shown small with a link to the Plots pane. The last
-line failed, and its result says in a headline that the package gt is not
-installed yet, explains what a package is, and offers Install gt. On the
-right, Environment lists three objects as plain rows, and the Plots pane
-below shows the bar chart.](docs/images/workspace-dark.png)
-
-![The Code text section of Settings. A sample of R at the top shows the
-chosen typeface, JetBrains Mono, at 17 points. Below are six typefaces,
-each named in its own letters, a size slider, three line spacings, and an
-option to join symbols such as the assignment arrow into single
-shapes.](docs/images/settings-code.png)
-
-![A Quarto report in dark mode. The script, report.qmd, is in the editor,
-and the Report pane at the bottom right shows the rendered page beside it:
-the title, a heading, and the chunk's code with its output. Above the
-preview are the file name, the time the render took, Open in browser, and a
-button to show the file in Finder. Render and the arrow for other formats
-sit in the toolbar beside Run line.](docs/images/report-dark.png)
-
-![The Import Data dialog. A semicolon separated survey file is chosen. The
-options on the left show the guessed separator, semicolon, and decimal
-mark, comma. The preview on the right shows three typed columns, and below
-it is the line of R that will run.](docs/images/import-data.png)
-
-![The data viewer. Each column header shows a type badge, a small bar
-chart of the column's values, its range, and its missing count. The
-selected column, species, has its details beside the table: its most
-common values as bars, its missing count, a Plot this column button, and
-sort buttons.](docs/images/data-viewer.png)
+The full list, with how each part behaves, is in
+[docs/FEATURES.md](docs/FEATURES.md).
 
 ## What it does not do
 
@@ -180,23 +48,23 @@ sort buttons.](docs/images/data-viewer.png)
 - It does not read data files itself. It lists them by name, and R reads
   them when you run the code that loads them
 - It does not open files outside the scripts you choose and the scripts in
-  a project you open
+  the projects those scripts belong to
 - It does not collect usage data, crash reports, or anything else
 - It does not install R. It finds the R you have and points you to CRAN when
   there is none
 - It does not change your files on its own. Saving, installing, and
-  running are always your choice
+  running are always your choice, unless you turn on Save files
+  automatically
 
 ## Planned
 
 These are designed and will arrive in later releases, in roughly this order.
 
-- Running Shiny apps in the workspace, and packaging a Shiny app so it can
-  be shared and run on another computer without setup
+- Publishing a shared app's web page in one step, to a host you
+  choose
 - A Git panel for history, committing, and pushing
 - Background jobs, with progress, for long scripts
 - Results in a separate window, for a second display
-- A first run walkthrough
 - Windows and Linux releases. The code already builds and runs on Linux,
   where the tests below run on every change
 
@@ -218,6 +86,17 @@ when you first render:
 - [Quarto](https://quarto.org/docs/get-started/), for Quarto documents and
   for PDFs. R Markdown documents render to HTML and Word without it, as
   long as Pandoc is installed, and Quarto brings its own Pandoc
+
+For PDFs, any one of these is enough: the LaTeX already on your computer,
+such as MacTeX, TeX Live, MiKTeX, or TinyTeX; the app's own TinyTeX,
+installed with one press from Settings, under Reports, or from a PDF that
+needed it; or Quarto alone, whose Typst makes PDFs without LaTeX.
+
+Running Shiny apps needs the shiny package in your R. The App sheet offers
+to install it the first time an app runs without it. Sharing an app as a
+web page needs the shinylive package, which the Share dialog offers to
+install, and the internet the first time, when shinylive downloads its own
+web files.
 
 ## Install
 
@@ -255,8 +134,12 @@ for R, R Markdown, and Quarto files without taking over as their default.
 | Start a new script | ⌘N |
 | Save, or Save As | ⌘S, ⇧⌘S |
 | Run the line or selection | ⌘↩ |
+| Run the chunk, or a script's section | ⌥⌘C |
 | Run the whole file | ⇧⌘↩ |
+| Start a new Quarto or R Markdown document | ⌥⌘N |
+| Insert a chunk | ⌥⌘I |
 | Render the report | ⇧⌘K |
+| Run a Shiny app | Run app in the title bar, or Run, Run Shiny App |
 | Stop | ⌘. |
 | Restart R | ⇧⌘0 |
 | Export the plot on show | ⇧⌘E |
@@ -264,25 +147,34 @@ for R, R Markdown, and Quarto files without taking over as their default.
 | Show the assistant | ⌃9 |
 | Insert a pipe, an assignment, or a section | ⇧⌘M, ⌥−, ⇧⌘R |
 | R help for the name at the cursor | F1 |
-| Show help, history, plots, packages, or the environment | ⌃3, ⌃4, ⌃6, ⌃7, ⌃8 |
-| Search for any command | ⌘K |
-| Show results under each line, beside, below, or in the console | ⌥⌘1, ⌥⌘2, ⌥⌘3, ⌥⌘4 |
+| Show R help, history, or packages over the canvas | ⌃3, ⌃4, ⌃7 |
+| Move to the canvas, or to the objects in R | ⌃6, ⌃8 |
+| Search for any command, or look a function up in R help | ⌘K |
+| Help for this app | ⇧⌘/ |
+| Show results in the canvas, or under each line | ⌥⌘1, ⌥⌘2 |
 | Update results as you type, on or off | ⌥⌘L |
 | Show or hide the project sidebar | ⌃⌘S |
-| Show or hide the console history | ⇧⌘Y |
-| Move to the editor or console | ⌃1, ⌃2 |
+| Show or hide the canvas | ⌥⌘0 |
+| Show past commands | ⇧⌘Y |
+| Show the start screen, without closing anything | ⇧⌘H |
+| Move to the editor or the R prompt | ⌃1, ⌃2 |
 
 On Windows and Linux, Ctrl takes the place of ⌘ and Alt the place of ⌥, and
 the app shows them that way. The sidebar shortcut there is Ctrl B.
 
-With a project open, R works in the project folder. Opening a project
-closes the scripts from other work that have no unsaved changes, and keeps
-any that do. Drag the top edge of the console, or focus it and press the
-up and down arrow keys, to change its height.
+A project's R works in the project folder. Opening a project leaves your
+other work open in its own sessions. Closing a project ends its R, and
+closing a script that is on its own ends that script's R. A new untitled
+script runs in the session of the tab in front, or, with nothing open, in
+an R kept for untitled work. Drag the left edge of the canvas, or focus it
+and press the left and right arrow keys, to change its width.
 
-The R button in the title bar shows the working folder and holds Restart R
-and Choose R Version. Settings is grouped into Appearance, Code text,
-Editor, Results, Accessibility, R and packages, and Menus. Every change
+Restart R, in the Run menu, restarts the R of the script in front only.
+The menu at the top left switches between open projects and scripts.
+Choose R Version, in Settings under R and packages or the Run menu,
+restarts every session with the new R. Settings is grouped into
+Appearance, Layout, Code text, Editor, Results, Reports, Accessibility,
+R and packages, Updates, and Menus. Every change
 applies at once, so there is nothing to save. Typing three characters of a name, or pressing
 Tab, shows completions from R; Tab or Return takes the highlighted one.
 
@@ -291,8 +183,11 @@ Tab, shows completions from R; Tab or Return takes the highlighted one.
 The app reads and writes only scripts: R, R Markdown, and Quarto files. A
 script becomes available to it when you choose it in the Open or Save
 dialog, drop it on the window, open it from Finder, or reopen it from the
-recent list. Opening a project adds the scripts inside that project's
-folder, and nothing else. Data files, whether listed in a project or
+recent list. Opening a project, or a script inside one, adds the scripts
+inside that project's folder, and nothing else. To find a script's
+project, the app lists the folders above the script, up to but not
+including your home folder, looking only at file names for a `.Rproj`
+file. It reads no file contents on the way. Data files, whether listed in a project or
 chosen in Import Data, are never opened by the app. R reads them: for the
 preview, and when the import code runs. Help pages are R's own, rebuilt
 from an allowlist of plain tags so they cannot run code or reach the
@@ -308,6 +203,12 @@ kept in one file,
 `~/Library/Application Support/app.goodfor.ide/settings.json` on the Mac. A
 damaged settings file is set aside under a new name rather than deleted.
 
+Unsaved changes are copied to the app's own storage on this computer as you
+type, so a crash never loses them, and each copy is removed once its file
+is saved or closed. For Undo, R keeps references to your objects as they
+were before the last run, in memory only, until the next run. Timing a
+run writes R's samples to a temporary file that R removes when it quits.
+
 The data viewer asks R for one page of rows at a time and keeps nothing
 after the tab closes. Exporting a plot runs the code that drew it in a
 scratch environment, so nothing it assigns reaches your workspace, and puts
@@ -319,8 +220,8 @@ what your code does.
 
 ## The assistant
 
-The assistant is optional and stays off until you set it up from its tab
-beside Environment and History. It runs through
+The assistant is optional and stays off until you set it up from its
+button on the canvas, beside R help, Packages, and History. It runs through
 [Ollama](https://ollama.com), a free program that runs language models on
 your computer.
 
@@ -334,23 +235,24 @@ your computer.
 2. **This Mac.** If you agree, the app reads your Mac's memory, free disk
    space, and chip, to mark which models fit. You can skip this step.
    Nothing is saved or sent.
-3. **Models.** A short list of free models, each with what it is good and
-   weaker at for help with R, how much it downloads, and whether it fits
-   your Mac. The suggestion is the largest code model that fits well.
+3. **Models.** A short list of free code models, Qwen2.5 Coder in three
+   sizes and Qwen3 Coder, each with what it is good and weaker at for help
+   with R, how much it downloads, and whether it fits your Mac. The
+   suggestion is the largest that fits well.
    Models you already downloaded with Ollama are found and can be used.
    Add, remove, and switch models at any time.
 
-![The assistant's third setup step, Models. Six model cards are listed,
+![The assistant's third setup step, Models. Four model cards are listed,
 each with its size, a note on how well it fits this Mac, and what it is
 good and weaker at. One is marked Suggested for this Mac, and the largest
 is marked too large for this Mac's memory.](docs/images/assistant-setup.png)
 
-![The workspace with the Assistant tab open. Under a line that failed
-because the package gt is not installed, the result offers Ask the
-assistant. The assistant's answer, on the right, explains the problem in
-two sentences and suggests install.packages("gt"), with a note that R can
-read the code and a button to put it in the
-console.](docs/images/assistant-dark.png)
+![The workspace with the Assistant sheet open over the canvas, after Ask
+the assistant on a line that failed because the package gt is not
+installed. The assistant's answer explains the problem in two sentences
+and suggests install.packages("gt"), with a note that R can read the code,
+and buttons to put it at the R prompt, insert it at the cursor, or copy
+it](docs/images/assistant-dark.png)
 
 What the assistant sees: the code you ask about, R's error message, the R
 version, and the names of the objects in your session, with column names
@@ -360,15 +262,17 @@ Replace, R's parser checks it first without running it, and Undo takes it
 back out. Replace appears only when the suggestion is a reworked version of
 the code you asked about, never for a different step that would wipe it
 out. A suggestion that only installs packages offers Put in the Console
-instead, since an install is done once and does not belong in the script.
+instead, which places it at the R prompt, since an install is done once
+and does not belong in the script.
 
 ## Accessibility
 
 - Five color vision palettes, standard, deuteranopia, protanopia,
-  tritanopia, and monochrome, each in light and dark. An automated audit
-  runs 670 checks of WCAG 2.2 AA contrast, and confirms that
+  tritanopia, and monochrome, each in Light, Dark, and Paper. An automated
+  audit runs over 2,000 checks of WCAG 2.2 AA contrast, and confirms that
   states such as warning and error stay distinguishable under simulated
-  color vision deficiency. Plots follow the chosen palette
+  color vision deficiency. A palette recolors the whole window, buttons,
+  links, focus rings, and selection, along with status, code, and plots
 - Meaning never depends on color alone. Each state also carries its own
   icon shape and words, such as a triangle and "did not run"
 - Appearance follows the system or can be set to light or dark
@@ -389,7 +293,7 @@ instead, since an install is done once and does not belong in the script.
   streaming assistant answer is announced once, when it is finished, rather
   than word by word. Controls carry names and roles for screen readers,
   and every screen passes automated WCAG 2.2 A and AA checks with axe in
-  both appearances
+  every appearance
 
 Automated checks catch a great deal but not everything. Reports from people
 using VoiceOver or other assistive technology are especially welcome.
@@ -418,10 +322,10 @@ a script does.
 
 A few helper functions written in base R are attached to the session as
 `tools:goodfor`, the way RStudio attaches `tools:rstudio`. They describe
-objects, size plots to the pane, set the plot palette, check for missing
+objects, size plots to the canvas, set the plot palette, check for missing
 packages, page through data frames for the viewer, and export plots. They never appear among your objects or mask a name you define.
 
-Plots are rendered by R at the exact pixel size of the pane they appear in,
+Plots are rendered by R at the width of the canvas they appear in,
 at the display's pixel density, so they arrive sharp instead of being
 scaled. ark sends a line that adds to a plot, such as `abline()`, as an
 update to the plot already on screen, and the app redraws that plot in
@@ -440,6 +344,25 @@ fails, knitr's "Quitting from lines" note names the chunk, so the
 interface can find the exact line within it. The preview loads the report
 through Tauri's asset protocol, which is opened only for the folder of a
 report the app has just rendered, inside a sandboxed frame.
+
+Sharing an app runs `shinylive::export()` in a new Rscript, into a new
+folder named after the app inside the folder chosen in the system dialog,
+so it never writes into a folder that already holds something. A single
+file app is copied alone into a folder of its own first, so nothing beside
+it is bundled. The preview serves that folder from the Rust core on a
+loopback port, with `.wasm` files served as WebAssembly, since browsers run
+the page only from a web address. Only folders an export made in this
+session can be served or shown in Finder.
+
+Shiny apps run in the same crate, from its `shiny` module, which follows
+the app's R the way a render is followed and stops it the same way. The
+app runs `shiny::runApp()` in a new Rscript in the app's own folder, on a
+loopback port the system picks as free, with Shiny's own reloading turned
+on, so saving a file of the app reloads it. Shiny names its address a
+moment before it answers there, so the pane waits until the port accepts
+a connection before showing the app. Errors inside the running app reach
+the pane as Shiny prints them, as warnings that leave the app running,
+and a syntax error that stops it names the file, line, and column.
 
 The assistant lives in its own crate, `crates/assistant`. It finds Ollama,
 downloads and checks the private copy with the macOS tools `curl` and
@@ -461,8 +384,10 @@ crates/assistant/    The optional assistant: finding or installing
                      Mac's specs, and the prompts for each kind of help.
 crates/render/       Rendering reports: finding Quarto, choosing the
                      program for each format, following its progress,
-                     stopping it, and reading why it failed.
-  tests/             Renders real reports with Quarto and R.
+                     stopping it, and reading why it failed. Running
+                     Shiny apps the same way.
+  tests/             Renders real reports with Quarto and R, and runs
+                     real Shiny apps.
 src-tauri/           The desktop app. Commands, menus, settings, project
                      templates, and file access limited to the scripts
                      you open.
@@ -535,24 +460,31 @@ assistant's tests check the fit rules, the prompts, reading streamed
 answers and download progress from a stand-in server, and installing the
 private copy from a checked archive, including refusing one whose checksum
 differs. They fail rather than skip when R or ark is
-missing. The render tests render real Quarto and R Markdown documents to
+missing. The Shiny tests run real apps, from an app.R folder and from a
+single script, check that saving reloads the app and that Stop frees its
+port, and check that a syntax error is named with its file and line. A
+further test exports a real app with shinylive and serves the page; it
+needs the shinylive package and the internet. The tests need the packages
+they use, and say so and pass without running when one is missing. The
+preview server's own tests check content types and that requests cannot
+reach outside the exported folder. The render tests render real Quarto and R Markdown documents to
 HTML, Word, and PDF, check that a failing chunk is named with its lines,
 and stop a long render and confirm its R is gone. They need Quarto and the
 rmarkdown and knitr packages, and say so and pass without rendering on a
-machine that lacks them. The continuous integration machines have all
-three.
+machine that lacks them. The continuous integration machines have all of
+them, and shiny too.
 
 `npm run test:ui` runs the interface tests in Chromium, including axe
-accessibility checks in both appearances and the 44 pixel target check on
+accessibility checks in every appearance and the 44 pixel target check on
 every screen, every Settings section, and every state of the Report
 pane. The preference tests check that
 the code typeface, size, and spacing reach the editor, that editor
-switches take effect, that plain and console results work, and that a
-copy across several results holds them all.
+switches take effect, that plain results and results in the canvas work,
+and that a copy across several results under each line holds them all.
 
 The standards gate rejects em and en dashes, contractions, a banned list of
 words, and British spellings in every source and document file, and holds
-logic files to a 15 percent comment floor. A line can opt out by carrying a
+logic files to a 10 percent comment floor. A line can opt out by carrying a
 comment that begins `standards:` and says why.
 
 ### Building distributable packages
@@ -588,8 +520,42 @@ pushed or by hand with `gh workflow run release-macos.yml`. It signs and
 notarizes the app, confirms ark carries its entitlement, runs the R
 integration tests against the signed ark, notarizes and staples the disk
 image, and attaches it to a draft release. The certificate and Apple
-credentials are repository secrets: `CSC_LINK`, `CSC_KEY_PASSWORD`,
-`APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`.
+credentials are repository secrets: `CSC_LINK` and `CSC_KEY_PASSWORD` for
+the certificate, and `APPLE_API_KEY_P8`, `APPLE_API_KEY_ID`, and
+`APPLE_API_ISSUER` for the App Store Connect API key that notarizes it. The
+key is the `.p8` file made under Users and Access, then Integrations, in App
+Store Connect. The certificate signs; the key only notarizes, so both are
+needed.
+
+To make the same signed disk image on a Mac instead, with the certificate in
+the login keychain:
+
+```bash
+export APPLE_API_KEY_PATH=~/keys/AuthKey_ABCDE12345.p8
+export APPLE_API_KEY=ABCDE12345
+export APPLE_API_ISSUER=00000000-0000-0000-0000-000000000000
+scripts/release-mac.sh
+```
+
+It runs the checks, builds, signs, and notarizes the app, notarizes and
+staples `Good-For.dmg`, and writes `Good-For.dmg.sha256` beside it.
+
+Installed copies update themselves through Tauri's updater, which checks
+each download against a public key built into the app. To turn this on,
+make a key pair once and keep the private half safe:
+
+```bash
+npx tauri signer generate -w ~/.tauri/goodr.key
+```
+
+Add the private key, and its password if it has one, as the repository
+secrets `TAURI_SIGNING_PRIVATE_KEY` and
+`TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, and the public key, the text in
+`~/.tauri/goodr.key.pub`, as the repository variable
+`GOODR_UPDATER_PUBKEY`. A release built with them carries
+`Good-For.app.tar.gz` and `latest.json`, which installed copies read once
+the release is published. A build without them still works, and its
+Updates page links to the release page instead.
 
 To confirm an installed copy is signed and notarized:
 

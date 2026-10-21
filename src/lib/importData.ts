@@ -79,10 +79,12 @@ export function objectName(path: string) {
 
 /** True when a name can be assigned to without backticks. */
 export function isValidName(name: string) {
-  return /^([A-Za-z]|\.[A-Za-z._])[A-Za-z0-9._]*$|^\.$/.test(name) && !RESERVED.has(name);
+  // ..1, ..2, and so on name the arguments passed through ..., so they
+  // cannot be assigned to either.
+  return /^([A-Za-z]|\.[A-Za-z._])[A-Za-z0-9._]*$|^\.$/.test(name) && !RESERVED.has(name) && !/^\.\.\d+$/.test(name);
 }
 
-const RESERVED = new Set(["if", "else", "repeat", "while", "function", "for", "next", "break", "TRUE", "FALSE", "NULL", "Inf", "NaN", "NA", "in"]);
+const RESERVED = new Set(["if", "else", "repeat", "while", "function", "for", "next", "break", "TRUE", "FALSE", "NULL", "Inf", "NaN", "NA", "NA_integer_", "NA_real_", "NA_complex_", "NA_character_", "in", "..."]);
 
 /** Names a file in R code: relative to the working folder when inside it,
  * with forward slashes, which R accepts on every system. */
@@ -90,6 +92,12 @@ export function pathForCode(path: string, workingDir: string) {
   const forward = path.replace(/\\/g, "/");
   const base = workingDir.replace(/\\/g, "/").replace(/\/$/, "");
   return base && forward.startsWith(`${base}/`) ? forward.slice(base.length + 1) : forward;
+}
+
+/** A name as the left side of an assignment: as it is when R accepts it
+ * plainly, otherwise in backticks, so no name can break the code. */
+function assignable(name: string) {
+  return isValidName(name) ? name : `\`${name.replace(/\\/g, "\\\\").replace(/`/g, "\\`")}\``;
 }
 
 /** Quotes text as an R string. */
@@ -151,7 +159,7 @@ function readCall(options: ImportOptions, limit?: number): string {
 export function importCode(options: ImportOptions) {
   // A saved workspace brings back its own objects under their own names.
   if (options.format === "rdata") return readCall(options);
-  return `${options.name} <- ${readCall(options)}`;
+  return `${assignable(options.name)} <- ${readCall(options)}`;
 }
 
 /** The code that reads the first rows for the preview. Nothing it makes is

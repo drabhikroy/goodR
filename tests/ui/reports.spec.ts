@@ -21,10 +21,10 @@ test("Render shows only for reports, and a finished report is previewed beside t
   await expect(page.getByRole("button", { name: "Render", exact: true })).toHaveCount(0);
   await page.goto("/");
   await openReport(page);
-  // The Report tab appears with the first render, not before.
-  await expect(page.getByRole("tab", { name: "Report", exact: true })).toHaveCount(0);
+  // The Report sheet appears with the first render, not before.
+  await expect(page.getByRole("button", { name: "Report", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Render", exact: true }).click();
-  await expect(page.getByRole("tab", { name: "Report", exact: true })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("button", { name: "Report", exact: true })).toHaveAttribute("aria-pressed", "true");
   const preview = page.frameLocator('iframe[title="Preview of report.html"]');
   await expect(preview.getByRole("heading", { name: "Penguin measurements" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Report" })).toContainText("report.html, rendered in");
@@ -86,4 +86,61 @@ test("a long render can be stopped, and says so", async ({ page }) => {
   await page.getByRole("button", { name: "Stop rendering" }).click();
   await expect(pane).toContainText("Rendering stopped");
   await expect(page.getByRole("button", { name: "Render", exact: true })).toBeVisible();
+});
+
+test("a rendered report renders again after each save, opening at the section being edited", async ({ page }) => {
+  await openReport(page);
+  await page.getByRole("button", { name: "Render", exact: true }).click();
+  const pane = page.getByRole("region", { name: "Report" });
+  await expect(pane).toContainText("report.html, rendered in");
+  await expect(pane.getByRole("checkbox", { name: "Render again each time the file is saved" })).toBeChecked();
+  const first = await page.evaluate(() => (window as unknown as { goodfor: { getState: () => { report: { finished: number } } } }).goodfor.getState().report.finished);
+  // Back on the canvas, the next render happens without taking it over.
+  await page.getByRole("navigation", { name: "Canvas views" }).getByRole("button", { name: "Canvas", exact: true }).click();
+  await page.locator(".editor-host .cm-content").click();
+  await page.keyboard.press("Control+End");
+  await page.keyboard.insertText("\nMore words.\n");
+  await page.keyboard.press("Control+s");
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { goodfor: { getState: () => { report: { finished: number; status: string } } } }).goodfor.getState().report.finished))
+    .toBeGreaterThan(first);
+  await expect(page.getByRole("button", { name: "Report", exact: true })).toHaveAttribute("aria-pressed", "false");
+  // The cursor is in the section "Body mass by species", so the preview
+  // opens there.
+  await page.getByRole("button", { name: "Report", exact: true }).click();
+  await expect(page.locator('iframe[title="Preview of report.html"]')).toHaveAttribute("src", /#body-mass-by-species$/);
+});
+
+test("a PDF that needs LaTeX offers to install TinyTeX, then renders by itself", async ({ page }) => {
+  page.on("dialog", (dialog) => dialog.accept());
+  await openReport(page);
+  // A document whose header asks for a LaTeX PDF.
+  await page.locator(".editor-host .cm-content").click();
+  await page.keyboard.press("Control+a");
+  await page.keyboard.insertText('---\ntitle: "Notes"\noutput: pdf_document\n---\n\n## Mass\n\n```{r}\n1 + 1\n```\n');
+  await page.getByRole("button", { name: "Render", exact: true }).click();
+  const pane = page.getByRole("region", { name: "Report" });
+  await expect(pane).toContainText("This PDF needs LaTeX, which is not on this computer yet");
+  await pane.getByRole("button", { name: "Install TinyTeX, about 120 MB" }).click();
+  await expect(pane.getByRole("progressbar", { name: "Installing TinyTeX" })).toBeVisible();
+  // Once installed, the report renders again without another press.
+  await expect(pane).toContainText(/report\.pdf, rendered in/, { timeout: 8000 });
+});
+
+test("Settings lists the LaTeX already on this computer, and Render as PDF says it uses it", async ({ page }) => {
+  await page.addInitScript(() => ((window as unknown as { goodforLatex: string }).goodforLatex = "system"));
+  await page.goto("/");
+  await page.getByRole("button", { name: "Use this R" }).click();
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Reports", exact: true }).click();
+  const choices = page.getByRole("radiogroup", { name: "Which LaTeX to use" });
+  await expect(choices).toContainText("TeX Live 2025");
+  await choices.getByRole("radio", { name: /^TeX Live 2025/ }).check();
+  await expect(page.getByRole("button", { name: "Install TinyTeX, about 120 MB" })).toBeVisible();
+  await page.getByRole("radio", { name: /^LaTeX/ }).check();
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: /^penguins/ }).first().click();
+  await page.getByRole("navigation", { name: "Project" }).getByRole("button", { name: /report\.qmd/ }).click();
+  await page.getByRole("button", { name: "Render in another format" }).click();
+  await expect(page.getByRole("menuitem", { name: /Render as PDF/ })).toContainText("Made with LaTeX");
 });

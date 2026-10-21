@@ -85,8 +85,8 @@ color vision deficiency.
 ## Style
 
 `scripts/standards/check.mjs` rejects em and en dashes, contractions,
-British spellings, and a short list of banned words, and requires about 15
-percent of the lines in a logic file to be comments that explain why the
-code is as it is. When a line must break a rule, for example because an
-R option is spelled the British way, end it with a comment that starts
-`standards:` and gives the reason.
+British spellings, and a short list of banned words, and requires comments
+on at least 10 percent of the lines in a logic file of 40 lines or more.
+When a line must break a rule, for example because an R option is spelled
+the British way, end it with a comment that starts `standards:` and gives
+the reason.

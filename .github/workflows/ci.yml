@@ -13,23 +13,30 @@ jobs:
   linux:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: '22'
           cache: npm
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
 
       - name: Install R and the libraries Tauri needs
         run: |
           sudo apt-get update
-          sudo apt-get install -y r-base r-cran-rmarkdown r-cran-knitr libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install -y r-base r-cran-rmarkdown r-cran-knitr r-cran-shiny libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+
+      # shinylive is not packaged by Ubuntu, so it comes from CRAN. The
+      # export test uses it to make a real web page from an app.
+      - name: Install shinylive
+        run: sudo Rscript -e 'install.packages("shinylive", repos = "https://cloud.r-project.org")'
 
       # The render tests use a real Quarto, so reports are checked end to
       # end rather than against a stand-in.
-      - uses: quarto-dev/quarto-actions/setup@v2
+      - uses: quarto-dev/quarto-actions/setup@8a96df13519ee81fd526f2dfca5962811136661b # v2
         with:
           version: 1.6.42
 
@@ -62,24 +69,26 @@ jobs:
   mac:
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: '22'
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
 
-      - uses: r-lib/actions/setup-r@v2
+      - uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
         with:
           r-version: release
 
-      - uses: quarto-dev/quarto-actions/setup@v2
+      - uses: quarto-dev/quarto-actions/setup@8a96df13519ee81fd526f2dfca5962811136661b # v2
         with:
           version: 1.6.42
 
-      - name: Install the packages reports render with
-        run: Rscript -e 'install.packages(c("rmarkdown", "knitr"), repos = "https://cloud.r-project.org")'
+      - name: Install the packages reports render with, and shiny and shinylive for apps
+        run: Rscript -e 'install.packages(c("rmarkdown", "knitr", "shiny", "shinylive"), repos = "https://cloud.r-project.org")'
 
       - name: Download ark
         run: node scripts/fetch-ark.mjs

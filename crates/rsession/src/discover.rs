@@ -1,9 +1,8 @@
 //! Finding R installations.
 //!
-//! People often have more than one R: the CRAN installer, Homebrew, rig, and
-//! system packages all put R in different places. We look in each standard
-//! place, read the version of what we find, and let the person choose rather
-//! than silently picking one (error prevention, Nielsen 1994).
+//! The CRAN installer, Homebrew, rig, and system packages all put R in
+//! different places. We look in each, read the version, and let the user
+//! pick when there is more than one.
 
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -16,7 +15,7 @@ pub struct RInstall {
     pub version: String,
     /// The R_HOME directory ark needs.
     pub home: PathBuf,
-    /// Where the person would recognize it from, shown under the version.
+    /// Where the user would recognize it from, shown under the version.
     pub source: String,
 }
 
@@ -38,7 +37,7 @@ pub fn find_installations() -> Vec<RInstall> {
     found
 }
 
-/// Every place an R_HOME might be, with a label the person will recognize.
+/// Every place an R_HOME might be, with a label the user will recognize.
 /// Duplicates and folders without R are filtered out later.
 fn candidate_homes() -> Vec<(PathBuf, String)> {
     let mut homes = Vec::new();

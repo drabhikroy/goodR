@@ -1,6 +1,6 @@
 //! Reading what Quarto and rmarkdown print while they work.
 //!
-//! Three things matter to the person watching: how far the render has got,
+//! Three things matter to the user watching: how far the render has got,
 //! which files it made, and, when it fails, what went wrong and where. The
 //! wording of R's own message is passed on unchanged, because the interface
 //! turns it into plain language with the same rules it uses for the
@@ -32,7 +32,7 @@ pub enum Failure {
     Chunk { from: u32, to: u32, label: String, message: String },
     /// Anything else, with the clearest lines of the program's own message.
     Other { message: String },
-    /// The person pressed Stop.
+    /// The user pressed Stop.
     Stopped,
 }
 
@@ -139,7 +139,7 @@ fn quitting(line: &str) -> Option<(u32, u32, String)> {
 
 /// R's error message, without the "Error in" header, the backtrace, or
 /// the "Execution halted" that follows every failed script.
-fn error_message(lines: &[String]) -> Option<String> {
+pub(crate) fn error_message(lines: &[String]) -> Option<String> {
     let start = lines.iter().position(|line| {
         let line = line.trim_start();
         line.starts_with("Error") || line.starts_with("ERROR:")

@@ -103,7 +103,9 @@ pub async fn install_from(paths: &Paths, url: &str, sha256: &str, size: u64, can
     let _ = std::fs::remove_file(&archive);
 
     let mut child = tokio::process::Command::new("curl")
-        .args(["--location", "--fail", "--silent", "--show-error", "--output"])
+        // Redirects may only lead to HTTPS. The checksum below is the real
+        // guard, and this keeps the transfer itself off plain HTTP.
+        .args(["--location", "--proto-redir", "=https", "--fail", "--silent", "--show-error", "--output"])
         .arg(&archive)
         .arg(url)
         .stdout(Stdio::null())

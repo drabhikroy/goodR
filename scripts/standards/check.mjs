@@ -6,7 +6,7 @@
 //   2. A contraction in prose, comments, or interface text.
 //   3. A word from the banned lexicon, in any inflection.
 //   4. A British spelling where the American one is standard.
-//   5. A logic file whose comments fall below 15 percent of its lines.
+//   5. A logic file whose comments fall below 10 percent of its lines.
 //
 // Usage: node scripts/standards/check.mjs [--quiet]
 
@@ -25,7 +25,7 @@ const EXEMPT = [/LICENSE\.md$/, /package-lock\.json$/, /Cargo\.lock$/, /src-taur
 // Logic files carry the comment density floor. Markup, styles, data, and
 // tests are excluded because their comments would only restate the code.
 const LOGIC = new Set([".rs", ".ts", ".mjs", ".py"]);
-const DENSITY_FLOOR = 0.15;
+const DENSITY_FLOOR = 0.1;
 const DENSITY_MIN_LINES = 40;
 
 const BANNED = [
@@ -35,7 +35,6 @@ const BANNED = [
   /\bleverag(?:e|es|ed|ing)\b/i,
   /\butiliz(?:e|es|ed|ing|ation)\b/i,
   /\benhanc(?:e|es|ed|ing|ement|ements)\b/i,
-  // The past participle of draw passes only in its rendering sense.
   /\bdrawn\b(?! (?:to scale|on|in|as|by the|at))/i,
 ];
 

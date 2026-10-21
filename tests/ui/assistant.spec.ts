@@ -4,7 +4,7 @@ import { appState, newFileWith, openExample, runLine } from "./helpers";
 /** Walks the setup steps with the private copy, the machine check, and the
  * small code model, as a first time user would. */
 async function setUpAssistant(page: Page) {
-  await page.getByRole("tab", { name: "Assistant" }).click();
+  await page.getByRole("button", { name: "Assistant", exact: true }).click();
   await page.getByRole("button", { name: "Set up the assistant" }).click();
   const dialog = page.getByRole("dialog", { name: "Set up the assistant" });
   await expect(dialog.locator("[aria-current=step]")).toContainText("Ollama");
@@ -25,7 +25,7 @@ test("the assistant is set up in three steps, with an even handed model list", a
   const dialog = await setUpAssistant(page);
   // Every model lists what it is good and weaker at.
   const cards = dialog.locator(".model-card");
-  await expect(cards).toHaveCount(6);
+  await expect(cards).toHaveCount(4);
   for (const card of await cards.all()) {
     await expect(card.getByText("Good at", { exact: true })).toBeVisible();
     await expect(card.getByText("Weaker at", { exact: true })).toBeVisible();
@@ -37,7 +37,7 @@ test("the assistant is set up in three steps, with an even handed model list", a
   // Downloading shows progress, and a second download waits its turn.
   const small = dialog.locator(".model-card").filter({ hasText: "Qwen2.5 Coder 3B" });
   await small.getByRole("button", { name: /^Download/ }).click();
-  await expect(dialog.locator(".model-card").filter({ hasText: "Gemma 3 4B" }).getByRole("button", { name: /^Download/ })).toBeDisabled();
+  await expect(dialog.locator(".model-card").filter({ hasText: "Qwen2.5 Coder 7B" }).getByRole("button", { name: /^Download/ })).toBeDisabled();
   await expect(small.getByText("In use")).toBeVisible({ timeout: 10_000 });
   expect(await appState<string>(page, "state.settings.assistantModel")).toBe("qwen2.5-coder:3b");
   expect(await appState<string>(page, "state.settings.assistantRoute")).toBe("private");
@@ -47,7 +47,7 @@ test("the assistant is set up in three steps, with an even handed model list", a
 
 test("the machine check can be skipped, and then models say how much memory they need", async ({ page }) => {
   await openExample(page);
-  await page.getByRole("tab", { name: "Assistant" }).click();
+  await page.getByRole("button", { name: "Assistant", exact: true }).click();
   await page.getByRole("button", { name: "Set up the assistant" }).click();
   const dialog = page.getByRole("dialog", { name: "Set up the assistant" });
   await dialog.getByRole("button", { name: "Install and continue" }).click();
@@ -73,7 +73,8 @@ test("an error can be handed to the assistant, and its fix replaces the failing 
   await expect(answer.getByRole("button", { name: "Replace line 2" })).toBeVisible();
   await answer.getByRole("button", { name: "Replace line 2" }).click();
   await expect(page.locator(".editor-host .cm-content")).toContainText("fit <- lm(body_mass ~ flipper_len, data = penguins)");
-  // Nothing ran: the replacement waits for the person to run it.
+  // Nothing ran: the replacement waits for the user to run it.
+  await page.getByRole("navigation", { name: "Canvas views" }).getByRole("button", { name: "Canvas", exact: true }).click();
   await expect(page.locator(".output-card.status-error")).toHaveCount(1);
 });
 
@@ -106,10 +107,10 @@ test("questions stream an answer whose code can be inserted, and code R cannot r
 
 test("the assistant pane explains itself before setup and never blocks the rest of the app", async ({ page }) => {
   await openExample(page);
-  await page.getByRole("tab", { name: "Assistant" }).click();
+  await page.getByRole("button", { name: "Assistant", exact: true }).click();
   const pane = page.getByRole("region", { name: "Assistant" });
   await expect(pane).toContainText("An assistant that runs on this Mac");
-  await expect(pane).toContainText("your code and data stay here");
+  await expect(pane).toContainText("your work never leaves it");
   // Errors offer the assistant only once a model is ready.
   await newFileWith(page, "nosuchthing\n");
   await runLine(page);
@@ -132,4 +133,26 @@ test("a fix that is a different step, such as an install, goes to the console an
   await expect(answer.getByRole("button", { name: /^Replace/ })).toHaveCount(0);
   await answer.getByRole("button", { name: "Put in the console" }).click();
   await expect(page.locator("#console-input")).toHaveText('install.packages("gt")');
+});
+
+test("a comment becomes code in a draft under it, and goes in only when inserted", async ({ page }) => {
+  await openExample(page);
+  const dialog = await setUpAssistant(page);
+  const small = dialog.locator(".model-card").filter({ hasText: "Qwen2.5 Coder 3B" });
+  await small.getByRole("button", { name: /^Download/ }).click();
+  await expect(small.getByText("In use")).toBeVisible({ timeout: 10_000 });
+  await dialog.getByRole("button", { name: "Done" }).click();
+  await page.getByRole("button", { name: "New script" }).click();
+  const editor = page.locator(".editor-host .cm-content");
+  await editor.click();
+  await page.keyboard.insertText("# count penguins by species");
+  await page.keyboard.press("Alt+Control+g");
+  const draft = page.locator(".code-draft");
+  await expect(draft).toContainText("Code for: count penguins by species");
+  await expect(draft.locator("pre")).toContainText("table(penguins$species)");
+  await expect(draft).toContainText("R can read this.");
+  await expect(editor).not.toContainText("table(penguins$species)");
+  await draft.getByRole("button", { name: "Insert" }).click();
+  await expect(page.locator(".editor-host .cm-line").nth(1)).toContainText("# Count penguins by species");
+  await expect(page.locator(".editor-host .cm-line").nth(2)).toHaveText("table(penguins$species)");
 });

@@ -5,12 +5,17 @@
 // into the script with one press. Nothing the model writes runs by itself.
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { assistOnCode, askAssistant, checkCode, chooseModel, clearConversation, codeBlocks, codeToConsole, insertAssistantCode, isOneOffStep, likeness, openAssistantSetup, replaceWithAssistantCode, stopAnswer } from "../lib/assistant";
+import { assistOnCode, askAssistant, checkCode, chooseModel, clearConversation, codeBlocks, codeToConsole, insertAssistantCode, isOneOffStep, likeness, openAssistantSetup, refreshAssistant, replaceWithAssistantCode, stopAnswer } from "../lib/assistant";
 import { useStore, type AssistantTurn } from "../lib/store";
 import { CheckIcon, CopyIcon, SparkIcon, StopIcon, TriangleIcon } from "./Icons";
 
 export function AssistantPane() {
   const assistant = useStore((state) => state.assistant);
+  // Checked again each time the pane opens, so a model whose Ollama has
+  // since stopped is not offered as if it could answer.
+  useEffect(() => {
+    refreshAssistant().catch(() => {});
+  }, []);
   if (!assistant.model) return <AssistantIntro connecting={assistant.connecting} connected={Boolean(assistant.status?.connected)} />;
   return <AssistantChat />;
 }
@@ -25,7 +30,7 @@ function AssistantIntro({ connecting, connected }: { connecting: boolean; connec
         <li>Explains code, or adds comments to it</li>
         <li>Writes R from a description of what you want</li>
       </ul>
-      <p className="muted">It is optional. It uses Ollama and a free model on this computer, so your code and data stay here.</p>
+      <p className="muted">It is optional. It runs a free AI model on this computer with Ollama, so your work never leaves it.</p>
       {connecting ? (
         <p className="muted" role="status">
           Connecting to Ollama
@@ -85,13 +90,13 @@ function AssistantChat() {
         )}
       </div>
       <div className="assistant-quick" role="group" aria-label="Ask about the code at the cursor">
-        <button type="button" className="chip" disabled={answering} onClick={() => assistOnCode("explainCode")}>
+        <button type="button" className="quick-button" disabled={answering} onClick={() => assistOnCode("explainCode")}>
           Explain code
         </button>
-        <button type="button" className="chip" disabled={answering} onClick={() => assistOnCode("comment")}>
+        <button type="button" className="quick-button" disabled={answering} onClick={() => assistOnCode("comment")}>
           Add comments
         </button>
-        <button type="button" className="chip" disabled={answering} onClick={() => assistOnCode("improve")}>
+        <button type="button" className="quick-button" disabled={answering} onClick={() => assistOnCode("improve")}>
           Make clearer
         </button>
       </div>

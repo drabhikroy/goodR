@@ -1,11 +1,11 @@
-//! File access, limited to the scripts the person chose.
+//! File access, limited to the scripts the user chose.
 //!
-//! A path becomes readable and writable only when the person picks it in
+//! A path becomes readable and writable only when the user picks it in
 //! an Open or Save dialog, drops it on the window, opens it from Finder, or
 //! reopens it from the recent list the app itself recorded. Opening a
-//! project adds the scripts inside that project's folder, and nothing else
-//! there: the app lists data files by name so they can be loaded into R,
-//! but never reads them itself. The interface cannot grant access on its
+//! project, or a script inside one, adds the scripts inside that project's
+//! folder, and nothing else there: the app lists data files by name so
+//! they can be loaded into R, but never reads them itself. The interface cannot grant access on its
 //! own, so a bug or a hostile file name in the interface cannot reach any
 //! other file on the disk.
 
@@ -33,16 +33,17 @@ pub const IMPORT_EXTENSIONS: &[&str] = &[
     "csv", "CSV", "tsv", "txt", "xlsx", "xls", "XLSX", "rds", "RDS", "RData", "rdata", "rda", "sav", "dta", "sas7bdat", "parquet", "feather", "json",
 ];
 
-/// The set of files the person has chosen in this run of the app, plus
-/// the scripts of the open project.
+/// The set of files the user has chosen in this run of the app, plus
+/// the scripts of every open project. Several projects can be open at
+/// once, each with its own R.
 #[derive(Default)]
 pub struct Allowed {
     paths: HashSet<PathBuf>,
-    project: Option<PathBuf>,
+    projects: HashSet<PathBuf>,
 }
 
 impl Allowed {
-    /// Adds a file the person chose. Existing files are stored in their
+    /// Adds a file the user chose. Existing files are stored in their
     /// resolved form, so two spellings of one path count as the same file.
     pub fn grant(&mut self, path: &Path) -> Result<PathBuf> {
         let resolved = resolve(path)?;
@@ -50,11 +51,11 @@ impl Allowed {
         Ok(resolved)
     }
 
-    /// Confirms a path was chosen by the person, or is a script inside the
+    /// Confirms a path was chosen by the user, or is a script inside an
     /// open project, before anything touches it.
     pub fn check(&self, path: &Path) -> Result<PathBuf> {
         let resolved = resolve(path)?;
-        let in_project = self.project.as_ref().is_some_and(|root| resolved.starts_with(root) && is_script(&resolved));
+        let in_project = is_script(&resolved) && self.projects.iter().any(|root| resolved.starts_with(root));
         if self.paths.contains(&resolved) || in_project {
             Ok(resolved)
         } else {
@@ -62,14 +63,44 @@ impl Allowed {
         }
     }
 
-    /// Makes the scripts inside a project folder available, replacing any
-    /// project opened before. `None` closes the project.
-    pub fn set_project(&mut self, root: Option<&Path>) -> Result<()> {
-        self.project = match root {
-            Some(root) => Some(root.canonicalize().context("the project folder is not available")?),
-            None => None,
-        };
-        Ok(())
+    /// Makes the scripts inside a project folder available, alongside any
+    /// other open project. Returns the folder in its resolved form.
+    pub fn add_project(&mut self, root: &Path) -> Result<PathBuf> {
+        let root = root.canonicalize().context("the project folder is not available")?;
+        self.projects.insert(root.clone());
+        Ok(root)
+    }
+
+    /// Closes a project. Scripts in it that were opened one by one stay
+    /// available, since the user chose them.
+    pub fn remove_project(&mut self, root: &Path) {
+        let root = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
+        self.projects.remove(&root);
+    }
+}
+
+/// The project file of the project a script belongs to: the nearest
+/// folder above it holding a .Rproj file, as RStudio defines a project.
+/// Only folder listings are read, never file contents. The search stops
+/// below the home folder and the top of the disk, since a project file
+/// there would claim every script on the computer.
+pub fn find_project(script: &Path) -> Option<PathBuf> {
+    let home = dirs::home_dir().and_then(|home| home.canonicalize().ok());
+    let mut folder = script.parent()?.canonicalize().ok()?;
+    loop {
+        if Some(&folder) == home.as_ref() || folder.parent().is_none() {
+            return None;
+        }
+        if let Ok(entries) = std::fs::read_dir(&folder) {
+            let mut found: Vec<PathBuf> = entries.flatten().map(|entry| entry.path()).filter(|path| path.extension().is_some_and(|ext| ext == "Rproj") && path.is_file()).collect();
+            // Two project files in one folder is unusual. The one named
+            // after the folder is the one RStudio would have made.
+            found.sort_by_key(|path| path.file_stem() != folder.file_name());
+            if let Some(file) = found.into_iter().next() {
+                return Some(file);
+            }
+        }
+        folder = folder.parent()?.to_path_buf();
     }
 }
 
@@ -98,12 +129,49 @@ pub fn read_text(path: &Path) -> Result<String> {
 }
 
 /// Writes through a temporary file and a rename, so a crash during a save
-/// never leaves a half written script behind.
+/// never leaves a half written script behind. The temporary file is named
+/// after the whole file name, so a.R and a.Rmd never share one, and it is
+/// hidden, so a project listing never shows it. It is created fresh and
+/// never opened through an existing link, so a link planted under that name,
+/// as in a downloaded project, cannot redirect the save to another file.
 pub fn write_bytes(path: &Path, bytes: &[u8]) -> Result<()> {
-    let temp = path.with_extension("goodfor-saving");
-    std::fs::write(&temp, bytes)?;
-    std::fs::rename(&temp, path)?;
-    Ok(())
+    use std::io::Write;
+    let name = path.file_name().ok_or_else(|| anyhow!("{} has no file name", path.display()))?;
+    let temp = path.with_file_name(format!(".{}.goodfor-saving", name.to_string_lossy()));
+    // A leftover from a crash, or a link, is removed rather than followed.
+    let _ = std::fs::remove_file(&temp);
+    let written = (|| -> Result<()> {
+        let mut file = std::fs::OpenOptions::new().write(true).create_new(true).open(&temp)?;
+        file.write_all(bytes)?;
+        file.sync_all()?;
+        // A save keeps the permissions the file already had.
+        if let Ok(meta) = std::fs::metadata(path) {
+            std::fs::set_permissions(&temp, meta.permissions())?;
+        }
+        std::fs::rename(&temp, path)?;
+        Ok(())
+    })();
+    if written.is_err() {
+        let _ = std::fs::remove_file(&temp);
+    }
+    written
+}
+
+/// Makes a new folder of the app's own under the system's temporary folder,
+/// readable only by this user where the system supports that. The name is
+/// unique, and the folder must not exist yet, so another user on a shared
+/// computer cannot prepare it in advance and read or replace what goes in.
+pub fn private_dir(prefix: &str) -> Result<PathBuf> {
+    let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|time| time.as_nanos()).unwrap_or_default();
+    let dir = std::env::temp_dir().join(format!("{prefix}-{}-{stamp}", std::process::id()));
+    let mut builder = std::fs::DirBuilder::new();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::DirBuilderExt;
+        builder.mode(0o700);
+    }
+    builder.create(&dir).with_context(|| format!("could not make a private folder at {}", dir.display()))?;
+    Ok(dir)
 }
 
 /// What the project sidebar shows: the scripts and the data files, by path
@@ -119,7 +187,7 @@ pub struct ProjectInfo {
 }
 
 /// Folders that hold tool bookkeeping or installed packages rather than
-/// the person's work.
+/// the user's work.
 const SKIP_DIRS: &[&str] = &["renv", "packrat", "node_modules", "rsconnect", "__pycache__"];
 
 /// The deepest folder level searched. Projects are rarely nested deeper,
@@ -181,20 +249,24 @@ const RPROJ: &str = "Version: 1.0\n\nRestoreWorkspace: No\nSaveWorkspace: No\nAl
 
 const GITIGNORE: &str = ".Rproj.user/\n.Rhistory\n.RData\n.Ruserdata\n";
 
-const ANALYSIS: &str = "# Analysis\n#\n# Run a line with Command Return, or the whole file with Command Shift Return.\n\n# First look ----\nhead(mtcars)\n\n# A simple model ----\nfit <- lm(mpg ~ wt, data = mtcars)\nconfint(fit)\n\nplot(mpg ~ wt, data = mtcars)\n";
+// The templates use quakes, a record of 1,000 earthquakes near Fiji that
+// comes with R, so a new project runs at once without any data file and
+// without the datasets every course has already worn out.
+const ANALYSIS: &str = "# Analysis\n#\n# Run a line with Command Return, or the whole file with Command Shift Return.\n\n# First look ----\n# 1,000 earthquakes near Fiji since 1964, which come with R.\nhead(quakes)\n\n# A simple model ----\n# Stronger earthquakes are picked up by more seismic stations.\nfit <- lm(stations ~ mag, data = quakes)\nconfint(fit)\n\nplot(stations ~ mag, data = quakes)\n";
 
-const REPORT: &str = "---\ntitle: \"Report\"\nformat: html\n---\n\n## Overview\n\n```{r}\nsummary(mtcars$mpg)\n```\n";
+const REPORT: &str = "---\ntitle: \"Report\"\nformat: html\n---\n\n## Overview\n\n```{r}\nsummary(quakes$mag)\n```\n";
 
-const SHINY: &str = "library(shiny)\n\nui <- fluidPage(\n  titlePanel(\"Old Faithful\"),\n  sliderInput(\"bins\", \"Number of bins\", min = 5, max = 50, value = 20),\n  plotOutput(\"waiting_plot\")\n)\n\nserver <- function(input, output) {\n  output$waiting_plot <- renderPlot({\n    hist(faithful$waiting, breaks = input$bins, col = \"#1F5F8B\", border = \"white\",\n         main = \"Waiting time between eruptions\", xlab = \"Minutes\")\n  })\n}\n\nshinyApp(ui, server)\n";
+const SHINY: &str = "library(shiny)\n\nui <- fluidPage(\n  titlePanel(\"Earthquakes near Fiji\"),\n  sliderInput(\"smallest\", \"Smallest magnitude\", min = 4, max = 6.4, value = 4.5, step = 0.1),\n  plotOutput(\"map\")\n)\n\nserver <- function(input, output, session) {\n  output$map <- renderPlot({\n    shown <- subset(quakes, mag >= input$smallest)\n    plot(lat ~ long, data = shown, pch = 19, col = \"#1F5F8B\", cex = shown$mag - 3,\n         main = paste(nrow(shown), \"earthquakes\"), xlab = \"Longitude\", ylab = \"Latitude\")\n  })\n}\n\nshinyApp(ui, server)\n";
 
 /// Creates a project and returns its project file. "existing" turns a
-/// folder the person already has into a project by adding the project file
+/// folder the user already has into a project by adding the project file
 /// and nothing else.
 pub fn create_project(parent: &Path, name: &str, template: &str, git: bool) -> Result<PathBuf> {
-    if template != "existing" && (name.trim().is_empty() || name.contains(['/', '\\', ':']) || name.starts_with('.')) {
+    let name = name.trim();
+    if template != "existing" && (name.is_empty() || name.contains(['/', '\\', ':']) || name.starts_with('.')) {
         return Err(anyhow!("A project name cannot be empty, start with a period, or contain / \\ or :"));
     }
-    let folder = if template == "existing" { parent.to_path_buf() } else { parent.join(name.trim()) };
+    let folder = if template == "existing" { parent.to_path_buf() } else { parent.join(name) };
     if template != "existing" {
         if folder.exists() {
             return Err(anyhow!("{} already exists. Choose another name.", folder.display()));
@@ -262,7 +334,21 @@ mod tests {
         write_bytes(&target, b"x <- 1\n").unwrap();
         assert!(allowed.check(&target).is_ok());
         assert_eq!(read_text(&target).unwrap(), "x <- 1\n");
-        assert!(!dir.path().join("new.goodfor-saving").exists());
+        assert!(!dir.path().join(".new.R.goodfor-saving").exists());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_planted_link_cannot_redirect_a_save() {
+        let dir = tempfile::tempdir().unwrap();
+        let victim = dir.path().join("victim.txt");
+        std::fs::write(&victim, "keep").unwrap();
+        let target = dir.path().join("analysis.R");
+        std::os::unix::fs::symlink(&victim, dir.path().join(".analysis.R.goodfor-saving")).unwrap();
+        write_bytes(&target, b"x <- 1\n").unwrap();
+        assert_eq!(std::fs::read_to_string(&victim).unwrap(), "keep");
+        assert!(!std::fs::symlink_metadata(&target).unwrap().file_type().is_symlink());
+        assert_eq!(read_text(&target).unwrap(), "x <- 1\n");
     }
 
     #[test]
@@ -280,15 +366,45 @@ mod tests {
         assert_eq!(info.data, vec!["data/survey.csv"]);
 
         let mut allowed = Allowed::default();
-        allowed.set_project(Some(root)).unwrap();
+        allowed.add_project(root).unwrap();
         assert!(allowed.check(&root.join("analysis.R")).is_ok());
         assert!(allowed.check(&root.join("new-script.R")).is_ok());
         // Data and other files stay out of reach of the app's own commands.
         assert!(allowed.check(&root.join("data/survey.csv")).is_err());
         assert!(allowed.check(&root.join("notes.txt")).is_err());
         assert!(allowed.check(&dir.path().join("outside.R")).is_err());
-        allowed.set_project(None).unwrap();
+        allowed.remove_project(root);
         assert!(allowed.check(&root.join("analysis.R")).is_err());
+    }
+
+    #[test]
+    fn two_projects_can_be_open_at_once() {
+        let dir = tempfile::tempdir().unwrap();
+        let first = create_project(dir.path(), "one", "analysis", false).unwrap();
+        let second = create_project(dir.path(), "two", "report", false).unwrap();
+        let mut allowed = Allowed::default();
+        allowed.add_project(first.parent().unwrap()).unwrap();
+        allowed.add_project(second.parent().unwrap()).unwrap();
+        assert!(allowed.check(&first.parent().unwrap().join("analysis.R")).is_ok());
+        assert!(allowed.check(&second.parent().unwrap().join("report.qmd")).is_ok());
+        allowed.remove_project(first.parent().unwrap());
+        assert!(allowed.check(&first.parent().unwrap().join("analysis.R")).is_err());
+        assert!(allowed.check(&second.parent().unwrap().join("report.qmd")).is_ok());
+    }
+
+    #[test]
+    fn a_script_finds_the_project_it_sits_in() {
+        let dir = tempfile::tempdir().unwrap();
+        let project = create_project(dir.path(), "study", "analysis", false).unwrap();
+        let root = project.parent().unwrap();
+        std::fs::create_dir_all(root.join("R/helpers")).unwrap();
+        std::fs::write(root.join("R/helpers/clean.R"), "").unwrap();
+        // From the top folder and from a folder nested inside it.
+        assert_eq!(find_project(&root.join("analysis.R")).unwrap().canonicalize().unwrap(), project.canonicalize().unwrap());
+        assert_eq!(find_project(&root.join("R/helpers/clean.R")).unwrap().canonicalize().unwrap(), project.canonicalize().unwrap());
+        // A script beside the project folder belongs to no project.
+        std::fs::write(dir.path().join("loose.R"), "").unwrap();
+        assert_eq!(find_project(&dir.path().join("loose.R")), None);
     }
 
     #[test]

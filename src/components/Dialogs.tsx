@@ -3,19 +3,31 @@
 // returns focus to where it was.
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { chooseDataFile, chooseProjectFolder, chooseR, createProject, exportPlot, hasPackage, previewData, runImport, installPackages, openDialog, openUrl, runCommand, setOutputLayout, shortPath, togglePalette, updateSettings } from "../lib/app";
-import { keyLabel, searchCommands, visibleCommands } from "../lib/commands";
+import { isDefaultLayout, resetApp, resetLayout, resetSettings, openHelp, chooseDataFile, chooseProjectFolder, chooseR, createDocument, createProject, exportPlot, hasPackage, previewData, runImport, installPackages, openDialog, openUrl, runCommand, setOutputLayout, shortPath, togglePalette, updateSettings, baseName, insertSnippetById } from "../lib/app";
+import { documentFileName, type DocumentFormat, type DocumentKind } from "../lib/chunks";
+import { explainApp, exportApp, previewExport, revealExport, stopExport } from "../lib/shiny";
+import { COMMANDS, keyLabel, searchCommands, searchSnippets, visibleCommands } from "../lib/commands";
+import { SNIPPETS } from "../lib/snippets";
 import { isSupportedR, OLDEST_R } from "../lib/rversion";
-import { getState, useStore } from "../lib/store";
+import { getState, setState, useStore } from "../lib/store";
 import { FORMAT_NAMES, FORMAT_PACKAGE, firstLinesCode, formatOf, guessLayout, importCode, isValidName, objectName, pathForCode, previewCode, sheetsCode, type ImportOptions } from "../lib/importData";
-import type { Appearance, CodeFont, DataPreview, LineSpacing, OutputLayout, PaletteName, PlotFormat, ProjectTemplate } from "../lib/types";
-import { CODE_FONTS } from "../theme/theme";
+import type { Appearance, PdfEngine, CodeFont, DataPreview, LineSpacing, OutputLayout, PaletteName, PlotFormat, ProjectTemplate } from "../lib/types";
+import { CODE_FONTS, resolveMode } from "../theme/theme";
 import tokens from "../theme/tokens.json";
 import { AssistantSetupDialog } from "./AssistantSetup";
-import { AppWindowIcon, ChartIcon, CloseIcon, FolderIcon, ReportIcon, SearchIcon } from "./Icons";
+import { LatexPanel } from "./LatexPanel";
+import { UpdatesPane } from "./UpdatesPane";
+import { trapTab } from "./focus";
+import { AskOnlineDialog, FileHistoryDialog, FixProblemsDialog, CiteDialog, FindInFilesDialog, RenameDialog, TraceDialog } from "./EditingDialogs";
+import { AppWindowIcon, ChartIcon, CheckIcon, CloseIcon, FolderIcon, ReportIcon, SearchIcon, TriangleIcon, WarnIcon } from "./Icons";
 
 export function Modal({ title, onClose, children, wide = false, labelledBy, className = "" }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean; labelledBy?: string; className?: string }) {
   const box = useRef<HTMLDivElement>(null);
+  // The latest close action, read when a key is pressed. Callers often pass
+  // a new function on every render, and setting up focus again each time
+  // would bounce focus out of the dialog and back with every keystroke.
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     // React applies autoFocus itself and leaves no attribute behind, so the
@@ -29,26 +41,16 @@ export function Modal({ title, onClose, children, wide = false, labelledBy, clas
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose();
+        closeRef.current();
       }
-      if (event.key !== "Tab" || !box.current) return;
-      const focusable = [...box.current.querySelectorAll<HTMLElement>("button, input, select, textarea, a[href], [tabindex='0']")].filter((element) => !element.hasAttribute("disabled"));
-      if (!focusable.length) return;
-      const [head, tail] = [focusable[0], focusable[focusable.length - 1]];
-      if (event.shiftKey && document.activeElement === head) {
-        event.preventDefault();
-        tail.focus();
-      } else if (!event.shiftKey && document.activeElement === tail) {
-        event.preventDefault();
-        head.focus();
-      }
+      if (box.current) trapTab(box.current, event);
     }
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);
       previous?.focus?.();
     };
-  }, [onClose]);
+  }, []);
   return (
     <div className="overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <div ref={box} role="dialog" aria-modal="true" aria-labelledby={labelledBy ?? "dialog-title"} className={`dialog ${wide ? "wide" : ""} ${className}`}>
@@ -76,15 +78,25 @@ export function Dialogs() {
       {dialog === "chooseR" && <ChooseRDialog />}
       {dialog === "install" && <InstallDialog />}
       {dialog === "newProject" && <NewProjectDialog />}
+      {dialog === "newDocument" && <NewDocumentDialog />}
+      {dialog === "shareApp" && <ShareAppDialog />}
       {dialog === "exportPlot" && <ExportPlotDialog />}
       {dialog === "importData" && <ImportDataDialog />}
       {dialog === "assistantSetup" && <AssistantSetupDialog />}
+      {dialog === "rename" && <RenameDialog />}
+      {dialog === "findInFiles" && <FindInFilesDialog />}
+      {dialog === "cite" && <CiteDialog />}
+      {dialog === "trace" && <TraceDialog />}
+      {dialog === "askOnline" && <AskOnlineDialog />}
+      {dialog === "fixProblems" && <FixProblemsDialog />}
+      {dialog === "fileHistory" && <FileHistoryDialog />}
+      {dialog === "resetApp" && <ResetAppDialog />}
       {palette && <CommandPalette />}
     </>
   );
 }
 
-function Radio<T extends string>({ name, value, current, onChange, children }: { name: string; value: T; current: T; onChange: (value: T) => void; children: ReactNode }) {
+export function Radio<T extends string>({ name, value, current, onChange, children }: { name: string; value: T; current: T; onChange: (value: T) => void; children: ReactNode }) {
   return (
     <label className={`choice ${current === value ? "is-on" : ""}`}>
       <input type="radio" name={name} checked={current === value} onChange={() => onChange(value)} />
@@ -101,15 +113,18 @@ const PALETTES: { value: PaletteName; label: string; note: string }[] = [
   { value: "monochrome", label: "Monochrome", note: "Shapes and lightness only" },
 ];
 
-type Pane = "appearance" | "code" | "editor" | "results" | "accessibility" | "r" | "menus";
+type Pane = "appearance" | "layout" | "code" | "editor" | "results" | "reports" | "accessibility" | "r" | "updates" | "menus";
 
 const PANES: { id: Pane; label: string }[] = [
   { id: "appearance", label: "Appearance" },
+  { id: "layout", label: "Layout" },
   { id: "code", label: "Code text" },
   { id: "editor", label: "Editor" },
   { id: "results", label: "Results" },
+  { id: "reports", label: "Reports" },
   { id: "accessibility", label: "Accessibility" },
   { id: "r", label: "R and packages" },
+  { id: "updates", label: "Updates" },
   { id: "menus", label: "Menus" },
 ];
 
@@ -120,6 +135,14 @@ const PANES: { id: Pane; label: string }[] = [
  */
 function SettingsDialog() {
   const [pane, setPane] = useState<Pane>("appearance");
+  // Opens on the pane something asked for, such as Check for Updates, even
+  // when Settings is already open, and then forgets the request.
+  const asked = useStore((state) => state.ui.settingsPane) as Pane | null;
+  useEffect(() => {
+    if (!asked) return;
+    if (PANES.some((item) => item.id === asked)) setPane(asked);
+    setState((state) => ({ ui: { ...state.ui, settingsPane: null } }));
+  }, [asked]);
   return (
     <Modal title="Settings" onClose={close} wide>
       <div className="settings-layout">
@@ -132,17 +155,95 @@ function SettingsDialog() {
         </nav>
         <div className="dialog-body settings">
           {pane === "appearance" && <AppearancePane />}
+          {pane === "layout" && <LayoutPane />}
           {pane === "code" && <CodePane />}
           {pane === "editor" && <EditorPrefsPane />}
           {pane === "results" && <ResultsPane />}
+          {pane === "reports" && <ReportsPane />}
           {pane === "accessibility" && <AccessibilityPane />}
           {pane === "r" && <RPane />}
+          {pane === "updates" && <UpdatesPane />}
           {pane === "menus" && <MenusPane />}
         </div>
+      </div>
+      {/* Resetting is kept apart from the choices, at the foot, and asks
+          first, so it is found when wanted and never pressed by accident. */}
+      <div className="dialog-foot settings-foot">
+        <button type="button" className="button quiet" onClick={() => openDialog("resetApp")}>
+          Reset the app
+        </button>
+        <button type="button" className="button" onClick={() => resetSettings(pane)}>
+          Reset {PANES.find((item) => item.id === pane)?.label.replace(/^[A-Z](?=[a-z])/, (letter) => letter.toLowerCase())}
+        </button>
       </div>
     </Modal>
   );
 }
+
+type Part = "showSidebar" | "showPrompt" | "showCanvas" | "showTimeline";
+const PARTS: { key: Part; label: string; note: string }[] = [
+  { key: "showSidebar", label: "Project sidebar", note: "The scripts and data in a project, down the left" },
+  { key: "showPrompt", label: "R prompt", note: "The box under the script for quick commands" },
+  { key: "showCanvas", label: "Canvas", note: "Results, plots, and your objects, on the right" },
+  { key: "showTimeline", label: "Earlier results", note: "The strip of past results under the canvas" },
+];
+
+/** A part of the window in the picture, as a switch: pressing it shows or
+ * hides that part, and its label says which it is and whether it is on. */
+function PartTile({ part, className }: { part: (typeof PARTS)[number]; className: string }) {
+  const on = useStore((state) => state.settings[part.key]);
+  return (
+    <button type="button" role="switch" aria-checked={on} aria-describedby={`note-${part.key}`} className={`layout-tile ${className} ${on ? "is-on" : ""}`} onClick={() => updateSettings({ [part.key]: !on })}>
+      <span className="layout-tile-name">{part.label}</span>
+      <span className="layout-tile-state" aria-hidden="true">
+        {on ? "Shown" : "Hidden"}
+      </span>
+    </button>
+  );
+}
+
+/** The window as a picture, each part a switch, with the way back to the
+ * standard layout under it. The script is always there, so it is shown
+ * but is not a switch. */
+function LayoutPane() {
+  const settings = useStore((state) => state.settings);
+  const standard = isDefaultLayout(settings);
+  return (
+    <>
+      <fieldset>
+        <legend>Parts of the window</legend>
+        <p className="hint">Press a part to hide it, and again to bring it back. Edges between parts can also be dragged to resize them.</p>
+        <div className="layout-map">
+          <PartTile part={PARTS[0]} className="layout-sidebar-part" />
+          <div className="layout-tile layout-script-part is-fixed" aria-hidden="true">
+            <span className="layout-tile-name">Script</span>
+          </div>
+          <PartTile part={PARTS[1]} className="layout-prompt-part" />
+          <PartTile part={PARTS[2]} className="layout-canvas-part" />
+          <PartTile part={PARTS[3]} className="layout-timeline-part" />
+        </div>
+        <ul className="layout-notes">
+          {PARTS.map((part) => (
+            <li key={part.key} id={`note-${part.key}`}>
+              <strong>{part.label}</strong>: {part.note}
+            </li>
+          ))}
+        </ul>
+      </fieldset>
+      <fieldset>
+        <legend>Standard layout</legend>
+        <p className="hint">{standard ? "The window is laid out as it was when the app was new." : "Shows every part again, at the size it started at."}</p>
+        <div>
+          <button type="button" className="button" disabled={standard} onClick={resetLayout}>
+            Go back to the standard layout
+          </button>
+        </div>
+      </fieldset>
+    </>
+  );
+}
+
+const APPEARANCE_NAMES: Record<Appearance, string> = { system: "Match the system", light: "Light", dark: "Dark", paper: "Paper" };
 
 function AppearancePane() {
   const settings = useStore((state) => state.settings);
@@ -151,13 +252,16 @@ function AppearancePane() {
       <fieldset>
         <legend>Appearance</legend>
         <div className="choices row">
-          {(["system", "light", "dark"] as Appearance[]).map((value) => (
+          {(["system", "light", "dark", "paper"] as Appearance[]).map((value) => (
             <Radio key={value} name="appearance" value={value} current={settings.appearance} onChange={(appearance) => updateSettings({ appearance })}>
-              {value === "system" ? "Match the system" : value === "light" ? "Light" : "Dark"}
+              {APPEARANCE_NAMES[value]}
             </Radio>
           ))}
         </div>
-        <p className="hint">Light is easier to proofread on, so it is the default. Dark is a full alternative, not an inverted copy.</p>
+        <p className="hint">
+          Match the system switches between light and dark with your computer. Dark is a full theme of its own, not just the colors flipped. Paper is a warm, softer page for long
+          stretches of reading.
+        </p>
       </fieldset>
       <fieldset>
         <legend>Interface text size</legend>
@@ -167,6 +271,25 @@ function AppearancePane() {
           <input type="range" min={90} max={150} step={10} value={settings.textSize} aria-label="Interface text size" onChange={(event) => updateSettings({ textSize: Number(event.target.value) })} />
           <span aria-hidden="true" className="large-a">A</span>
           <span className="muted">{settings.textSize} percent</span>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Space</legend>
+        <div className="checks">
+          <label className="check">
+            <input type="checkbox" checked={settings.compact} onChange={(event) => updateSettings({ compact: event.target.checked })} />
+            <span>
+              Compact
+              <span className="hint">Less space around panes and lists, for a small screen. Buttons stay just as easy to click.</span>
+            </span>
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={settings.readingWidth} onChange={(event) => updateSettings({ readingWidth: event.target.checked })} />
+            <span>
+              Comfortable line length for documents
+              <span className="hint">The text of a Quarto or R Markdown document wraps at about 80 characters, however wide the window is. Scripts are not affected.</span>
+            </span>
+          </label>
         </div>
       </fieldset>
     </>
@@ -183,7 +306,7 @@ x <- c(1, 2.5, 10) != 0L`;
 
 /**
  * The code typeface, its size, and its spacing, applied to the script, the
- * console, and every result. A sample shows each change before the person
+ * console, and every result. A sample shows each change before the user
  * goes back to their own code, so trying a setting costs nothing.
  */
 function CodePane() {
@@ -192,7 +315,10 @@ function CodePane() {
   return (
     <>
       <pre className="code-sample" aria-label="Sample of code in the chosen typeface">
-        {CODE_SAMPLE}
+        {/* The comment line is styled as the editor styles comments, so the
+            script italic shows here when it is chosen. */}
+        <span className="sample-comment">{CODE_SAMPLE.split("\n")[0]}</span>
+        {"\n" + CODE_SAMPLE.split("\n").slice(1).join("\n")}
       </pre>
       <fieldset>
         <legend>Typeface</legend>
@@ -205,6 +331,7 @@ function CodePane() {
             </Radio>
           ))}
         </div>
+        {font.note && <p className="hint">{font.note}</p>}
       </fieldset>
       <fieldset>
         <legend>Size</legend>
@@ -229,7 +356,19 @@ function CodePane() {
         <legend>Joined symbols</legend>
         <label className="check">
           <input type="checkbox" checked={settings.ligatures} disabled={!font.ligatures} onChange={(event) => updateSettings({ ligatures: event.target.checked })} />
-          {font.ligatures ? "Draw symbols such as <- and != as single shapes" : `${font.label} has no joined symbols. JetBrains Mono and Fira Code do.`}
+          {font.ligatures ? "Draw symbols such as <- and != as single shapes" : `${font.label} has no joined symbols. Fira Code, JetBrains Mono, Cascadia Code, and Iosevka do.`}
+        </label>
+      </fieldset>
+      <fieldset>
+        <legend>Comments</legend>
+        <label className="check">
+          <input type="checkbox" checked={Boolean(font.comments) || settings.scriptItalics} disabled={Boolean(font.comments)} onChange={(event) => updateSettings({ scriptItalics: event.target.checked })} />
+          <span>
+            Write comments in a script italic
+            <span className="hint">
+              {font.comments ? `${font.label} sets its own face for comments.` : "Comments take the flowing italic of Victor Mono, beside whichever typeface the code uses, so notes stand apart from code at a glance."}
+            </span>
+          </span>
         </label>
       </fieldset>
     </>
@@ -239,7 +378,7 @@ function CodePane() {
 /** How the script editor behaves as you type and read. */
 function EditorPrefsPane() {
   const settings = useStore((state) => state.settings);
-  const toggle = (key: "lineNumbers" | "highlightLine" | "wrapLines" | "closeBrackets" | "rainbowBrackets", label: string, hint: string) => (
+  const toggle = (key: "lineNumbers" | "highlightLine" | "wrapLines" | "closeBrackets" | "rainbowBrackets" | "autosave" | "hints" | "formatOnType", label: string, hint: string) => (
     <label className="check">
       <input type="checkbox" checked={settings[key]} onChange={(event) => updateSettings({ [key]: event.target.checked })} />
       <span>
@@ -261,7 +400,34 @@ function EditorPrefsPane() {
       </fieldset>
       <fieldset>
         <legend>Typing</legend>
-        <div className="checks">{toggle("closeBrackets", "Close brackets and quotes", "Typing ( adds the ) after the cursor")}</div>
+        <div className="checks">
+          {toggle("closeBrackets", "Close brackets and quotes", "Typing ( adds the ) after the cursor")}
+          {toggle(
+            "formatOnType",
+            "Tidy each line as you finish it",
+            "Return adds spaces around <- and other operators and after commas, the way the tidyverse lays out code. Text in quotes and comments is never changed, and Undo puts a line back.",
+          )}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Suggestions</legend>
+        <div className="checks">
+          {toggle(
+            "hints",
+            "Point out habits that cause trouble later",
+            "A dotted line under code such as T for TRUE or 1:length(x). Rest the pointer on it to see why, and change it with one click. It never stops code from running.",
+          )}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Saving</legend>
+        <div className="checks">
+          {toggle(
+            "autosave",
+            "Save files automatically",
+            "A moment after you stop typing. Either way, unsaved changes are kept safe and come back if the app closes unexpectedly.",
+          )}
+        </div>
       </fieldset>
       <fieldset>
         <legend>Indent width</legend>
@@ -279,10 +445,8 @@ function EditorPrefsPane() {
 }
 
 const RESULT_PLACES: { value: OutputLayout; label: string; note: string }[] = [
-  { value: "inline", label: "Under each line", note: "Each result right below the code that made it" },
-  { value: "side", label: "Beside the code", note: "Results in a column of their own" },
-  { value: "stacked", label: "Below the code", note: "Results in a strip under the script" },
-  { value: "console", label: "In the console", note: "The traditional way, as in R itself" },
+  { value: "canvas", label: "In the canvas", note: "Beside the script, in one feed with plots at full width" },
+  { value: "inline", label: "Under each line", note: "Each result right below the code that made it, plots as small copies" },
 ];
 
 /** Where results appear, how they look, and how copying treats them. */
@@ -292,7 +456,7 @@ function ResultsPane() {
     <>
       <fieldset>
         <legend>Where results appear</legend>
-        <div className="choices palettes">
+        <div className="choices stack">
           {RESULT_PLACES.map((item) => (
             <Radio key={item.value} name="result-place" value={item.value} current={settings.outputLayout} onChange={(outputLayout) => setOutputLayout(outputLayout)}>
               <span>
@@ -303,7 +467,7 @@ function ResultsPane() {
           ))}
         </div>
       </fieldset>
-      <fieldset disabled={settings.outputLayout === "console"}>
+      <fieldset>
         <legend>How they look</legend>
         <div className="choices row">
           <Radio name="result-style" value="cards" current={settings.resultStyle} onChange={(resultStyle) => updateSettings({ resultStyle })}>
@@ -319,7 +483,6 @@ function ResultsPane() {
             </span>
           </Radio>
         </div>
-        {settings.outputLayout === "console" && <p className="hint">In the console, results are plain text already.</p>}
       </fieldset>
       <fieldset>
         <legend>Copying</legend>
@@ -331,25 +494,46 @@ function ResultsPane() {
           </span>
         </label>
       </fieldset>
+      <fieldset>
+        <legend>Keeping and styling</legend>
+        <div className="checks">
+          <label className="check">
+            <input type="checkbox" checked={settings.keepResults} onChange={(event) => updateSettings({ keepResults: event.target.checked })} />
+            <span>
+              Keep results for next time
+              <span className="hint">They come back when the app opens, marked as from last time. The objects behind them do not, so run the script again to work with them.</span>
+            </span>
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={settings.plotStyle} onChange={(event) => updateSettings({ plotStyle: event.target.checked })} />
+            <span>
+              Plots match the app
+              <span className="hint">New plots use the page, text, and grid colors of the app, light or dark to match, for base R plots and ggplot2 alike.</span>
+            </span>
+          </label>
+        </div>
+      </fieldset>
     </>
   );
 }
 
 function AccessibilityPane() {
   const settings = useStore((state) => state.settings);
-  const mode = useStore(() => (document.documentElement.dataset.mode === "dark" ? "dark" : "light"));
+  // Read from the appearance setting, so the swatches follow it as it changes.
+  const appearance = useStore((state) => state.settings.appearance);
+  const mode = resolveMode(appearance) === "dark" ? "dark" : "light";
   return (
     <>
       <fieldset>
         <legend>Color vision palette</legend>
-        <p className="hint">Changes interface colors, code colors, and the default colors of new plots. Every palette passes WCAG 2.2 AA, and shapes carry meaning alongside color.</p>
-        <div className="choices palettes">
+        <p className="hint">Changes the colors of the app, your code, and new plots. Every palette meets the WCAG 2.2 AA standard for easy reading, and shapes tell things apart as well as color.</p>
+        <div className="choices stack">
           {PALETTES.map((item) => {
             const colors = tokens.palettes[item.value][mode as "light" | "dark"];
             return (
               <Radio key={item.value} name="palette" value={item.value} current={settings.palette} onChange={(palette) => updateSettings({ palette })}>
                 <span className="swatches" aria-hidden="true">
-                  {[colors.ok, colors.warn, colors.danger].map((color) => (
+                  {[("accent" in colors ? colors.accent : tokens.modes[mode as "light" | "dark"].accent), colors.ok, colors.warn, colors.danger].map((color) => (
                     <span key={color} style={{ background: color }} />
                   ))}
                 </span>
@@ -361,12 +545,36 @@ function AccessibilityPane() {
             );
           })}
         </div>
+        {/* The palette changes the app's accent, the colors of status, and
+            the colors of code. This shows them as they are now, so a change
+            is seen at once. */}
+        <div className="palette-preview" role="group" aria-label="How the palette looks now">
+          <p className="palette-status">
+            <span className="palette-accent">Button</span>
+            <span className="palette-link">A link</span>
+            <span className="tone-ok">
+              <CheckIcon size={15} label="" /> Ran
+            </span>
+            <span className="tone-warn">
+              <WarnIcon size={15} /> Warning
+            </span>
+            <span className="tone-danger">
+              <TriangleIcon size={15} label="" /> Did not run
+            </span>
+          </p>
+          <pre className="palette-code">
+            <span className="syn-comment"># Mean brightness</span>
+            {"\n"}
+            <span className="syn-function">mean</span>(x, na.rm = <span className="syn-number">TRUE</span>) <span className="syn-keyword">|&gt;</span> <span className="syn-function">round</span>(
+            <span className="syn-number">1</span>){"\n"}label &lt;- <span className="syn-string">"magnitude"</span>
+          </pre>
+        </div>
       </fieldset>
       <fieldset>
         <legend>Motion</legend>
         <label className="check">
           <input type="checkbox" checked={settings.reduceMotion} onChange={(event) => updateSettings({ reduceMotion: event.target.checked })} />
-          Reduce motion. The system setting is always followed too.
+          Reduce motion. If your computer is set to reduce motion, the app follows that too.
         </label>
       </fieldset>
     </>
@@ -398,6 +606,73 @@ function RPane() {
           </Radio>
         </div>
       </fieldset>
+      <fieldset>
+        <legend>Installing and updating</legend>
+        <label className="check">
+          <input type="checkbox" checked={settings.showPackageLog} onChange={(event) => updateSettings({ showPackageLog: event.target.checked })} />
+          <span>
+            Show what R prints while it installs
+            <span className="hint">Instead of a list of packages with a progress bar, show R&#8217;s own messages, line by line. Either way, the other is one click away.</span>
+          </span>
+        </label>
+      </fieldset>
+      <fieldset>
+        <legend>Undo for runs</legend>
+        <label className="check">
+          <input type="checkbox" checked={settings.undoRuns} onChange={(event) => updateSettings({ undoRuns: event.target.checked })} />
+          <span>
+            Let the last run be undone
+            <span className="hint">
+              R keeps the objects as they were before each run. That costs almost nothing, except while a run changes a very large table, which is then held twice until the next
+              run.
+            </span>
+          </span>
+        </label>
+      </fieldset>
+    </>
+  );
+}
+
+const PDF_ENGINES: { value: PdfEngine; label: string; hint: string }[] = [
+  { value: "auto", label: "Choose for me", hint: "LaTeX when there is one on this computer, and Typst when there is not" },
+  { value: "latex", label: "LaTeX", hint: "What journals and many templates expect, and the only one that reads LaTeX commands in a document" },
+  { value: "typst", label: "Typst", hint: "Fast, and nothing more to install, since it comes with Quarto" },
+];
+
+/** How reports are made: which program makes a PDF, the LaTeX to use,
+ * and whether a report renders again when saved. */
+function ReportsPane() {
+  const settings = useStore((state) => state.settings);
+  return (
+    <>
+      <fieldset>
+        <legend>Making a PDF</legend>
+        <div className="choices stack">
+          {PDF_ENGINES.map((item) => (
+            <Radio key={item.value} name="pdf-engine" value={item.value} current={settings.pdfEngine} onChange={(pdfEngine) => updateSettings({ pdfEngine })}>
+              <span>
+                {item.label}
+                <span className="hint">{item.hint}</span>
+              </span>
+            </Radio>
+          ))}
+        </div>
+        <p className="hint">This is for Render as PDF. A document whose own header asks for a LaTeX PDF always uses LaTeX.</p>
+      </fieldset>
+      <fieldset>
+        <legend>LaTeX</legend>
+        <LatexPanel />
+      </fieldset>
+      <fieldset>
+        <legend>After saving</legend>
+        <label className="check">
+          <input type="checkbox" checked={settings.renderOnSave} onChange={(event) => updateSettings({ renderOnSave: event.target.checked })} />
+          <span>
+            Render a report again each time it is saved
+            <span className="hint">Once it has been rendered, so the preview keeps up with your writing</span>
+          </span>
+        </label>
+      </fieldset>
     </>
   );
 }
@@ -407,7 +682,7 @@ function MenusPane() {
   return (
     <fieldset>
       <legend>Menus</legend>
-      <p className="hint">Holding advanced tools back at first helps people learn faster. Switch whenever you like.</p>
+      <p className="hint">Hiding the advanced tools at first makes R easier to learn. You can switch any time.</p>
       <div className="choices row">
         <Radio name="layer" value="essentials" current={settings.layer} onChange={(layer) => updateSettings({ layer })}>
           <span>
@@ -422,6 +697,14 @@ function MenusPane() {
           </span>
         </Radio>
       </div>
+      {/* Saying exactly what Everything adds, read from the command list,
+          so the choice is not a guess. */}
+      <p className="hint">Everything adds these to the menus and the search, and changes nothing else:</p>
+      <ul className="menus-extra">
+        {COMMANDS.filter((command) => command.advanced).map((command) => (
+          <li key={command.id}>{command.title}</li>
+        ))}
+      </ul>
     </fieldset>
   );
 }
@@ -434,14 +717,12 @@ const TEMPLATES: { value: ProjectTemplate; label: string; note: string; Icon: ty
 ];
 
 /**
- * A project is a folder with a project file, the same .Rproj file RStudio
- * uses. People start working before they read instructions (Carroll and
- * Rosson 1987), so each template gives them something that runs on the
- * first click.
+ * A project is a folder with an .Rproj file, the same one RStudio uses.
+ * Each template starts with code that runs on the first click.
  */
 function NewProjectDialog() {
   const git = useStore((state) => state.info?.git ?? false);
-  const [template, setTemplate] = useState<ProjectTemplate>("analysis");
+  const [template, setTemplate] = useState<ProjectTemplate>(getState().ui.newProjectTemplate);
   const [name, setName] = useState("");
   const [parent, setParent] = useState("");
   const [history, setHistory] = useState(git);
@@ -474,7 +755,7 @@ function NewProjectDialog() {
   return (
     <Modal title="New project" onClose={close} wide>
       <div className="dialog-body new-project">
-        <p className="hint">A project keeps your code, data, and output together in one folder, and reopens where you left off. Only its scripts are opened by this app.</p>
+        <p className="hint">A project keeps your code, data, and output together in one folder, and reopens where you left off. This app opens only the scripts in it.</p>
         <fieldset>
           <legend>Start from</legend>
           <div className="template-grid">
@@ -542,6 +823,249 @@ function NewProjectDialog() {
         <button type="button" className="button primary" disabled={busy} onClick={create}>
           Create project
         </button>
+      </div>
+    </Modal>
+  );
+}
+
+const DOCUMENT_KINDS: { value: DocumentKind; label: string; note: string }[] = [
+  { value: "quarto", label: "Quarto", note: "The newer format. It makes PDFs without needing LaTeX, and can make books, slides, and websites too." },
+  { value: "rmarkdown", label: "R Markdown", note: "The older format, used by many courses and journals. Saved as a .Rmd file." },
+];
+
+const DOCUMENT_FORMATS: { value: DocumentFormat; label: string; note: string }[] = [
+  { value: "html", label: "Web page", note: "HTML, previewed beside the code" },
+  { value: "word", label: "Word", note: "A .docx file to edit or send" },
+  { value: "pdf", label: "PDF", note: "For printing and submitting" },
+];
+
+/**
+ * A new document starts with a header and two example chunks, so it
+ * renders straight away. Only three choices are asked here; the rest can
+ * be changed later in the header.
+ */
+function NewDocumentDialog() {
+  const [kind, setKind] = useState<DocumentKind>("quarto");
+  const [title, setTitle] = useState("");
+  const [author, setAuthor] = useState("");
+  const [format, setFormat] = useState<DocumentFormat>("html");
+  const pdfNote = kind === "rmarkdown" && format === "pdf" ? "R Markdown needs LaTeX, a large extra program, to make a PDF. To skip it, choose Render as PDF from the Render menu, which uses Quarto instead." : "";
+  return (
+    <Modal title="New document" onClose={close} wide>
+      <form
+        className="dialog-form"
+        aria-label="New document"
+        onSubmit={(event) => {
+          event.preventDefault();
+          createDocument(kind, title, author, format);
+        }}
+      >
+        <div className="dialog-body new-project">
+          <p className="hint">A document mixes writing with R code. When it renders, each chunk of code runs and its results appear in the finished report.</p>
+          <fieldset>
+            <legend>Kind</legend>
+            <div className="template-grid two">
+              {DOCUMENT_KINDS.map((item) => (
+                <label key={item.value} className={`template ${kind === item.value ? "is-on" : ""}`}>
+                  <span className="template-top">
+                    <span className="template-icon" aria-hidden="true">
+                      <ReportIcon size={20} />
+                    </span>
+                    <input type="radio" name="document-kind" checked={kind === item.value} onChange={() => setKind(item.value)} />
+                  </span>
+                  <strong>{item.label}</strong>
+                  <span className="hint">{item.note}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <div className="field-row">
+            <label className="field">
+              Title
+              <input type="text" value={title} data-autofocus onChange={(event) => setTitle(event.target.value)} placeholder="Penguin measurements" />
+            </label>
+            <label className="field">
+              <span>
+                Author <span className="muted field-optional">(optional)</span>
+              </span>
+              <input type="text" value={author} onChange={(event) => setAuthor(event.target.value)} />
+            </label>
+          </div>
+          <fieldset>
+            <legend>Renders to</legend>
+            <div className="choices row">
+              {DOCUMENT_FORMATS.map((item) => (
+                <Radio key={item.value} name="document-format" value={item.value} current={format} onChange={setFormat}>
+                  <span>
+                    <strong>{item.label}</strong>
+                    <span className="hint">{item.note}</span>
+                  </span>
+                </Radio>
+              ))}
+            </div>
+            {pdfNote && <p className="hint">{pdfNote}</p>}
+          </fieldset>
+        </div>
+        <div className="dialog-foot">
+          <span className="hint">Saved as {documentFileName(kind, title)} when you first save or render it.</span>
+          <button type="button" className="button" onClick={close}>
+            Cancel
+          </button>
+          <button type="submit" className="button primary">
+            Create document
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+// Files that are code or page parts rather than data. Anything else in an
+// app's folder is likely data, which the dialog points out before sharing.
+const CODE_FILE = /\.(R|r|js|css|html|md|qmd|Rmd|svg|png|jpg|jpeg|gif|ico|woff2?|ttf)$/;
+
+/**
+ * Sharing an app as a web page that runs R in the browser, made with
+ * shinylive, so whoever opens it needs nothing installed. Before anything
+ * is made, the dialog lists every file the page will hold and points out
+ * data among them, since anyone with the page's address can download
+ * what is in it. Nothing is uploaded: the user puts the folder on a web
+ * host of their choosing.
+ */
+function ShareAppDialog() {
+  const share = useStore((state) => state.share);
+  const platform = useStore((state) => state.info?.platform);
+  const [showLog, setShowLog] = useState(false);
+  if (!share) return null;
+  const name = baseName(share.file);
+  const files = share.bundle?.files ?? [];
+  const data = files.filter((file) => !CODE_FILE.test(file));
+  const reveal = platform === "macos" ? "Show in Finder" : "Show in folder";
+  const explained = share.failure ? explainApp(share.failure) : null;
+  // A missing package is installed in the console, where its progress
+  // shows, and the dialog closes to make room for it.
+  const install = share.status === "failed" && explained?.action?.kind === "install" ? explained.action : null;
+  return (
+    <Modal title="Share as a web page" onClose={close} wide>
+      <div className="dialog-body share-app">
+        {share.status === "ready" && (
+          <>
+            <p>
+              Makes a web page that runs <strong>{name}</strong> entirely in the browser, R included, so whoever opens it needs nothing installed. Put the folder it makes on any web host, such as GitHub Pages, Netlify, or your institution's web space, and share the address.
+            </p>
+            <section className="share-files" aria-labelledby="share-files-heading">
+              <h3 id="share-files-heading">What goes in the page</h3>
+              {share.bundle === null ? (
+                <p className="muted">Listing the app's files</p>
+              ) : (
+                <ul className="share-file-list">
+                  {files.map((file) => (
+                    <li key={file}>
+                      <code>{file}</code>
+                      {data.includes(file) && <span className="share-data">data</span>}
+                    </li>
+                  ))}
+                  {share.bundle.more && <li className="muted">and more</li>}
+                </ul>
+              )}
+              {data.length > 0 && (
+                <p className="share-warning" role="note">
+                  <WarnIcon size={15} />
+                  <span>
+                    Everything in the app's folder goes in, including {data.length === 1 ? "this data file" : `these ${data.length} data files`}. Anyone with the address can download {data.length === 1 ? "it" : "them"}. Move anything private out of the folder first, or keep the app in a folder of its own.
+                  </span>
+                </p>
+              )}
+            </section>
+            <p className="hint">Most CRAN packages work in the browser. A few that need programs outside R do not, and the page says which ones when it loads. The first time, shinylive downloads some files of its own, so you need to be online once.</p>
+          </>
+        )}
+        {share.status === "exporting" && (
+          <div className="report-progress">
+            <p role="status">Making the web version of {name}</p>
+            <progress aria-label={`Making the web version of ${name}`} />
+            {share.log.length > 0 && <p className="muted truncate">{share.log[share.log.length - 1]}</p>}
+          </div>
+        )}
+        {share.status === "done" && share.folder && (
+          <>
+            <p role="status">
+              <strong>The web version is ready</strong> in <code>{shortPath(share.folder)}</code>.
+            </p>
+            <p>Preview it here to see it as others will. To share it, upload the whole folder to a web host and send the address.</p>
+            <p className="hint">Double clicking its index.html does not work, because browsers only run R from a web address. The preview here works the way a web host does.</p>
+          </>
+        )}
+        {(share.status === "failed" || share.status === "stopped") && explained && (
+          <div className="output-error report-problem">
+            <p className="error-title">{share.status === "stopped" ? "Making the web version stopped" : explained.title}</p>
+            <p>{share.status === "stopped" ? "Nothing was shared. Make it again when you are ready." : explained.detail}</p>
+            {explained.hint && share.status !== "stopped" && (
+              <p className="error-hint">
+                <strong>Try this:</strong> {explained.hint}
+              </p>
+            )}
+          </div>
+        )}
+        {share.log.length > 0 && share.status !== "exporting" && (
+          <div className="report-log">
+            <button type="button" className="button small quiet" aria-expanded={showLog} onClick={() => setShowLog(!showLog)}>
+              {showLog ? "Hide what R printed" : "Show what R printed"}
+            </button>
+            {showLog && (
+              <pre className="output-text" tabIndex={0} aria-label="What the export printed">
+                {share.log.join("\n")}
+              </pre>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="dialog-foot">
+        {share.status === "ready" && (
+          <>
+            <span className="hint">You choose where the folder goes. Nothing is uploaded.</span>
+            <button type="button" className="button" onClick={close}>
+              Cancel
+            </button>
+            <button type="button" className="button primary" disabled={share.bundle === null} onClick={exportApp}>
+              Choose a folder and make it
+            </button>
+          </>
+        )}
+        {share.status === "exporting" && (
+          <button type="button" className="button" onClick={stopExport}>
+            Stop
+          </button>
+        )}
+        {share.status === "done" && (
+          <>
+            <button type="button" className="button" onClick={revealExport}>
+              {reveal}
+            </button>
+            <button type="button" className="button" onClick={close}>
+              Done
+            </button>
+            <button type="button" className="button primary" onClick={previewExport}>
+              Preview here
+            </button>
+          </>
+        )}
+        {(share.status === "failed" || share.status === "stopped") && (
+          <>
+            <button type="button" className="button" onClick={close}>
+              Close
+            </button>
+            {install ? (
+              <button type="button" className="button primary" onClick={() => (close(), installPackages([install.name]))}>
+                {install.label}
+              </button>
+            ) : (
+              <button type="button" className="button primary" onClick={exportApp}>
+                Make it again
+              </button>
+            )}
+          </>
+        )}
       </div>
     </Modal>
   );
@@ -671,7 +1195,7 @@ function ExportPlotDialog() {
           </div>
         </div>
         <p className="hint export-source">
-          R draws the plot again from <code>{firstLine.length > 60 ? `${firstLine.slice(0, 60)}...` : firstLine}</code>, in {plot.label}. Nothing it assigns is kept.
+          R draws the plot again from <code>{firstLine.length > 60 ? `${firstLine.slice(0, 60)}...` : firstLine}</code>, in {plot.label}. Any objects it makes are thrown away.
         </p>
         {random && (
           <p className="form-note" role="note">
@@ -1015,7 +1539,7 @@ function ChooseRDialog() {
     <Modal title="Choose which R to use" onClose={close}>
       <div className="dialog-body">
         {installs.length > 1 && (
-          <p className="hint">The app found {installs.length} installations by looking in the standard install folders. It did not read anything else on this computer. The newest is listed first.</p>
+          <p className="hint">The app found {installs.length} versions of R in the usual places. It did not look anywhere else on this computer. The newest is first.</p>
         )}
         {installs.length === 0 && <p>No R installation was found. R is free from CRAN.</p>}
         <div className="choices">
@@ -1087,18 +1611,33 @@ function InstallDialog() {
 
 function AboutDialog() {
   const info = useStore((state) => state.info);
+  // The facts are a list of label and value pairs, so a screen reader
+  // reads each as a pair and the eye finds a label down one column.
+  const facts: [string, string][] = [
+    ["Version", info?.version ?? ""],
+    ["Runs R with", `ark ${info?.arkVersion ?? ""}, by Posit Software, PBC, under the MIT License`],
+    ["License", "PolyForm Noncommercial 1.0.0"],
+    ["Copyright", "2026 Abhik Roy"],
+  ];
   return (
-    <Modal title="R: What Is It Good For?" onClose={close}>
+    <Modal title="About" onClose={close}>
       <div className="dialog-body about">
-        <img src="/icon.svg" alt="" width="72" height="72" />
-        <p>
-          Version {info?.version}. Runs R through the ark kernel, version {info?.arkVersion}.
-        </p>
-        <p>
-          Released under the PolyForm Noncommercial License 1.0.0. Copyright 2026 Abhik Roy.
-        </p>
-        <p className="hint">Includes ark by Posit Software, PBC, under the MIT License. Its license and notice are bundled with the app.</p>
-        <p className="hint">No telemetry, no accounts. Your code and data stay on this computer.</p>
+        <div className="about-head">
+          <img src="/icon.svg" alt="" width="64" height="64" />
+          <div>
+            <p className="about-name">R: What Is It Good For?</p>
+            <p className="muted">A workspace for writing R and seeing what it makes.</p>
+          </div>
+        </div>
+        <dl className="about-facts">
+          {facts.map(([label, value]) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="hint">The licenses of everything included come with the app.</p>
       </div>
       <div className="dialog-foot">
         <button type="button" className="button" onClick={() => openUrl("issues")}>
@@ -1112,12 +1651,34 @@ function AboutDialog() {
   );
 }
 
+/** Matches grouped by their section, each keeping its place in the flat
+ * list that the arrow keys move through. */
+function groupBySection<T extends { section: string }>(results: T[]) {
+  const groups: { section: string; items: { command: T; index: number }[] }[] = [];
+  results.forEach((command, index) => {
+    const group = groups.find((item) => item.section === command.section);
+    if (group) group.items.push({ command, index });
+    else groups.push({ section: command.section, items: [{ command, index }] });
+  });
+  return groups;
+}
+
 function CommandPalette() {
   const layer = useStore((state) => state.settings.layer);
   const initialQuery = useStore((state) => state.ui.paletteQuery);
   const [query, setQuery] = useState(initialQuery);
   const [selected, setSelected] = useState(0);
-  const results = useMemo(() => searchCommands(visibleCommands(layer), query), [layer, query]);
+  // A query that could be the name of an R function also offers its help
+  // page after any matching commands, so the one search field finds both.
+  const resultsFor = (text: string) => {
+    const found = [...searchCommands(visibleCommands(layer), text), ...searchSnippets(SNIPPETS, text)];
+    const name = text.trim().replace(/^\?+/, "");
+    const lookup = /^[A-Za-z.][\w.]*(::[A-Za-z.][\w.]*)?$/.test(name) ? [{ id: `help:${name}`, title: `Look up ${name} in R help`, section: "R help", keys: "" }] : [];
+    // Shown grouped by section, so the arrow keys follow the same order the
+    // eye does.
+    return groupBySection([...found, ...lookup]).flatMap((group) => group.items.map((item) => item.command));
+  };
+  const results = useMemo(() => resultsFor(query), [layer, query]);
   const list = useRef<HTMLUListElement>(null);
 
   useEffect(() => setSelected(0), [query]);
@@ -1128,15 +1689,24 @@ function CommandPalette() {
   function run(id: string) {
     togglePalette();
     // The palette closes first so a command that opens a dialog gets focus.
+    if (id.startsWith("snippet:")) {
+      setTimeout(() => insertSnippetById(id.slice(8)), 0);
+      return;
+    }
+    if (id.startsWith("help:")) {
+      const [pkg, topic] = id.slice(5).includes("::") ? id.slice(5).split("::") : ["", id.slice(5)];
+      setTimeout(() => openHelp(topic, pkg), 0);
+      return;
+    }
     setTimeout(() => runCommand(id), 0);
   }
 
   return (
-    <Modal title="Commands" onClose={() => togglePalette()} labelledBy="palette-title">
+    <Modal title="Search" onClose={() => togglePalette()} labelledBy="palette-title">
       <div className="palette">
         <label className="palette-search">
           <SearchIcon size={16} />
-          <span className="visually-hidden">Search commands</span>
+          <span className="visually-hidden">Search commands and R help</span>
           <input
             data-autofocus
             value={query}
@@ -1144,7 +1714,7 @@ function CommandPalette() {
             aria-expanded="true"
             aria-controls="palette-list"
             aria-activedescendant={results[selected] ? `cmd-${results[selected].id}` : undefined}
-            placeholder="Type a command"
+            placeholder="A command, or a function to look up, such as mean"
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "ArrowDown") {
@@ -1153,38 +1723,98 @@ function CommandPalette() {
               } else if (event.key === "ArrowUp") {
                 event.preventDefault();
                 setSelected((index) => Math.max(0, index - 1));
-              } else if (event.key === "Enter" && results[selected]) {
+              } else if (event.key === "Enter") {
+                // What is typed now decides, even when Enter comes before
+                // the list has caught up with the last key.
                 event.preventDefault();
-                run(results[selected].id);
+                const typed = event.currentTarget.value;
+                // A highlight left past the end of a list that just got
+                // shorter falls back to the first match, so Enter always
+                // does something when anything matches.
+                const choice = (typed === query ? results[selected] : undefined) ?? resultsFor(typed)[0];
+                if (choice) run(choice.id);
               }
             }}
           />
         </label>
         <ul id="palette-list" role="listbox" aria-label="Matching commands" ref={list}>
-          {results.map((command, index) => (
-            <li
-              key={command.id}
-              id={`cmd-${command.id}`}
-              role="option"
-              aria-selected={index === selected}
-              data-index={index}
-              className={index === selected ? "is-selected" : ""}
-              onMouseEnter={() => setSelected(index)}
-              onMouseDown={(event) => {
-                event.preventDefault();
-                run(command.id);
-              }}
-            >
-              <span>{command.title}</span>
-              <span className="hint">{command.section}</span>
-              {command.keys && <kbd>{keyLabel(command.keys)}</kbd>}
+          {/* Grouped under their menu's name, in the order matches come,
+              with shortcuts in one column at the right, so the list can be
+              skimmed down either edge. */}
+          {groupBySection(results).map(({ section, items }) => (
+            <li key={section} role="presentation" className="palette-group">
+              <p className="palette-heading" id={`palette-group-${section.replace(/\W+/g, "-")}`}>
+                {section}
+              </p>
+              <ul role="group" aria-labelledby={`palette-group-${section.replace(/\W+/g, "-")}`}>
+                {items.map(({ command, index }) => (
+                  <li
+                    key={command.id}
+                    id={`cmd-${command.id}`}
+                    role="option"
+                    aria-selected={index === selected}
+                    data-index={index}
+                    className={`palette-item${index === selected ? " is-selected" : ""}`}
+                    onMouseEnter={() => setSelected(index)}
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      run(command.id);
+                    }}
+                  >
+                    <span className="palette-title">{command.title}</span>
+                    <span className="palette-keys">{command.keys && <kbd>{keyLabel(command.keys)}</kbd>}</span>
+                  </li>
+                ))}
+              </ul>
             </li>
           ))}
           {results.length === 0 && <li className="muted palette-empty">No command matches. Try a shorter word.</li>}
         </ul>
         <p className="hint palette-foot">
-          {getState().settings.layer === "essentials" ? "Showing the Essentials commands. Switch to Everything in Settings for more." : "Showing every command."}
+          {getState().settings.layer === "essentials" ? "Showing the Essentials commands. Choose Everything in Settings, under Menus, for more." : "Showing every command."}
         </p>
+      </div>
+    </Modal>
+  );
+}
+
+/** Reset the app: what it puts back, listed, with the parts beyond the
+ * settings left to choose. It says plainly what is never touched. */
+function ResetAppDialog() {
+  const [choices, setChoices] = useState({ recent: false, history: false, results: false, r: false });
+  const toggle = (key: keyof typeof choices) => (event: React.ChangeEvent<HTMLInputElement>) => setChoices({ ...choices, [key]: event.target.checked });
+  return (
+    <Modal title="Reset the app" onClose={close}>
+      <div className="dialog-body">
+        <p>This puts every setting and the layout back as they were when the app was new, and shows the tour again.</p>
+        <fieldset>
+          <legend>Also reset</legend>
+          <label className="check">
+            <input type="checkbox" checked={choices.recent} onChange={toggle("recent")} />
+            <span>The lists of recent scripts and projects</span>
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={choices.history} onChange={toggle("history")} />
+            <span>Earlier versions of files</span>
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={choices.results} onChange={toggle("results")} />
+            <span>Results kept from last time</span>
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={choices.r} onChange={toggle("r")} />
+            <span>The R in use, so it is chosen again next time</span>
+          </label>
+        </fieldset>
+        <p className="hint">Your scripts, data, projects, installed packages, and downloaded models are never touched, and open tabs stay open.</p>
+      </div>
+      <div className="dialog-foot">
+        <button type="button" className="button" onClick={close}>
+          Cancel
+        </button>
+        <button type="button" className="button primary" onClick={() => resetApp(choices)}>
+          Reset the app
+        </button>
       </div>
     </Modal>
   );

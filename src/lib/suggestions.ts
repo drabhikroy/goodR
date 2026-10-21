@@ -15,7 +15,7 @@ export function codeBlocks(text: string): string[] {
  * corrected version of the code shares most of its names. One that is a
  * different step, such as install.packages() for a missing package,
  * shares few, and offering to put it in place of the original would
- * delete the person's code.
+ * delete the user's code.
  */
 export function likeness(original: string, suggestion: string): number {
   const names = (code: string) => new Set(maskNames(code));

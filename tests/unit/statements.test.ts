@@ -62,3 +62,9 @@ describe("statementAt", () => {
     expect(statementAt(all, 9)).toBeNull();
   });
 });
+
+describe("statementRanges with escaped newlines", () => {
+  it("counts a newline escaped inside a string", () => {
+    expect(ranges('x <- "one\\\ntwo"\ny <- 2')).toEqual([[0, 1], [2, 2]]);
+  });
+});

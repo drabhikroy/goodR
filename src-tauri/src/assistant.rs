@@ -109,7 +109,7 @@ pub async fn assistant_connect(state: State<'_, AssistantState>, route: String) 
         _ => return Err("Choose the Ollama on this computer or the private copy.".into()),
     };
     let client = Client::new(url).map_err(text_error)?;
-    // Only a server that is not answering is started. One the person runs
+    // Only a server that is not answering is started. One the user runs
     // already is used as it is and never stopped by the app.
     if client.version().await.is_err() {
         let child = if route == "private" {
@@ -139,7 +139,7 @@ pub async fn assistant_connect(state: State<'_, AssistantState>, route: String) 
 }
 
 /// This computer's memory, disk, and chip. The interface calls this only
-/// after the person agrees to the check.
+/// after the user agrees to the check.
 #[tauri::command]
 pub fn assistant_specs(state: State<'_, AssistantState>) -> Specs {
     specs::read(&state.paths.models())

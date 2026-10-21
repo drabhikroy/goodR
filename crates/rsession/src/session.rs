@@ -60,7 +60,7 @@ pub enum Event {
         update: bool,
     },
     Error { run: String, message: String, traceback: Vec<String> },
-    /// `stopped` is true when the run ended because the person pressed Stop.
+    /// `stopped` is true when the run ended because the user pressed Stop.
     /// ark reports an interrupted run as successful, so we track it ourselves.
     Done { run: String, ok: bool, stopped: bool },
     /// R called readline(), menu(), or similar and is waiting for an answer.
@@ -203,7 +203,7 @@ impl Session {
         Err(anyhow!("R did not start within {} seconds:\n{}", START_TIMEOUT.as_secs(), log_tail(&self.log_path)))
     }
 
-    /// Runs code the person asked for. Output arrives as events tagged with
+    /// Runs code the user asked for. Output arrives as events tagged with
     /// the returned run id.
     pub async fn execute(&self, code: &str) -> Result<String> {
         self.send_execute(code, true, None, None).await
@@ -254,7 +254,11 @@ impl Session {
             run_id.clone(),
             Run { visible, stopped: false, idle: false, ok: None, stdout: String::new(), error: None, waiter },
         );
-        self.send(&self.shell, &msg).await?;
+        // A run whose request never left is forgotten, so nothing waits on it.
+        if let Err(error) = self.send(&self.shell, &msg).await {
+            self.shared.runs.lock().unwrap().remove(&run_id);
+            return Err(error);
+        }
         Ok(run_id)
     }
 
@@ -312,7 +316,10 @@ impl Session {
         let (tx, rx) = oneshot::channel();
         let id = msg.msg_id().to_string();
         self.shared.replies.lock().unwrap().insert(id.clone(), tx);
-        self.send(socket, &msg).await?;
+        if let Err(error) = self.send(socket, &msg).await {
+            self.shared.replies.lock().unwrap().remove(&id);
+            return Err(error);
+        }
         let outcome = tokio::time::timeout(timeout, rx).await;
         self.shared.replies.lock().unwrap().remove(&id);
         match outcome {

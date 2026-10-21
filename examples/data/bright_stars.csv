@@ -1,0 +1,895 @@
+"name","constellation","magnitude","distance_ly","temperature_k","color","class","kind","luminosity_sun","ra_hours","dec_degrees"
+"Sirius","Canis Major",-1.44,8.6,10000,"#CADAFF","A","not recorded",22.8,6.752,-16.716
+"Canopus","Carina",-0.62,309.2,8500,"#D7E2FF","F","supergiant",13900,6.399,-52.696
+"Arcturus","Bootes",-0.05,36.7,4200,"#FFD3AF","K","giant",116,14.261,19.182
+"Rigil Kentaurus","Centaurus",-0.01,4.3,5600,"#FFEFE1","G","main sequence",1.54,14.661,-60.834
+"Vega","Lyra",0.03,25,10100,"#C9DAFF","A","main sequence",49.9,18.616,38.784
+"Capella","Auriga",0.08,42.8,5300,"#FFEAD8","M","not recorded",139,5.278,45.998
+"Rigel","Orion",0.18,862.8,10500,"#C7D8FF","B","supergiant",51700,5.242,-8.202
+"Procyon","Canis Minor",0.4,11.5,6700,"#FEF9FF","F","subgiant",7.44,7.655,5.225
+"Achernar","Eridanus",0.45,139.4,12700,"#BCD2FF","B","main sequence",1050,1.629,-57.237
+"Betelgeuse","Orion",0.45,497.9,3800,"#FFC99D","M","supergiant",13400,5.92,7.407
+"Hadar","Centaurus",0.61,392,14400,"#B7CEFF","B","giant",7170,14.064,-60.373
+"Altair","Aquila",0.76,16.7,8000,"#DDE6FF","A","subgiant",11.4,19.846,8.868
+"Acrux","Crux",0.77,322,14700,"#B6CEFF","B","subgiant",4180,12.443,-63.099
+"Aldebaran","Taurus",0.87,66.6,3700,"#FFC697","K","giant",163,4.599,16.509
+"Spica","Virgo",0.98,249.7,14500,"#B6CEFF","B","main sequence",2070,13.42,-11.161
+"Antares","Scorpius",1.06,553.7,3300,"#FFBB81","M","supergiant",9450,16.49,-26.432
+"Pollux","Gemini",1.16,33.8,4800,"#FFE0C7","K","giant",32.1,7.755,28.026
+"Fomalhaut","Piscis Austrinus",1.17,25.1,8600,"#D6E1FF","A","main sequence",17.6,22.961,-29.622
+"Mimosa","Crux",1.25,278.5,14600,"#B6CEFF","B","giant",2010,12.795,-59.689
+"Deneb","Cygnus",1.25,1411.9,9100,"#D1DEFF","A","supergiant",51600,20.691,45.28
+"Toliman","Centaurus",1.35,4.3,5000,"#FFE4CE","K","main sequence",0.441,14.66,-60.838
+"Regulus","Leo",1.36,79.3,11400,"#C2D5FF","B","main sequence",147,10.14,11.967
+"Adhara","Canis Major",1.5,405.2,13900,"#B8CFFF","B","giant",3380,6.977,-28.972
+"Castor","Gemini",1.58,50.9,9700,"#CCDBFF","A","main sequence",49.4,7.577,31.888
+"Gacrux","Crux",1.59,88.6,3600,"#FFC392","M","giant",148,12.519,-57.113
+"Shaula","Scorpius",1.62,571.2,14400,"#B7CEFF","B","subgiant",6010,17.56,-37.104
+"Bellatrix","Orion",1.64,252.4,14200,"#B7CFFF","B","giant",1150,5.419,6.35
+"Elnath","Taurus",1.65,133.9,12100,"#BFD3FF","B","giant",321,5.438,28.607
+"Miaplacidus","Carina",1.67,113.2,9300,"#CFDDFF","A","subgiant",225,9.22,-69.717
+"Alnilam","Orion",1.69,1976.7,13200,"#BBD1FF","B","supergiant",67500,5.604,-1.202
+"Alnair","Grus",1.73,101,11100,"#C3D6FF","B","subgiant",170,22.137,-46.961
+"Alnitak","Orion",1.74,736.2,13600,"#B9D0FF","O","supergiant",8940,5.679,-1.943
+"Gamma Vela","Vela",1.75,1117,12400,"#BDD2FF",,"not recorded",20400,8.159,-47.337
+"Alioth","Ursa Major",1.76,82.6,10400,"#C7D9FF","A","not recorded",110,12.9,55.96
+"Mirfak","Perseus",1.79,506.5,6500,"#FFFEFA","F","supergiant",4040,3.405,49.861
+"Kaus Australis","Sagittarius",1.79,143.3,10500,"#C7D8FF","B","giant",323,18.403,-34.385
+"Dubhe","Ursa Major",1.81,122.9,4600,"#FFDCBF","F","main sequence",233,11.062,61.751
+"Wezen","Canis Major",1.83,1606.7,5700,"#FFF1E4","F","supergiant",39200,7.14,-26.393
+"Alkaid","Ursa Major",1.85,103.9,11600,"#C1D5FF","B","main sequence",161,13.792,49.313
+"Avior","Carina",1.86,605.1,4300,"#FFD5B3","K","giant",5410,8.375,-59.509
+"Sargas","Scorpius",1.86,300.3,6800,"#FAF6FF","F","giant",1330,17.622,-42.998
+"Menkalinan","Auriga",1.9,81.1,9300,"#CFDDFF","A","main sequence",93.6,5.992,44.947
+"Atria","Triangulum Australe",1.91,390.6,3900,"#FFCBA1","K","giant",2150,16.811,-69.028
+"Alhena","Gemini",1.93,109.3,10100,"#C9DAFF","A","subgiant",165,6.629,16.399
+"Alsephina","Vela",1.93,80.6,9600,"#CDDCFF","A","main sequence",89.8,8.745,-54.709
+"Peacock","Pavo",1.94,178.8,11900,"#C0D4FF","B","subgiant",439,20.427,-56.735
+"Polaris","Ursa Minor",1.97,432.6,5800,"#FFF3E7","F","not recorded",2500,2.53,89.264
+"Mirzam","Canis Major",1.98,492.7,14600,"#B6CEFF","B","giant",3210,6.378,-17.956
+"Alphard","Hydra",1.99,180.3,3900,"#FFCBA1","K","giant",426,9.46,-8.659
+"Hamal","Aries",2.01,65.8,4400,"#FFD7B7","K","giant",55.7,2.12,23.462
+"Algieba","Leo",2.01,130.1,4500,"#FFDABB","K","giant",218,10.333,19.841
+"Diphda","Cetus",2.04,96.3,4700,"#FFDEC3","K","giant",116,0.726,-17.987
+"Nunki","Sagittarius",2.05,227.8,12200,"#BED3FF","B","main sequence",643,18.921,-26.297
+"Menkent","Centaurus",2.06,58.8,4700,"#FFDEC3","K","giant",42.5,14.111,-36.37
+"Alpheratz","Andromeda",2.07,97,10600,"#C6D8FF","B","not recorded",114,0.14,29.09
+"Mirach","Andromeda",2.07,197.4,3700,"#FFC697","M","giant",474,1.162,35.621
+"Saiph","Orion",2.07,647.1,12900,"#BCD1FF","B","supergiant",5100,5.796,-9.67
+"Kochab","Ursa Minor",2.07,130.9,3800,"#FFC99D","K","giant",209,14.845,74.156
+"Tiaki","Grus",2.07,177,3600,"#FFC392","M","giant",381,22.711,-46.885
+"Rasalhague","Ophiuchus",2.08,48.6,8500,"#D7E2FF","A","giant",28.4,17.582,12.56
+"Algol","Perseus",2.09,89.9,10200,"#C8D9FF","B","main sequence",96.6,3.136,40.956
+"Almach","Andromeda",2.1,393,4000,"#FFCEA6","B","main sequence",1830,2.065,42.33
+"Denebola","Leo",2.14,35.9,9100,"#D1DEFF","A","main sequence",14.7,11.818,14.572
+"Cih","Cassiopeia",2.15,549.1,10700,"#C5D7FF","B","subgiant",3410,0.945,60.717
+"Gamma Centaurus","Centaurus",2.2,130.1,10400,"#C7D9FF","A","subgiant",183,12.692,-48.96
+"Naos","Puppis",2.21,1083.6,15500,"#B4CCFF","O","supergiant",12600,8.06,-40.003
+"Aspidiske","Carina",2.21,765.6,8200,"#DAE4FF","A","supergiant",6270,9.285,-59.275
+"Alphecca","Corona Borealis",2.22,75,9700,"#CCDBFF","A","main sequence",59.7,15.578,26.715
+"Suhail","Vela",2.23,544.5,3600,"#FFC392","K","supergiant",3110,9.133,-43.433
+"Mizar","Ursa Major",2.23,85.8,9500,"#CDDCFF","A","main sequence",77.3,13.399,54.925
+"Sadr","Cygnus",2.23,1832.3,5700,"#FFF1E4","F","supergiant",35300,20.37,40.257
+"Schedar","Cassiopeia",2.24,228.2,4400,"#FFD7B7","K","giant",542,0.675,56.537
+"Eltanin","Draco",2.24,154.3,3800,"#FFC99D","K","giant",248,17.943,51.489
+"Mintaka","Orion",2.25,692.5,13000,"#BBD1FF","O","giant",4940,5.533,-0.299
+"Caph","Cassiopeia",2.28,54.7,7000,"#F3F2FF","F","giant",30.1,0.153,59.15
+"Epsilon Centaurus","Centaurus",2.29,427.5,12900,"#BCD1FF","B","giant",1810,13.665,-53.466
+"Dschubba","Scorpius",2.29,491.2,11900,"#C0D4FF","B","subgiant",2400,16.006,-22.622
+"Larawag","Scorpius",2.29,63.7,4400,"#FFD7B7","K","giant",40.3,16.836,-34.293
+"Alpha Lupus","Lupus",2.3,464.6,12600,"#BDD2FF","B","giant",2120,14.699,-47.388
+"Eta Centaurus","Centaurus",2.33,305.7,12600,"#BDD2FF","B","main sequence",895,14.592,-42.158
+"Merak","Ursa Major",2.34,79.7,9700,"#CCDBFF","A","main sequence",60.3,11.031,56.382
+"Izar","Bootes",2.35,202.6,4800,"#FFE0C7","A","not recorded",386,14.75,27.074
+"Enif","Pegasus",2.38,689.5,3800,"#FFC99D","K","supergiant",4350,21.736,9.875
+"Kappa Scorpius","Scorpius",2.39,483.2,12900,"#BCD1FF","B","giant",2110,17.708,-39.03
+"Ankaa","Phoenix",2.4,84.7,4600,"#FFDCBF","K","giant",64.4,0.438,-42.306
+"Phecda","Ursa Major",2.41,83.2,9600,"#CDDCFF","A","main sequence",61.5,11.897,53.695
+"Sabik","Ophiuchus",2.43,88.4,9400,"#CEDDFF","A","main sequence",68.2,17.173,-15.725
+"Scheat","Pegasus",2.44,196,3600,"#FFC392","M","giant",332,23.063,28.083
+"Aludra","Canis Major",2.45,1988.8,11300,"#C2D5FF","B","supergiant",33900,7.402,-29.303
+"Alderamin","Cepheus",2.45,49,7700,"#E2E9FF","A","subgiant",20.6,21.31,62.586
+"Markeb","Vela",2.47,572.2,12300,"#BED3FF","B","subgiant",2760,9.369,-55.011
+"Aljanah","Cygnus",2.48,72.7,4700,"#FFDEC3","K","giant",44.1,20.77,33.97
+"Markab","Pegasus",2.49,133.3,10200,"#C8D9FF","B","giant",147,23.079,15.205
+"Menkar","Cetus",2.54,249.2,3600,"#FFC392","M","giant",490,3.038,4.09
+"Zeta Ophiuchus","Ophiuchus",2.54,366.1,9700,"#CCDBFF","O","main sequence",1060,16.619,-10.567
+"Zeta Centaurus","Centaurus",2.55,381.9,13000,"#BBD1FF","B","subgiant",1140,13.926,-47.288
+"Zosma","Leo",2.56,58.4,8800,"#D4E0FF","A","main sequence",26.4,11.235,20.524
+"Acrab","Scorpius",2.56,404.2,11000,"#C4D6FF","B","main sequence",1270,16.091,-19.805
+"Arneb","Lepus",2.58,2218.7,8100,"#DCE5FF","F","supergiant",37400,5.546,-17.822
+"Delta Centaurus","Centaurus",2.58,415,12100,"#BFD3FF","B","subgiant",1310,12.139,-50.722
+"Gienah","Corvus",2.58,153.6,11700,"#C0D4FF","B","giant",179,12.263,-17.542
+"Ascella","Sagittarius",2.6,88.2,9400,"#CEDDFF","A","subgiant",58.1,19.044,-29.88
+"Zubeneschamali","Libra",2.61,185.1,11100,"#C3D6FF","B","main sequence",254,15.283,-9.383
+"Unukalhai","Serpens",2.63,74,4400,"#FFD7B7","K","giant",39.7,15.738,6.426
+"Sheratan","Aries",2.64,58.7,8400,"#D8E3FF","A","main sequence",24.8,1.911,20.808
+"Phact","Columba",2.65,261.3,11900,"#C0D4FF","B","subgiant",487,5.661,-34.074
+"Mahasim","Auriga",2.65,165.6,11300,"#C2D5FF","A","not recorded",196,5.995,37.213
+"Kraz","Corvus",2.65,145.7,5000,"#FFE4CE","G","giant",151,12.573,-23.397
+"Ruchbah","Cassiopeia",2.66,99.4,8500,"#D7E2FF","A","main sequence",69.8,1.43,60.235
+"Muphrid","Bootes",2.68,37.2,6000,"#FFF6ED","G","subgiant",9.59,13.911,18.398
+"Beta Lupus","Lupus",2.68,382.8,13200,"#BBD1FF","B","giant",1020,14.976,-43.134
+"Hassaleh","Auriga",2.69,493.4,3800,"#FFC99D","K","giant",1670,4.95,33.166
+"Mu Vela","Vela",2.69,117.2,5000,"#FFE4CE","G","giant",94.4,10.779,-49.42
+"Alpha Musca","Musca",2.69,315.4,13000,"#BBD1FF","B","subgiant",684,12.62,-69.136
+"Lesath","Scorpius",2.7,576.2,13100,"#BBD1FF","B","subgiant",2260,17.513,-37.296
+"Pi Puppis","Puppis",2.71,807.3,3600,"#FFC392","K","supergiant",4400,7.286,-37.097
+"Kaus Media","Sagittarius",2.72,347.7,4000,"#FFCEA6","K","giant",808,18.35,-29.828
+"Tarazed","Aquila",2.72,394.9,3800,"#FFC99D","K","giant",1040,19.771,10.613
+"Yed Prior","Ophiuchus",2.73,171.1,3700,"#FFC697","M","giant",194,16.239,-3.694
+"Athebyne","Draco",2.73,92.1,5000,"#FFE4CE","G","giant",56.2,16.4,61.514
+"Theta Carina","Carina",2.74,455.5,14100,"#B8CFFF","B","main sequence",1360,10.716,-64.394
+"Porrima","Virgo",2.74,38.1,7100,"#F0F0FF","F","main sequence",9.53,12.694,-1.449
+"Hatysa","Orion",2.75,2329.7,13800,"#B9CFFF","O","giant",35300,5.591,-5.91
+"Iota Centaurus","Centaurus",2.75,58.8,9300,"#CFDDFF","A","main sequence",22.5,13.343,-36.712
+"Zubenelgenubi","Libra",2.75,75.8,8600,"#D6E1FF","A","subgiant",37.4,14.848,-16.042
+"Cebalrai","Ophiuchus",2.76,81.8,4400,"#FFD7B7","K","giant",43.2,17.725,4.567
+"Cursa","Eridanus",2.78,89.4,8500,"#D7E2FF","A","giant",50.5,5.131,-5.086
+"Kornephoros","Hercules",2.78,139.1,4900,"#FFE2CA","G","giant",122,16.504,21.49
+"Rasalgethi","Hercules",2.78,359.6,4400,"#FFD7B7","M","giant",818,17.244,14.39
+"Imai","Crux",2.79,345.1,13400,"#BAD0FF","B","subgiant",747,12.252,-58.749
+"Rastaban","Draco",2.79,380.1,4900,"#FFE2CA","G","giant",906,17.507,52.301
+"Gamma Lupus","Lupus",2.8,420.8,14000,"#B8CFFF","B","subgiant",1100,15.586,-41.167
+"Nihal","Lepus",2.81,160.4,5300,"#FFEAD8","G","giant",158,5.471,-20.759
+"Zeta Hercules","Hercules",2.81,35,5800,"#FFF3E7","F","subgiant",7.52,16.688,31.603
+"Beta Hydrus","Hydrus",2.82,24.3,5900,"#FFF4EA","G","subgiant",3.61,0.428,-77.254
+"Paikauhale","Scorpius",2.82,474.1,13700,"#B9D0FF","B","main sequence",1370,16.598,-28.216
+"Kaus Borealis","Sagittarius",2.82,78.2,4700,"#FFDEC3","K","giant",37.3,18.466,-25.422
+"Algenib","Pegasus",2.83,391.5,13300,"#BAD0FF","B","subgiant",926,0.221,15.184
+"Tureis","Puppis",2.83,63.5,6600,"#FFFFFF","F","not recorded",24.4,8.126,-24.304
+"Beta Triangulum Australe","Triangulum Australe",2.83,40.4,7400,"#E8ECFF","F","giant",9.84,15.919,-63.431
+"Zeta Perseus","Perseus",2.84,751.5,7700,"#E2E9FF","B","supergiant",3380,3.902,31.884
+"Beta Ara","Ara",2.84,645.9,3800,"#FFC99D","K","supergiant",2500,17.422,-55.53
+"Alpha Ara","Ara",2.84,267.3,12200,"#BED3FF","B","main sequence",428,17.531,-49.876
+"Alcyone","Taurus",2.85,403.2,11300,"#C2D5FF","B","giant",964,3.791,24.105
+"Vindemiatrix","Virgo",2.85,109.6,4900,"#FFE2CA","G","giant",71.3,13.036,10.959
+"Deneb Algedi","Capricornus",2.85,38.7,8300,"#D9E3FF","A","not recorded",8.89,21.784,-16.127
+"Alpha Hydrus","Hydrus",2.86,71.8,7500,"#E6EBFF","F","main sequence",30.3,1.979,-61.57
+"Fawaris","Cygnus",2.86,165,10200,"#C8D9FF","B","giant",160,19.75,45.131
+"Tejat","Gemini",2.87,231.6,3600,"#FFC392","M","giant",312,6.383,22.514
+"Gamma Triangulum Australe","Triangulum Australe",2.87,183.9,10000,"#CADAFF","A","main sequence",197,15.315,-68.68
+"Alpha Tucana","Tucana",2.87,199.7,4000,"#FFCEA6","K","giant",232,22.308,-60.26
+"Acamar","Eridanus",2.88,161.2,8800,"#D4E0FF","A","giant",150,2.971,-40.305
+"Albaldah","Sagittarius",2.88,509.6,7000,"#F3F2FF","F","giant",1500,19.163,-21.024
+"Gomeisa","Canis Minor",2.89,161.7,11500,"#C1D5FF","B","main sequence",149,7.453,8.289
+"Cor Caroli","Canes Venatici",2.89,114.8,11800,"#C0D4FF","A","not recorded",75.4,12.934,38.318
+"Fang","Scorpius",2.89,585.6,13100,"#BBD1FF","B","main sequence",1960,15.981,-26.114
+"Epsilon Perseus","Perseus",2.9,638.3,13600,"#B9D0FF","B","main sequence",2310,3.964,40.01
+"Alniyat","Scorpius",2.9,696.9,7500,"#E6EBFF","B","giant",2750,16.353,-25.593
+"Sadalsuud","Aquarius",2.9,537.3,5200,"#FFE8D5","G","supergiant",1640,21.526,-5.571
+"Gamma Perseus","Perseus",2.91,243.2,5500,"#FFEDDE","G","giant",332,3.08,53.506
+"Upsilon Carina","Carina",2.92,1436.8,7600,"#E4EAFF","A","not recorded",11500,9.785,-65.072
+"Matar","Pegasus",2.93,214.3,5100,"#FFE6D1","G","giant",253,22.717,30.221
+"Tau Puppis","Puppis",2.94,182,4300,"#FFD5B3","K","giant",181,6.832,-50.615
+"Algorab","Corvus",2.94,86.9,10300,"#C8D9FF","B","main sequence",41.2,12.498,-16.515
+"Sadalmelik","Aquarius",2.95,523.5,4800,"#FFE0C7","G","supergiant",1480,22.096,-0.32
+"Zaurak","Eridanus",2.97,203.3,3700,"#FFC697","M","giant",220,3.967,-13.509
+"Tianguan","Taurus",2.97,445,12400,"#BDD2FF","B","giant",1050,5.627,21.143
+"Ras Elased Australis","Leo",2.97,246.7,5300,"#FFEAD8","G","giant",323,9.764,23.774
+"Alnasl","Sagittarius",2.98,96.9,4800,"#FFE0C7","K","giant",49.4,18.097,-30.424
+"Gamma Hydra","Hydra",2.99,133.8,4900,"#FFE2CA","G","giant",93.4,13.315,-23.172
+"Iota Scorpius","Scorpius",2.99,1929.9,6300,"#FFFBF5","F","supergiant",19400,17.793,-40.127
+"Okab","Aquila",2.99,83,10000,"#CADAFF","A","main sequence",35.9,19.09,13.863
+"Beta Triangulum","Triangulum",3,126.9,8700,"#D5E1FF","A","giant",83.1,2.159,34.987
+"Psi Ursa Major","Ursa Major",3,144.5,4400,"#FFD7B7","K","giant",108,11.161,44.498
+"Pherkad","Ursa Minor",3,486.8,9500,"#CDDCFF","A","giant",1220,15.345,71.834
+"Xamidimura","Scorpius",3,501,13600,"#B9D0FF","B","subgiant",1300,16.865,-38.047
+"Aldhanab","Grus",3,211.1,11300,"#C2D5FF","B","giant",230,21.899,-37.365
+"Delta Perseus","Perseus",3.01,516.1,12000,"#BFD3FF","B","giant",1360,3.715,47.788
+"Furud","Canis Major",3.02,362.4,12700,"#BCD2FF","B","main sequence",666,6.339,-30.063
+"Omicron Canis Major","Canis Major",3.02,2764,11200,"#C3D6FF","B","supergiant",38800,7.05,-23.833
+"Epsilon Corvus","Corvus",3.02,317.9,4100,"#FFD0AB","K","giant",512,12.169,-22.62
+"Almaaz","Auriga",3.03,2131.7,6200,"#FFF9F2","F","supergiant",22800,5.033,43.823
+"Beta Musca","Musca",3.04,341.5,13100,"#BBD1FF","B","main sequence",581,12.771,-68.108
+"Seginus","Bootes",3.04,86.8,8200,"#DAE4FF","A","giant",37.5,14.535,38.308
+"Albireo","Cygnus",3.05,434.3,4500,"#FFDABB","K","giant",931,19.512,27.96
+"Dabih","Capricornus",3.05,326.8,5300,"#FFEAD8","A","not recorded",527,20.35,-14.781
+"Mebsuta","Gemini",3.06,845,4000,"#FFCEA6","A","not recorded",3490,6.732,25.131
+"Tania Australis","Ursa Major",3.06,230.3,3600,"#FFC392","M","giant",259,10.372,41.5
+"Altais","Draco",3.07,97.4,4800,"#FFE0C7","G","giant",46,19.209,67.662
+"Eta Sagittarius","Sagittarius",3.1,145.9,3700,"#FFC697","M","giant",100,18.294,-36.762
+"Zeta Hydra","Hydra",3.11,167.2,4800,"#FFE0C7","G","giant",130,8.923,5.946
+"Nu Hydra","Hydra",3.11,143.7,4200,"#FFD3AF","K","not recorded",96.5,10.827,-16.194
+"Lambda Centaurus","Centaurus",3.11,419.8,10700,"#C5D7FF","B","giant",823,11.596,-63.02
+"Alpha Indus","Indus",3.11,98.3,4700,"#FFDEC3","K","giant",45.1,20.626,-47.292
+"Wazn","Columba",3.12,87.2,4400,"#FFD7B7","K","giant",35.2,5.849,-35.768
+"Talitha","Ursa Major",3.12,47.3,8000,"#DDE6FF","A","subgiant",10.4,8.987,48.042
+"Zeta Ara","Ara",3.12,486.1,3700,"#FFC697","K","giant",1090,16.977,-55.99
+"Sarin","Hercules",3.12,75.1,9200,"#D0DEFF","A","subgiant",26.1,17.251,24.839
+"Kappa Centaurus","Centaurus",3.13,383.3,13800,"#B9CFFF","B","subgiant",673,14.986,-42.104
+"Alpha Lynx","Lynx",3.14,203.1,3700,"#FFC697","M","giant",187,9.351,34.393
+"HR 3803","Vela",3.16,238.9,3700,"#FFC697","K","giant",254,9.52,-57.034
+"Pi Hercules","Hercules",3.16,376.6,3900,"#FFCBA1","K","giant",632,17.251,36.809
+"Nu Puppis","Puppis",3.17,371.5,11600,"#C1D5FF","B","giant",610,6.629,-43.196
+"Theta Ursa Major","Ursa Major",3.17,44,6500,"#FFFEFA","F","subgiant",8.53,9.548,51.677
+"Aldhibah","Draco",3.17,328.5,11900,"#C0D4FF","B","giant",476,17.146,65.715
+"Phi Sagittarius","Sagittarius",3.17,239.3,11700,"#C0D4FF","B","giant",253,18.761,-26.991
+"Haedus","Auriga",3.18,243.4,12400,"#BDD2FF","B","main sequence",259,5.109,41.234
+"Alpha Circinus","Circinus",3.18,54,7800,"#E0E8FF","F","main sequence",12.8,14.708,-64.975
+"Tabit","Orion",3.19,26.3,6500,"#FFFEFA","F","main sequence",3,4.831,6.961
+"Epsilon Lepus","Lepus",3.19,213.3,3900,"#FFCBA1","K","giant",197,5.091,-22.371
+"Kappa Ophiuchus","Ophiuchus",3.19,91.5,4400,"#FFD7B7","K","giant",36.3,16.961,9.375
+"Fuyue","Scorpius",3.19,125.8,4300,"#FFD5B3","K","not recorded",68.7,17.831,-37.043
+"Zeta Cygnus","Cygnus",3.21,143.1,4800,"#FFE0C7","G","giant",87.2,21.216,30.227
+"Errai","Cepheus",3.21,46,4700,"#FFDEC3","K","subgiant",9,23.656,77.632
+"Delta Lupus","Lupus",3.22,883.9,14300,"#B7CEFF","B","subgiant",3300,15.356,-40.648
+"Yed Posterior","Ophiuchus",3.23,106.4,4800,"#FFE0C7","G","giant",47.4,16.305,-4.693
+"Eta Serpens","Serpens",3.23,60.5,4900,"#FFE2CA","K","giant",15.3,18.355,-2.899
+"Alfirk","Cepheus",3.23,685.2,13600,"#B9D0FF","B","giant",1960,21.478,70.561
+"Alpha Pictor","Pictor",3.24,96.6,8000,"#DDE6FF","A","subgiant",38.6,6.803,-61.941
+"Theta Aquila","Aquila",3.24,286.4,11000,"#C4D6FF","B","giant",339,20.188,-0.821
+"Sigma Puppis","Puppis",3.25,193.7,3800,"#FFC99D","K","giant",154,7.487,-43.301
+"Pi Hydra","Hydra",3.25,101,4500,"#FFDABB","K","giant",41.8,14.106,-26.682
+"Brachium","Libra",3.25,288.4,3500,"#FFC18D","M","not recorded",341,15.068,-25.282
+"Sulafat","Lyra",3.25,620.1,10800,"#C5D7FF","B","giant",1580,18.982,32.69
+"Gamma Hydrus","Hydrus",3.26,214,3700,"#FFC697","M","giant",186,3.787,-74.239
+"Delta Andromeda","Andromeda",3.27,105.5,4200,"#FFD3AF","K","giant",44.9,0.655,30.861
+"Theta Ophiuchus","Ophiuchus",3.27,436,13300,"#BAD0FF","B","subgiant",766,17.367,-25
+"Skat","Aquarius",3.27,160.6,9400,"#CEDDFF","A","main sequence",104,22.911,-15.821
+"Mu Lepus","Lepus",3.29,185.9,11700,"#C0D4FF","B","subgiant",137,5.216,-16.205
+"Omega Carina","Carina",3.29,341.9,11200,"#C3D6FF","B","giant",462,10.229,-70.038
+"Edasich","Draco",3.29,101.2,4400,"#FFD7B7","K","giant",40.5,15.415,58.966
+"Alpha Dorado","Dorado",3.3,168.6,11200,"#C3D6FF","A","main sequence",111,4.567,-55.045
+"HR 4140","Carina",3.3,483.2,11400,"#C2D5FF","B","main sequence",915,10.534,-61.685
+"Propus","Gemini",3.31,384.6,3600,"#FFC392","M","giant",574,6.248,22.507
+"Gamma Ara","Ara",3.31,1113.2,12500,"#BDD2FF","B","supergiant",4810,17.423,-56.378
+"Rho Perseus","Perseus",3.32,307.7,3800,"#FFC99D","M","giant",364,3.086,38.84
+"Megrez","Ursa Major",3.32,80.5,9300,"#CFDDFF","A","main sequence",24.9,12.257,57.033
+"Eta Scorpius","Scorpius",3.32,73.5,6700,"#FEF9FF","F","not recorded",20.8,17.203,-43.239
+"Nu Ophiuchus","Ophiuchus",3.32,150.7,4800,"#FFE0C7","K","giant",87.4,17.984,-9.774
+"Tau Sagittarius","Sagittarius",3.32,121.6,4400,"#FFD7B7","K","not recorded",56.9,19.116,-27.67
+"Alpha Reticulum","Reticulum",3.33,161.6,5000,"#FFE4CE","G","giant",99.5,4.24,-62.474
+"Chertan","Leo",3.33,165.1,10200,"#C8D9FF","A","main sequence",104,11.237,15.43
+"Azmidi","Puppis",3.34,1199.1,4300,"#FFD5B3","G","supergiant",5430,7.822,-24.86
+"Segin","Cassiopeia",3.35,411.8,12500,"#BDD2FF","B","not recorded",634,1.907,63.67
+"Eta Orion","Orion",3.35,976.5,14600,"#B6CEFF","B","main sequence",3570,5.408,-2.397
+"Alzirr","Gemini",3.35,58.7,6700,"#FEF9FF","F","subgiant",12.9,6.755,12.896
+"Muscida","Ursa Major",3.35,179.1,5100,"#FFE6D1","G","giant",120,8.504,60.718
+"Delta Aquila","Aquila",3.36,50.6,7300,"#EAEDFF","F","subgiant",9.51,19.425,3.115
+"Epsilon Lupus","Lupus",3.37,512,13400,"#BAD0FF","B","subgiant",963,15.378,-44.69
+"Ashlesha","Hydra",3.38,129.3,5700,"#FFF1E4","G","giant",60.8,8.78,6.419
+"Heze","Virgo",3.38,74.1,8900,"#D3DFFF","A","main sequence",20,13.578,-0.596
+"Meissa","Orion",3.39,1098.2,12700,"#BCD2FF","O","not recorded",4350,5.586,9.934
+"HR 4050","Carina",3.39,657.6,3700,"#FFC697","K","giant",1560,10.285,-61.332
+"Minelauva","Virgo",3.39,198.4,3700,"#FFC697","M","giant",142,12.927,3.397
+"Zeta Cepheus","Cepheus",3.39,836.3,3700,"#FFC697","K","supergiant",2520,22.181,58.201
+"Chamukuy","Taurus",3.4,150.4,8300,"#D9E3FF","A","giant",80.8,4.478,15.871
+"Gamma Phoenix","Phoenix",3.41,233.6,3700,"#FFC697","K","giant",193,1.473,-43.318
+"Lambda Taurus","Taurus",3.41,483.9,11600,"#C1D5FF","B","main sequence",829,4.011,12.49
+"Nu Centaurus","Centaurus",3.41,436.6,14200,"#B7CFFF","B","subgiant",675,13.825,-41.688
+"Zeta Lupus","Lupus",3.41,117.3,4900,"#FFE2CA","G","giant",48.8,15.205,-52.099
+"Eta Cepheus","Cepheus",3.41,46.5,5000,"#FFE4CE","K","subgiant",7.66,20.755,61.839
+"Homam","Pegasus",3.41,204.4,11300,"#C2D5FF","B","main sequence",148,22.691,10.831
+"Mothallah","Triangulum",3.42,63.3,6400,"#FFFDF8","F","subgiant",14.1,1.885,29.579
+"Eta Lupus","Lupus",3.42,441.9,13700,"#B9D0FF","B","subgiant",685,16.002,-38.397
+"Mu Hercules","Hercules",3.42,27.1,5400,"#FFECDB","G","subgiant",2.58,17.774,27.721
+"Beta Pavo","Pavo",3.42,135.1,8500,"#D7E2FF","A","subgiant",64,20.749,-66.203
+"HR 3659","Carina",3.43,446.8,13300,"#BAD0FF","B","subgiant",694,9.183,-58.967
+"Adhafera","Leo",3.43,274.1,7400,"#E8ECFF","F","giant",261,10.278,23.417
+"Lambda Aquila","Aquila",3.43,123.7,11500,"#C1D5FF","B","main sequence",53.2,19.104,-4.883
+"Tania Borealis","Ursa Major",3.45,137.5,9800,"#CBDBFF","A","subgiant",64.5,10.285,42.914
+"Achird","Cassiopeia",3.46,19.4,6000,"#FFF6ED","G","main sequence",1.28,0.818,57.815
+"Eta Cetus","Cetus",3.46,123.9,4400,"#FFD7B7","K","giant",52,1.143,-10.182
+"Chi Carina","Carina",3.46,454.9,13100,"#BBD1FF","B","subgiant",700,7.946,-52.982
+"Delta Bootes","Bootes",3.46,121.8,4800,"#FFE0C7","G","giant",50.2,15.258,33.315
+"Kaffaljidhma","Cetus",3.47,79.6,9100,"#D1DEFF","A","main sequence",21.2,2.722,3.236
+"Mu Centaurus","Centaurus",3.47,505.7,12900,"#BCD1FF","B","subgiant",857,13.827,-42.474
+"Eta Leo","Leo",3.48,1269.1,10500,"#C7D8FF","A","supergiant",5350,10.122,16.763
+"Eta Hercules","Hercules",3.48,108.6,5000,"#FFE4CE","G","giant",39.2,16.715,38.922
+"Tau Cetus","Cetus",3.49,11.9,5500,"#FFEDDE","G","main sequence",0.466,1.734,-15.937
+"Nganurganity","Canis Major",3.49,1120.8,3500,"#FFC18D","K","giant",4130,7.029,-27.935
+"Alula Borealis","Ursa Major",3.49,399.2,4000,"#FFCEA6","K","giant",524,11.308,33.094
+"Nekkar","Bootes",3.49,225.2,4900,"#FFE2CA","G","giant",167,15.032,40.391
+"Alpha Telescopium","Telescopium",3.49,277.8,13100,"#BBD1FF","B","subgiant",254,18.45,-45.968
+"Epsilon Grus","Grus",3.49,128.9,9200,"#D0DEFF","A","main sequence",54.7,22.809,-51.317
+"Kappa Canis Major","Canis Major",3.5,658.9,11800,"#C0D4FF","B","subgiant",1420,6.831,-32.508
+"Wasat","Gemini",3.5,60.5,7000,"#F3F2FF","F","subgiant",11.9,7.335,21.982
+"Iota Cepheus","Cepheus",3.5,115.3,4600,"#FFDCBF","K","giant",43.3,22.828,66.2
+"Gamma Sagitta","Sagitta",3.51,258.4,3700,"#FFC697","K","giant",216,19.979,19.492
+"Sadalbari","Pegasus",3.51,106.1,4900,"#FFE2CA","M","giant",36.3,22.833,24.602
+"Rana","Eridanus",3.52,29.5,5000,"#FFE4CE","K","subgiant",2.78,3.721,-9.763
+"Subra","Leo",3.52,130.3,6300,"#FFFBF5","A","main sequence",54.4,9.686,9.892
+"Phi Vela","Vela",3.52,1591,11000,"#C4D6FF","B","supergiant",8100,9.948,-54.568
+"Sheliak","Lyra",3.52,962.1,10100,"#C9DAFF","A","not recorded",2960,18.835,33.363
+"Xi Sagittarius","Sagittarius",3.52,365.2,4400,"#FFD7B7","G","not recorded",427,18.962,-21.107
+"Biham","Pegasus",3.52,92.3,9200,"#D0DEFF","A","main sequence",27.3,22.17,6.198
+"Ain","Taurus",3.53,146.7,4700,"#FFDEC3","K","giant",68.2,4.477,19.18
+"Tarf","Cancer",3.53,303.4,3800,"#FFC99D","K","giant",292,8.275,9.186
+"Xi Hydra","Hydra",3.54,129.6,4900,"#FFE2CA","G","giant",52.8,11.55,-31.858
+"Mu Serpens","Serpens",3.54,169.6,10600,"#C6D8FF","A","main sequence",90.4,15.827,-3.43
+"Xi Serpens","Serpens",3.54,105.3,7700,"#E2E9FF","F","giant",34.8,17.626,-15.399
+"Upsilon Eridanus","Eridanus",3.55,177.9,11700,"#C0D4FF","B","main sequence",98.5,4.298,-33.798
+"Zeta Lepus","Lepus",3.55,70.5,9000,"#D2DFFF","A","main sequence",15.5,5.783,-14.822
+"Iota Lupus","Lupus",3.55,338,13200,"#BBD1FF","B","subgiant",355,14.323,-46.058
+"Chi Draco","Draco",3.55,26.3,6400,"#FFFDF8","F","main sequence",2.15,18.351,72.733
+"Delta Pavo","Pavo",3.55,19.9,5400,"#FFECDB","G","subgiant",1.24,20.145,-66.182
+"Iota Cetus","Cetus",3.56,274.5,4300,"#FFD5B3","K","giant",232,0.324,-8.824
+"Phi Eridanus","Eridanus",3.56,153.7,11900,"#C0D4FF","B","subgiant",72.8,2.275,-51.512
+"Delta Crater","Crater",3.56,185.7,4500,"#FFDABB","K","giant",106,11.322,-14.779
+"Pipirima","Scorpius",3.56,474.1,13800,"#B9CFFF","B","subgiant",693,16.872,-38.018
+"Kappa Gemini","Gemini",3.57,141.4,4900,"#FFE2CA","G","giant",61.1,7.741,24.398
+"Alkaphrah","Ursa Major",3.57,358.4,10000,"#CADAFF","A","main sequence",393,9.06,47.157
+"Rho Bootes","Bootes",3.57,160.1,4100,"#FFD0AB","K","giant",78.3,14.53,30.371
+"Phi Lupus","Lupus",3.57,275,3700,"#FFC697","K","giant",231,15.363,-36.261
+"Lambda Gemini","Gemini",3.58,100.9,9000,"#D2DFFF","A","main sequence",30.8,7.302,16.54
+"Algedi","Capricornus",3.58,105.8,5000,"#FFE4CE","G","not recorded",33.9,20.301,-12.545
+"Nembus","Andromeda",3.59,177.2,4200,"#FFD3AF","K","giant",94.2,1.633,48.628
+"Tau Orion","Orion",3.59,494.2,11800,"#C0D4FF","B","giant",732,5.293,-6.844
+"Gamma Lepus","Lepus",3.59,29.1,6500,"#FFFEFA","F","main sequence",2.54,5.741,-22.448
+"Zavijava","Virgo",3.59,35.6,6300,"#FFFBF5","F","main sequence",3.81,11.845,1.765
+"Ginan","Crux",3.59,229.8,4000,"#FFCEA6","K","not recorded",158,12.356,-60.401
+"Theta Cetus","Cetus",3.6,113.8,4600,"#FFDCBF","K","giant",38.5,1.4,-8.183
+"Theta Gemini","Gemini",3.6,189.1,9000,"#D2DFFF","A","giant",106,6.88,33.961
+"Omicron Vela","Vela",3.6,493.4,12900,"#BCD1FF","B","subgiant",724,8.672,-52.922
+"Psi Vela","Vela",3.6,61.4,7000,"#F3F2FF","F","subgiant",11.2,9.512,-40.467
+"Upsilon Libra","Libra",3.6,223.7,4000,"#FFCEA6","K","giant",149,15.617,-28.135
+"Delta Ara","Ara",3.6,197.9,11600,"#C1D5FF","B","main sequence",116,17.518,-60.684
+"Bharani","Aries",3.61,165.6,11600,"#C1D5FF","B","main sequence",80.8,2.833,27.261
+"Omicron Taurus","Taurus",3.61,291,5000,"#FFE4CE","G","giant",249,3.414,9.029
+"Lambda Hydra","Hydra",3.61,112.5,4700,"#FFDEC3","K","giant",37.3,10.176,-12.354
+"Delta Musca","Musca",3.61,90.9,4300,"#FFD5B3","K","giant",24.3,13.038,-71.549
+"Eta Pavo","Pavo",3.61,352.2,4400,"#FFD7B7","K","giant",365,17.762,-64.724
+"Alpherg","Pisces",3.62,349.6,4800,"#FFE0C7","G","giant",357,1.525,15.346
+"Atlas","Taurus",3.62,382.4,11100,"#C3D6FF","B","giant",427,3.819,24.053
+"HR 3017","Puppis",3.62,1132.5,3500,"#FFC18D","K","giant",3740,7.754,-37.969
+"Zeta Scorpius","Scorpius",3.62,132.3,4000,"#FFCEA6","K","giant",51.1,16.91,-42.361
+"Omicron Andromeda","Andromeda",3.62,686.6,11600,"#C1D5FF","B","not recorded",1380,23.032,42.326
+"Lambda Musca","Musca",3.63,127.2,8500,"#D7E2FF","A","giant",46.8,11.76,-66.729
+"Rotanev","Delphinus",3.64,100.9,6700,"#FEF9FF","F","subgiant",29.2,20.626,14.595
+"Prima Hyadum","Taurus",3.65,161.5,4800,"#FFE0C7","G","giant",74.1,4.33,15.628
+"23 Ursa Major","Ursa Major",3.65,77.7,7100,"#F0F0FF","F","subgiant",17.1,9.525,63.062
+"Beta Serpens","Serpens",3.65,155.1,9300,"#CFDDFF","A","main sequence",68.3,15.77,15.422
+"Theta Ara","Ara",3.65,813.4,11600,"#C1D5FF","B","supergiant",1880,18.111,-50.091
+"Zeta Aquarius","Aquarius",3.65,91.9,6800,"#FAF6FF","F","giant",24,22.481,-0.02
+"Nusakan","Corona Borealis",3.66,111.8,7300,"#EAEDFF","F","not recorded",35.2,15.464,29.106
+"Tau Libra","Libra",3.66,366.9,13100,"#BBD1FF","B","main sequence",378,15.644,-29.778
+"Thuban","Draco",3.67,303.1,10800,"#C5D7FF","A","giant",256,14.073,64.376
+"Beta Indus","Indus",3.67,611.9,4200,"#FFD3AF","K","giant",1040,20.913,-58.454
+"Pi Orion","Orion",3.68,1052.1,12600,"#BDD2FF","B","giant",3060,4.853,5.605
+"Alpha Pyxis","Pyxis",3.68,879.1,13100,"#BBD1FF","B","giant",2130,8.727,-33.186
+"Delta Sagitta","Sagitta",3.68,594.1,4100,"#FFD0AB","M","giant",975,19.79,18.534
+"88 Aquarius","Aquarius",3.68,270.7,4300,"#FFD5B3","K","giant",202,23.157,-21.172
+"Fulu","Cassiopeia",3.69,593,13500,"#BAD0FF","B","subgiant",962,0.616,53.897
+"Chi Eridanus","Eridanus",3.69,58.2,5200,"#FFE8D5","G","subgiant",9.27,1.933,-51.609
+"Saclateni","Auriga",3.69,785.9,4400,"#FFD7B7","K","giant",1690,5.041,41.076
+"HR 3884","Carina",3.69,1560.6,4700,"#FFDEC3","G","supergiant",6660,9.754,-62.508
+"Taiyangshou","Ursa Major",3.69,183.6,4300,"#FFD5B3","K","giant",92.3,11.768,47.779
+"Nashira","Capricornus",3.69,157,7300,"#EAEDFF","A","giant",67.5,21.668,-16.662
+"Tau Eridanus","Eridanus",3.7,304.5,3600,"#FFC392","M","not recorded",251,3.325,-21.758
+"Xi Hercules","Hercules",3.7,136.8,4900,"#FFE2CA","K","giant",50.7,17.963,29.248
+"Gamma Pisces","Pisces",3.7,138,5000,"#FFE4CE","G","giant",51.6,23.286,3.282
+"Eta Lepus","Lepus",3.71,48.5,7200,"#EDEFFF","F","main sequence",6.33,5.94,-14.168
+"HR 3080","Puppis",3.71,352.6,4700,"#FFDEC3","G","giant",334,7.87,-40.576
+"Epsilon Serpens","Serpens",3.71,70.4,8600,"#D6E1FF","A","not recorded",13.3,15.847,4.478
+"72 Ophiuchus","Ophiuchus",3.71,86.9,8500,"#D7E2FF","A","subgiant",20.3,18.122,9.564
+"Alshain","Aquila",3.71,44.7,5100,"#FFE6D1","G","subgiant",5.36,19.922,6.407
+"Ran","Eridanus",3.72,10.5,5000,"#FFE4CE","K","main sequence",0.293,3.549,-9.458
+"Electra","Taurus",3.72,404.7,11700,"#C0D4FF","B","giant",436,3.748,24.113
+"Delta Auriga","Auriga",3.72,126,4700,"#FFDEC3","K","giant",42.3,5.992,54.285
+"Xi Cygnus","Cygnus",3.72,842.8,3600,"#FFC392","K","supergiant",1890,21.082,43.928
+"Xi Taurus","Taurus",3.73,209.1,11300,"#C2D5FF","B","main sequence",115,3.453,9.733
+"109 Virgo","Virgo",3.73,134.5,10200,"#C8D9FF","A","main sequence",47.7,14.771,1.893
+"Grumium","Draco",3.73,112.5,4400,"#FFD7B7","K","giant",33.4,17.892,56.873
+"Nu Octans","Octans",3.73,69.1,4700,"#FFDEC3","K","giant",12.6,21.691,-77.39
+"Lambda Aquarius","Aquarius",3.73,385.1,3600,"#FFC392","M","giant",391,22.877,-7.58
+"Baten Kaitos","Cetus",3.74,235,4400,"#FFD7B7","K","giant",144,1.858,-10.335
+"Gamma Hercules","Hercules",3.74,192.6,7500,"#E6EBFF","A","giant",97,16.365,19.153
+"Tau Cygnus","Cygnus",3.74,66.3,6900,"#F6F4FF","F","subgiant",11.5,21.247,38.045
+"HR 3614","Vela",3.75,299.5,4400,"#FFD7B7","K","giant",232,9.069,-47.098
+"Gamma Ophiuchus","Ophiuchus",3.75,102.8,9600,"#CDDCFF","A","main sequence",27.4,17.798,2.707
+"Beta Dorado","Dorado",3.76,1006.7,5800,"#FFF3E7","F","supergiant",2600,5.56,-62.49
+"Delta Lepus","Lepus",3.76,113.7,4800,"#FFE0C7","G","giant",33.2,5.855,-20.879
+"Beta Monoceros","Monoceros",3.76,676.7,11800,"#C0D4FF","B","main sequence",1170,6.48,-7.033
+"Omicron Sagittarius","Sagittarius",3.76,142.1,4700,"#FFDEC3","K","giant",51.8,19.078,-21.741
+"Iota Cygnus","Cygnus",3.76,121.3,8600,"#D6E1FF","A","main sequence",37.8,19.495,51.73
+"Alpha Lacerta","Lacerta",3.76,102.6,9800,"#CBDBFF","A","main sequence",27,22.522,50.282
+"Miram","Perseus",3.77,879.1,3500,"#FFC18D","K","supergiant",1960,2.845,55.895
+"Nu Perseus","Perseus",3.77,556.6,6700,"#FEF9FF","F","giant",788,3.753,42.579
+"Secunda Hyadum","Taurus",3.77,155.6,4800,"#FFE0C7","G","giant",61.5,4.382,17.543
+"Sigma Orion","Orion",3.77,1072.9,13300,"#BAD0FF","O","main sequence",2930,5.646,-2.6
+"Beta Volans","Volans",3.77,107.5,4400,"#FFD7B7","K","giant",29.4,8.429,-66.137
+"Eta Ara","Ara",3.77,299.2,3700,"#FFC697","K","giant",228,16.83,-59.041
+"Sualocin","Delphinus",3.77,253.8,10900,"#C4D7FF","B","main sequence",164,20.661,15.912
+"Zeta Capricornus","Capricornus",3.77,385.5,4700,"#FFDEC3","G","supergiant",378,21.444,-22.411
+"Iota Pegasus","Pegasus",3.77,38.2,6700,"#FEF9FF","F","main sequence",3.72,22.117,25.345
+"Gamma Volans","Volans",3.78,139.8,4700,"#FFDEC3","G","giant",49.2,7.146,-70.499
+"Iota Gemini","Gemini",3.78,120.4,4700,"#FFDEC3","G","giant",36.5,7.429,27.798
+"Upsilon Ursa Major","Ursa Major",3.78,116.2,7500,"#E6EBFF","F","subgiant",34,9.85,59.039
+"HR 4257","Carina",3.78,95,4900,"#FFE2CA","K","giant",22.7,10.892,-58.853
+"Zeta Bootes","Bootes",3.78,175.7,9600,"#CDDCFF","A","subgiant",77.8,14.686,13.728
+"Albali","Aquarius",3.78,207.7,10100,"#C9DAFF","A","main sequence",109,20.795,-9.496
+"Misam","Perseus",3.79,112.7,4800,"#FFE0C7","K","giant",31.7,3.158,44.858
+"Praecipua","Leo Minor",3.79,94.9,4600,"#FFDCBF","K","giant",22.4,10.889,34.215
+"Dalim","Fornax",3.8,46.4,6200,"#FFF9F2","F","main sequence",5.33,3.201,-28.988
+"HR 2948","Puppis",3.8,346.6,12700,"#BCD2FF","B","subgiant",297,7.647,-26.804
+"Delta Serpens","Serpens",3.8,228.1,7700,"#E2E9FF","F","subgiant",129,15.58,10.539
+"Kappa Cygnus","Cygnus",3.8,124.2,4900,"#FFE2CA","K","giant",38.1,19.285,53.368
+"31 Cygnus","Cygnus",3.8,883.9,4200,"#FFD3AF","K","giant",1930,20.227,46.741
+"Theemin","Eridanus",3.81,213.9,4800,"#FFE0C7","G","giant",112,4.593,-30.562
+"HR 4114","Carina",3.81,1342.2,7400,"#E8ECFF","F","giant",4410,10.465,-58.739
+"Gamma Corona Borealis","Corona Borealis",3.81,146.1,9900,"#CADAFF","A","main sequence",52.3,15.712,26.296
+"Lambda Andromeda","Andromeda",3.81,86.1,4800,"#FFE0C7","G","giant",18.2,23.626,46.458
+"Alrescha","Pisces",3.82,150.6,9800,"#CBDBFF","A","not recorded",55.1,2.034,2.764
+"38 Lynx","Lynx",3.82,124.8,9400,"#CEDDFF","A","main sequence",37.8,9.314,36.803
+"Giausar","Draco",3.82,333.2,3600,"#FFC392","M","giant",269,11.523,69.331
+"Marfik","Ophiuchus",3.82,173.1,9900,"#CADAFF","A","main sequence",72.8,16.515,1.984
+"Iota Hercules","Hercules",3.82,454.9,13100,"#BBD1FF","B","main sequence",502,17.658,46.006
+"Mu Hydra","Hydra",3.83,234.1,3900,"#FFCBA1","K","giant",132,10.435,-16.836
+"Phi Centaurus","Centaurus",3.83,525.2,14200,"#B7CFFF","B","subgiant",664,13.971,-42.101
+"Alpha Apus","Apus",3.83,446.8,3900,"#FFCBA1","K","giant",480,14.798,-79.045
+"Beta Reticulum","Reticulum",3.84,97.4,4400,"#FFD7B7","K","subgiant",22.6,3.737,-64.807
+"Atik","Perseus",3.84,1120.8,9900,"#CADAFF","B","giant",3000,3.739,32.288
+"Theta Taurus","Taurus",3.84,154.4,4900,"#FFE2CA","G","giant",56.8,4.476,15.962
+"HR 3571","Carina",3.84,319.8,11600,"#C1D5FF","B","giant",244,8.917,-60.645
+"HR 4167","Vela",3.84,87.5,7500,"#E6EBFF","A","not recorded",18.3,10.622,-48.226
+"Gamma Musca","Musca",3.84,324.9,12600,"#BDD2FF","B","main sequence",251,12.541,-72.133
+"Omicron Hercules","Hercules",3.84,338,10400,"#C7D9FF","B","main sequence",272,18.126,28.762
+"Epsilon Draco","Draco",3.84,148,5000,"#FFE4CE","G","giant",52.2,19.803,70.268
+"Alpha Horologium","Horologium",3.85,115,4500,"#FFDABB","K","giant",31.2,4.233,-42.294
+"Beta Pictor","Pictor",3.85,63.4,8400,"#D8E3FF","A","main sequence",9.49,5.788,-51.067
+"Delta Columba","Columba",3.85,234,5100,"#FFE6D1","G","giant",129,6.369,-33.436
+"HR 4023","Vela",3.85,101.4,9500,"#CDDCFF","A","main sequence",24.3,10.246,-42.122
+"Kappa Draco","Draco",3.85,490.5,11800,"#C0D4FF","B","giant",568,12.558,69.788
+"Tau Centaurus","Centaurus",3.85,131.2,9600,"#CDDCFF","A","main sequence",40.7,12.628,-48.541
+"Gamma Serpens","Serpens",3.85,36.7,6500,"#FFFEFA","F","main sequence",3.18,15.941,15.662
+"109 Hercules","Hercules",3.85,118.9,4400,"#FFD7B7","K","giant",33.4,18.395,21.77
+"Alpha Scutum","Scutum",3.85,199.1,4100,"#FFD0AB","K","giant",93.6,18.587,-8.244
+"Mu Andromeda","Andromeda",3.86,129.7,8700,"#D5E1FF","A","main sequence",39.4,0.946,38.499
+"Sceptrum","Eridanus",3.86,109.9,4600,"#FFDCBF","K","giant",28.2,4.636,-14.304
+"Epsilon Columba","Columba",3.86,263.2,4500,"#FFDABB","K","giant",162,5.52,-35.471
+"Delta Triangulum Australe","Triangulum Australe",3.86,607.4,4500,"#FFDABB","G","giant",863,16.257,-63.686
+"Gamma Apus","Apus",3.86,156.3,4900,"#FFE2CA","K","subgiant",57.1,16.558,-78.897
+"Theta Hercules","Hercules",3.86,753.2,4000,"#FFCEA6","K","giant",1330,17.938,37.251
+"Sadachbia","Aquarius",3.86,163.7,10900,"#C4D7FF","A","main sequence",62.7,22.361,-1.387
+"Maia","Taurus",3.87,383.3,11000,"#C4D6FF","B","giant",340,3.764,24.368
+"HR 3487","Vela",3.87,1853.2,9900,"#CADAFF","A","giant",7960,8.767,-46.042
+"Upsilon Centaurus","Centaurus",3.87,427.5,13800,"#B9CFFF","B","subgiant",423,13.978,-44.804
+"Mu Virgo","Virgo",3.87,59.6,7000,"#F3F2FF","F","giant",8.23,14.718,-5.658
+"Iklil","Scorpius",3.87,472,13600,"#B9D0FF","B","subgiant",517,15.948,-29.214
+"Eta Aquila","Aquila",3.87,1382,5900,"#FFF4EA","F","supergiant",4430,19.875,1.006
+"Epsilon Phoenix","Phoenix",3.88,144.2,4700,"#FFDEC3","K","giant",47.8,0.157,-45.747
+"Mesarthim","Aries",3.88,164.1,10800,"#C5D7FF","A","not recorded",61.8,1.892,19.294
+"Rasalas","Leo",3.88,124.1,4300,"#FFD5B3","K","giant",35.4,9.879,26.007
+"Kappa Lupus","Lupus",3.88,180,10500,"#C7D8FF","B","main sequence",74.4,15.199,-48.738
+"Iota Grus","Grus",3.88,183.2,4700,"#FFDEC3","K","giant",77.1,23.173,-45.247
+"Azha","Eridanus",3.89,136.5,4500,"#FFDABB","K","giant",42.4,2.94,-8.898
+"Theta Hydra","Hydra",3.89,113.5,10900,"#C4D7FF","B","main sequence",29.3,9.239,2.314
+"Zaniah","Virgo",3.89,265.4,9800,"#CBDBFF","A","subgiant",160,12.332,-0.667
+"Eta Cygnus","Cygnus",3.89,134.9,4700,"#FFDEC3","K","giant",41.5,19.938,35.083
+"Ukdah","Hydra",3.9,263.2,4100,"#FFD0AB","K","giant",156,9.664,-1.143
+"Pi Centaurus","Centaurus",3.9,357.6,12600,"#BDD2FF","B","main sequence",288,11.35,-54.491
+"HR 5089","Centaurus",3.9,906,4300,"#FFD5B3","G","giant",1850,13.517,-39.407
+"Nu Taurus","Taurus",3.91,116.9,9700,"#CCDBFF","A","main sequence",30.6,4.053,5.989
+"HR 3314","Hydra",3.91,122.3,10300,"#C8D9FF","A","main sequence",33.5,8.428,-3.906
+"Sigma Centaurus","Centaurus",3.91,411.8,13400,"#BAD0FF","B","main sequence",379,12.467,-50.231
+"Pi Lupus","Lupus",3.91,443.1,12400,"#BDD2FF","B","not recorded",439,15.085,-47.051
+"Zubenelhakrabi","Libra",3.91,163.2,4700,"#FFDEC3","K","giant",59.5,15.592,-14.79
+"Tau Hercules","Hercules",3.91,307.4,12500,"#BDD2FF","B","subgiant",211,16.329,46.313
+"Epsilon Hercules","Hercules",3.92,155,10400,"#C7D9FF","A","main sequence",53.2,17.005,30.926
+"Rho Sagittarius","Sagittarius",3.92,127,8000,"#DDE6FF","F","giant",35.7,19.361,-17.847
+"Kitalpha","Equuleus",3.92,190.3,6200,"#FFF9F2","G","giant",80.2,21.264,5.248
+"Kappa Phoenix","Phoenix",3.93,77.7,8400,"#D8E3FF","A","main sequence",13.2,0.437,-43.68
+"Delta Phoenix","Phoenix",3.93,142.1,4800,"#FFE0C7","K","giant",44.3,1.521,-49.073
+"Tau Perseus","Perseus",3.93,254.2,5400,"#FFECDB","G","giant",142,2.904,52.762
+"Nu Eridanus","Eridanus",3.93,675.3,13800,"#B9CFFF","B","giant",1000,4.605,-3.352
+"Zeta Volans","Volans",3.93,141,4700,"#FFDEC3","K","giant",43.6,7.697,-72.606
+"Omega Scorpius","Scorpius",3.93,471.3,10700,"#C5D7FF","B","main sequence",487,16.113,-20.669
+"67 Ophiuchus","Ophiuchus",3.93,1230.8,9800,"#CBDBFF","B","supergiant",3320,18.011,2.932
+"Wurren","Phoenix",3.94,298.7,11900,"#C0D4FF","B","main sequence",194,1.14,-55.246
+"Alpha Monoceros","Monoceros",3.94,147.8,4700,"#FFDEC3","K","giant",47.5,7.687,-9.551
+"Asellus Australis","Cancer",3.94,130.6,4600,"#FFDCBF","K","giant",37.1,8.745,18.154
+"Nu Cygnus","Cygnus",3.94,374.5,9800,"#CBDBFF","A","main sequence",305,20.953,41.167
+"50 Cassiopeia","Cassiopeia",3.95,157.1,10200,"#C8D9FF","A","main sequence",53.2,2.057,72.421
+"Nu Canis Major","Canis Major",3.95,64.4,4700,"#FFDEC3","K","giant",8.94,6.611,-19.256
+"Zeta Ursa Major","Ursa Major",3.95,78.8,8700,"#D5E1FF","A","not recorded",13.4,13.399,54.92
+"48 Perseus","Perseus",3.96,476.8,10400,"#C7D9FF","B","main sequence",485,4.144,47.713
+"Eta Columba","Columba",3.96,472,4400,"#FFD7B7","K","giant",476,5.986,-42.815
+"HR 3579","Lynx",3.96,52.4,6600,"#FFFFFF","F","main sequence",5.86,9.011,41.783
+"HR 3663","Carina",3.96,542.7,13100,"#BBD1FF","B","subgiant",629,9.188,-62.317
+"Arkab Prior","Sagittarius",3.96,313.6,11300,"#C2D5FF","B","main sequence",210,19.377,-44.459
+"Rukbat","Sagittarius",3.96,181.8,11700,"#C0D4FF","B","main sequence",70.5,19.398,-40.616
+"32 Cygnus","Cygnus",3.96,1058.9,3900,"#FFCBA1","K","supergiant",2390,20.258,47.714
+"98 Aquarius","Aquarius",3.96,163.4,4600,"#FFDCBF","K","giant",57,23.383,-20.101
+"Beemim","Eridanus",3.97,296.2,3800,"#FFC99D","K","giant",186,4.401,-34.017
+"Nu Auriga","Auriga",3.97,230.3,4400,"#FFD7B7","K","giant",112,5.858,39.148
+"Delta Volans","Volans",3.97,737.9,5400,"#FFECDB","F","giant",1150,7.281,-67.957
+"Beta Pyxis","Pyxis",3.97,416,4900,"#FFE2CA","G","giant",366,8.668,-35.308
+"Rho Centaurus","Centaurus",3.97,378.8,12600,"#BDD2FF","B","main sequence",303,12.194,-52.368
+"Chi Lupus","Lupus",3.97,195.2,10700,"#C5D7FF","B","giant",80.5,15.849,-33.627
+"Epsilon Pavo","Pavo",3.97,105.1,10500,"#C7D8FF","A","main sequence",23.3,20.01,-72.911
+"Delta Grus","Grus",3.97,309.4,4700,"#FFDEC3","G","not recorded",202,22.488,-43.496
+"Lambda Pegasus","Pegasus",3.97,365.2,4600,"#FFDCBF","G","giant",282,22.776,23.566
+"Menkib","Perseus",3.98,1244.9,9900,"#CADAFF","O","supergiant",3240,3.983,35.791
+"Rho Cygnus","Cygnus",3.98,123.6,5000,"#FFE4CE","G","giant",32,21.566,45.592
+"Upsilon Cetus","Cetus",3.99,292.8,3700,"#FFC697","K","not recorded",178,2,-21.078
+"Gamma Monoceros","Monoceros",3.99,497.9,4100,"#FFD0AB","K","giant",515,6.248,-6.275
+"HR 4102","Carina",3.99,52.9,7000,"#F3F2FF","F","subgiant",5.81,10.407,-74.032
+"Alcor","Ursa Major",3.99,81.7,8400,"#D8E3FF","A","main sequence",13.9,13.42,54.988
+"Gamma Tucana","Tucana",3.99,75.2,6800,"#FAF6FF","F","giant",11.7,23.29,-58.236
+"Alpha Volans","Volans",4,124.9,8600,"#D6E1FF","A","not recorded",32.1,9.041,-66.396
+"Iota Leo","Leo",4,77.2,6800,"#FAF6FF","F","subgiant",12.3,11.399,10.53
+"Jabbah","Scorpius",4,474.1,9300,"#CFDDFF","B","subgiant",462,16.2,-19.461
+"Phi Perseus","Perseus",4.01,718.4,11500,"#C1D5FF","B","main sequence",1050,1.728,50.689
+"Mu Eridanus","Eridanus",4.01,521.8,12400,"#BDD2FF","B","subgiant",555,4.758,-3.255
+"Mekbuda","Gemini",4.01,1376.2,5000,"#FFE4CE","G","supergiant",3860,7.068,20.57
+"Omega Canis Major","Canis Major",4.01,911.1,12500,"#BDD2FF","B","subgiant",1690,7.247,-26.773
+"HR 5471","Centaurus",4.01,339,12600,"#BDD2FF","B","main sequence",234,14.699,-37.793
+"Theta Draco","Draco",4.01,68.6,6300,"#FFFBF5","F","subgiant",9.59,16.032,58.565
+"Gamma Norma","Norma",4.01,128.8,4600,"#FFDCBF","G","giant",33.8,16.331,-50.156
+"Zeta Pavo","Pavo",4.01,218.5,4400,"#FFD7B7","K","giant",97.3,18.717,-71.428
+"41 Cygnus","Cygnus",4.01,769.2,6900,"#F6F4FF","F","giant",1210,20.49,30.369
+"Gamma Pyxis","Pyxis",4.02,207.3,4200,"#FFD3AF","K","giant",86.8,8.842,-27.71
+"Alchiba","Corvus",4.02,48.7,7300,"#EAEDFF","F","subgiant",4.79,12.14,-24.729
+"Epsilon Aquila","Aquila",4.02,154.9,4600,"#FFDCBF","K","giant",48.5,18.994,15.068
+"12 Aquila","Aquila",4.02,143.9,4600,"#FFDCBF","K","giant",41.8,19.028,-5.739
+"Gamma Triangulum","Triangulum",4.03,112.3,9900,"#CADAFF","A","main sequence",25.2,2.289,33.847
+"Beta Camelopardalis","Camelopardalis",4.03,872.1,4900,"#FFE2CA","G","supergiant",1520,5.057,60.442
+"Iota Cancer","Cancer",4.03,331.1,4700,"#FFDEC3","G","supergiant",219,8.778,28.76
+"Mu Crux","Crux",4.03,414.4,13100,"#BBD1FF","B","subgiant",344,12.91,-57.178
+"70 Ophiuchus","Ophiuchus",4.03,16.6,5100,"#FFE6D1","K","main sequence",0.55,18.091,2.5
+"Aldulfin","Delphinus",4.03,330.5,12000,"#BFD3FF","B","giant",218,20.554,11.303
+"Omega Pisces","Pisces",4.03,104.3,6800,"#FAF6FF","F","subgiant",21.8,23.989,6.863
+"Beid","Eridanus",4.04,121.7,7300,"#EAEDFF","F","giant",29.3,4.198,-6.838
+"Nu Virgo","Virgo",4.04,293.8,3800,"#FFC99D","M","giant",171,11.764,6.529
+"Theta Bootes","Bootes",4.04,47.4,6400,"#FFFDF8","F","main sequence",4.45,14.42,51.851
+"Eta Aquarius","Aquarius",4.04,167.9,11300,"#C2D5FF","B","subgiant",55.9,22.589,-0.117
+"Iota Perseus","Perseus",4.05,34.4,6000,"#FFF6ED","G","main sequence",2.32,3.151,49.613
+"Alpha Chamaeleon","Chamaeleon",4.05,63.8,6800,"#FAF6FF","F","giant",7.99,8.309,-76.92
+"HR 3477","Vela",4.05,228.9,5100,"#FFE6D1","G","giant",103,8.74,-42.649
+"Sigma Leo","Leo",4.05,220.1,10900,"#C4D7FF","B","main sequence",95.1,11.352,6.029
+"Upsilon Bootes","Bootes",4.05,263.5,3800,"#FFC99D","K","giant",136,13.825,15.798
+"Psi Centaurus","Centaurus",4.05,258.9,10500,"#C7D8FF","A","subgiant",132,14.343,-37.885
+"Rho Lupus","Lupus",4.05,316,12500,"#BDD2FF","B","main sequence",196,14.631,-49.426
+"Tau Aquarius","Aquarius",4.05,317.6,3700,"#FFC697","K","giant",198,22.827,-13.593
+"Omicron Orion","Orion",4.06,185.9,4400,"#FFD7B7","K","giant",67.3,4.94,13.514
+"Upsilon Gemini","Gemini",4.06,270.9,3700,"#FFC697","K","giant",143,7.599,26.896
+"Gamma Crater","Crater",4.06,82.3,8000,"#DDE6FF","A","main sequence",13.2,11.415,-17.684
+"Epsilon Musca","Musca",4.06,301.4,3600,"#FFC392","M","giant",177,12.293,-67.961
+"Zeta Crux","Crux",4.06,357.6,12900,"#BCD1FF","B","main sequence",249,12.307,-64.003
+"HR 5485","Centaurus",4.06,209.5,4000,"#FFCEA6","K","giant",85.4,14.728,-35.174
+"Epsilon Ara","Ara",4.06,360.8,3900,"#FFCBA1","K","giant",253,16.993,-53.16
+"Syrma","Virgo",4.07,72.5,6300,"#FFFBF5","F","main sequence",10.1,14.267,-6.001
+"Lambda Lupus","Lupus",4.07,776.6,12700,"#BCD2FF","B","main sequence",1160,15.147,-45.28
+"Beta Circinus","Circinus",4.07,99.7,9100,"#D1DEFF","A","main sequence",19.1,15.292,-58.801
+"Delta Cepheus","Cepheus",4.07,865.1,5300,"#FFEAD8","G","supergiant",1440,22.486,58.415
+"Zeta Andromeda","Andromeda",4.08,189.2,4500,"#FFDABB","K","giant",68.4,0.789,24.267
+"Delta Hydrus","Hydrus",4.08,139.7,9700,"#CCDBFF","A","main sequence",37.3,2.362,-68.659
+"Delta Cetus","Cetus",4.08,649.7,13900,"#B8CFFF","B","subgiant",806,2.658,0.329
+"Theta Canis Major","Canis Major",4.08,260.7,3900,"#FFCBA1","K","giant",130,6.903,-12.039
+"HR 3825","Carina",4.08,1325.8,10300,"#C8D9FF","B","giant",3360,9.574,-59.23
+"Alkes","Crater",4.08,159.2,4600,"#FFDCBF","K","giant",48.4,10.996,-18.299
+"13 Lyra","Lyra",4.08,298.1,4000,"#FFCEA6","M","giant",170,18.922,43.946
+"Theta Capricornus","Capricornus",4.08,162.2,10300,"#C8D9FF","A","main sequence",50.3,21.099,-17.233
+"1 Pegasus","Pegasus",4.08,155.8,4500,"#FFDABB","K","giant",46.4,21.368,19.805
+"Phi Orion","Orion",4.09,117.5,4900,"#FFE2CA","G","giant",26.1,5.615,9.291
+"Gudja","Serpens",4.09,381.9,3600,"#FFC392","M","giant",276,15.812,18.142
+"Titawin","Andromeda",4.1,44,6200,"#FFF9F2","F","main sequence",3.63,1.613,41.405
+"Theta Perseus","Perseus",4.1,36.3,6300,"#FFFBF5","F","main sequence",2.47,2.737,49.228
+"HR 3055","Puppis",4.1,1647.3,12700,"#BCD2FF","B","giant",5090,7.821,-46.373
+"Zeta Telescopium","Telescopium",4.1,126.2,4800,"#FFE0C7","G","not recorded",29.9,18.481,-49.071
+"Beta Corona Australis","Corona Australis",4.1,474.1,4400,"#FFD7B7","K","giant",422,19.167,-39.341
+"Iota Eridanus","Eridanus",4.11,150.6,4700,"#FFDEC3","K","giant",42.2,2.678,-39.855
+"Muliphein","Canis Major",4.11,441.9,11800,"#C0D4FF","B","giant",363,7.063,-15.633
+"HR 3426","Vela",4.11,1822.1,8900,"#D3DFFF","A","giant",6170,8.627,-42.989
+"Zhang","Hydra",4.11,263.9,4900,"#FFE2CA","G","not recorded",129,9.858,-14.847
+"Gamma Chamaeleon","Chamaeleon",4.11,417.6,3700,"#FFC697","M","giant",324,10.591,-78.608
+"HR 4522","Centaurus",4.11,389.7,5000,"#FFE4CE","G","giant",282,11.775,-61.178
+"Epsilon Triangulum Australe","Triangulum Australe",4.11,201.7,4400,"#FFD7B7","K","giant",75.6,15.612,-66.317
+"Meridiana","Corona Australis",4.11,125.3,9600,"#CDDCFF","A","not recorded",29.2,19.158,-37.904
+"Zeta Grus","Grus",4.11,108.9,4800,"#FFE0C7","G","giant",22,23.015,-52.754
+"Epsilon Hydrus","Hydrus",4.12,151.8,11000,"#C4D6FF","B","giant",42.5,2.66,-68.267
+"Mu Perseus","Perseus",4.12,901,4900,"#FFE2CA","G","supergiant",1490,4.248,48.409
+"Mu Orion","Orion",4.12,154.9,8400,"#D8E3FF","A","not recorded",44.2,6.04,9.647
+"Omicron Virgo","Virgo",4.12,163.2,4800,"#FFE0C7","G","giant",49.1,12.087,8.733
+"Iota Sagittarius","Sagittarius",4.12,181.8,4600,"#FFDCBF","K","giant",60.9,19.921,-41.868
+"Omega Capricornus","Capricornus",4.12,842.8,3600,"#FFC392","K","giant",1310,20.864,-26.919
+"29 Orion","Orion",4.13,157.3,4900,"#FFE2CA","G","giant",45.2,5.399,-7.808
+"Nu Gemini","Gemini",4.13,544.5,11800,"#C0D4FF","B","giant",541,6.483,20.212
+"Theta Libra","Libra",4.13,168.5,4700,"#FFDEC3","K","giant",51.8,15.897,-16.729
+"Psi Capricornus","Capricornus",4.13,47.9,6700,"#FEF9FF","F","main sequence",4.18,20.768,-25.271
+"Beta Octans","Octans",4.13,149.3,8100,"#DCE5FF","A","subgiant",40.7,22.768,-81.382
+"Iota Pisces","Pisces",4.13,44.7,6400,"#FFFDF8","F","main sequence",3.65,23.666,5.626
+"5 Taurus","Taurus",4.14,342.2,4500,"#FFDABB","K","giant",212,3.515,12.937
+"Merope","Taurus",4.14,380.1,10800,"#C5D7FF","B","subgiant",261,3.772,23.948
+"Delta Hydra","Hydra",4.14,160.4,10100,"#C9DAFF","A","main sequence",46.5,8.628,5.704
+"Eta Crux","Crux",4.14,64.4,7100,"#F0F0FF","F","giant",7.5,12.115,-64.614
+"Theta Corona Borealis","Corona Borealis",4.14,375.3,12000,"#BFD3FF","B","main sequence",255,15.549,31.359
+"Epsilon Corona Borealis","Corona Borealis",4.14,221.4,4200,"#FFD3AF","K","giant",88.6,15.96,26.878
+"Kappa Pegasus","Pegasus",4.14,111.6,6700,"#FEF9FF","F","subgiant",22.5,21.744,25.645
+"1 Lacerta","Lacerta",4.14,621.2,3900,"#FFCBA1","K","giant",698,22.266,37.749
+"Delta Monoceros","Monoceros",4.15,384.2,10200,"#C8D9FF","A","main sequence",264,7.198,-0.493
+"Rho Hercules","Hercules",4.15,393.4,10300,"#C8D9FF","B","giant",277,17.395,37.146
+"Kappa Andromeda","Andromeda",4.15,168.4,11100,"#C3D6FF","B","subgiant",50.8,23.673,44.334
+"1 Gemini","Gemini",4.16,155.1,5200,"#FFE8D5","G","giant",42.7,6.069,23.263
+"Rho Gemini","Gemini",4.16,58.9,7300,"#EAEDFF","F","main sequence",6.15,7.485,31.785
+"44 Ophiuchus","Ophiuchus",4.16,83.2,7600,"#E4EAFF","A","subgiant",12.3,17.44,-24.175
+"HR 1195","Eridanus",4.17,209.9,4900,"#FFE2CA","G","giant",77.5,3.824,-36.2
+"Ancha","Aquarius",4.17,187.4,4800,"#FFE0C7","G","giant",61.8,22.281,-7.783
+"Kang","Virgo",4.18,254.8,4100,"#FFD0AB","K","giant",113,14.215,-10.274
+"Xuange","Bootes",4.18,99,9200,"#D0DEFF","A","not recorded",17.1,14.273,46.088
+"HR 6166","Scorpius",4.18,342.6,3700,"#FFC697","K","giant",205,16.606,-35.255
+"Epsilon Cepheus","Cepheus",4.18,85.4,7600,"#E4EAFF","F","subgiant",12.7,22.251,57.044
+"Epsilon Piscis Austrinus","Piscis Austrinus",4.18,486.8,11700,"#C0D4FF","B","main sequence",413,22.678,-27.044
+"2 Centaurus","Centaurus",4.19,183,3800,"#FFC99D","M","giant",57.8,13.824,-34.451
+"110 Hercules","Hercules",4.19,62.7,6500,"#FFFEFA","F","main sequence",6.77,18.761,20.546
+"32 Orion","Orion",4.2,302.8,12400,"#BDD2FF","B","main sequence",157,5.513,5.948
+"11 Puppis","Puppis",4.2,521.8,5500,"#FFEDDE","F","not recorded",466,7.948,-22.88
+"Beta Leo Minor","Leo Minor",4.2,153.9,5000,"#FFE4CE","G","giant",40.5,10.465,36.707
+"Sigma Hercules","Hercules",4.2,314.8,10300,"#C8D9FF","B","main sequence",170,16.568,42.437
+"Xi Pegasus","Pegasus",4.2,53.2,6400,"#FFFDF8","F","main sequence",4.84,22.778,12.173
+"Delta Piscis Austrinus","Piscis Austrinus",4.2,154.1,4900,"#FFE2CA","G","giant",40.6,22.932,-32.54
+"HR 1035","Camelopardalis",4.21,1941.4,6800,"#FAF6FF","B","supergiant",6390,3.484,59.94
+"Kappa Taurus","Taurus",4.21,153.9,8700,"#D5E1FF","A","subgiant",40.1,4.423,22.294
+"Epsilon Ursa Minor","Ursa Minor",4.21,304,5000,"#FFE4CE","G","giant",157,16.766,82.037
+"Theta Cepheus","Cepheus",4.21,136.5,8200,"#DAE4FF","A","giant",31.6,20.493,62.994
+"Gamma Pavo","Pavo",4.21,30.2,6400,"#FFFDF8","F","main sequence",1.55,21.441,-65.366
+"16 Perseus","Perseus",4.22,120.8,7200,"#EDEFFF","F","giant",24.5,2.843,38.319
+"HR 3090","Puppis",4.22,1655.6,12100,"#BFD3FF","B","supergiant",4600,7.888,-48.103
+"Theta Lupus","Lupus",4.22,414.4,13200,"#BBD1FF","B","main sequence",288,16.11,-36.802
+"Chi Ophiuchus","Ophiuchus",4.22,525.2,8000,"#DDE6FF","B","main sequence",463,16.45,-18.456
+"Phi Draco","Draco",4.22,302.8,11500,"#C1D5FF","A","not recorded",154,18.346,71.338
+"Beta Scutum","Scutum",4.22,916.2,4500,"#FFDABB","G","giant",1410,18.786,-4.748
+"Lambda Pavo","Pavo",4.22,1430.5,12500,"#BDD2FF","B","giant",3440,18.87,-62.188
+"Delta Lyra","Lyra",4.22,736.2,3700,"#FFC697","M","giant",910,18.908,36.899
+"52 Cygnus","Cygnus",4.22,201.1,4600,"#FFDCBF","K","giant",67.9,20.761,30.72
+"Sigma Cygnus","Cygnus",4.22,2886.3,9000,"#D2DFFF","B","supergiant",14000,21.29,39.395
+"Phi Aquarius","Aquarius",4.22,202.1,3700,"#FFC697","M","giant",68.5,23.239,-6.049
+"Zeta Tucana","Tucana",4.23,28,6100,"#FFF8F0","F","main sequence",1.3,0.334,-64.875
+"Sigma Gemini","Gemini",4.23,125.1,4500,"#FFDABB","K","giant",26,7.722,28.884
+"Beta Coma Berenices","Coma Berenices",4.23,29.8,6100,"#FFF8F0","G","main sequence",1.48,13.198,27.878
+"1 Centaurus","Centaurus",4.23,63.3,6900,"#F6F4FF","F","main sequence",6.66,13.761,-33.044
+"Tau Virgo","Virgo",4.23,224.9,8800,"#D4E0FF","A","main sequence",84.2,14.027,1.545
+"Phi Hercules","Hercules",4.23,204,10700,"#C5D7FF","B","not recorded",69.2,16.146,44.935
+"Beta Apus","Apus",4.23,157,4600,"#FFDCBF","K","giant",41,16.718,-77.517
+"Gamma Corona Australis","Corona Australis",4.23,56.4,6300,"#FFFBF5","F","subgiant",5.3,19.107,-37.063
+"Pi Cygnus","Cygnus",4.23,1105.6,11900,"#C0D4FF","B","giant",2030,21.78,49.31
+"HR 285","Cepheus",4.24,280.2,4300,"#FFD5B3","K","giant",129,1.146,86.257
+"Kappa Eridanus","Eridanus",4.24,508,12200,"#BED3FF","B","subgiant",425,2.45,-47.704
+"Pi Cetus","Cetus",4.24,393,12000,"#BFD3FF","B","subgiant",255,2.735,-13.859
+"Beta Chamaeleon","Chamaeleon",4.24,298.4,12000,"#BFD3FF","B","main sequence",147,12.306,-79.312
+"Chara","Canes Venatici",4.24,27.5,6000,"#FFF6ED","G","main sequence",1.25,12.562,41.357
+"HR 6143","Scorpius",4.24,554.7,12900,"#BCD1FF","B","giant",507,16.523,-34.704
+"Omicron Serpens","Serpens",4.24,173.2,9200,"#D0DEFF","A","main sequence",49.5,17.69,-12.875
+"Psi Aquarius","Aquarius",4.24,149.8,4500,"#FFDABB","K","giant",37,23.265,-9.088
+"Kappa Tucana","Tucana",4.25,68.3,6500,"#FFFEFA","F","subgiant",7.63,1.263,-68.876
+"Lambda Perseus","Perseus",4.25,421.9,10300,"#C8D9FF","A","subgiant",291,4.11,50.351
+"88 Taurus","Taurus",4.25,156.2,8300,"#D9E3FF","A","not recorded",39.8,4.594,10.161
+"58 Perseus","Perseus",4.25,797.4,4400,"#FFD7B7","G","giant",1040,4.612,41.265
+"Lambda Eridanus","Eridanus",4.25,811.3,13300,"#BAD0FF","B","subgiant",1080,5.152,-8.754
+"Alsciaukat","Lynx",4.25,382.4,3700,"#FFC697","K","giant",239,8.381,43.188
+"HR 4889","Centaurus",4.25,148.6,8000,"#DDE6FF","A","subgiant",36.1,12.891,-40.179
+"5 Ursa Minor","Ursa Minor",4.25,358.8,3900,"#FFCBA1","K","giant",210,14.459,75.696
+"Phi Andromeda","Andromeda",4.26,716.8,10000,"#CADAFF","B","giant",832,1.158,47.242
+"Torcular","Pisces",4.26,279.5,4900,"#FFE2CA","K","giant",126,1.757,9.158
+"82 G. Eri","Eridanus",4.26,19.7,5600,"#FFEFE1","G","main sequence",0.629,3.332,-43.07
+"Gamma Dorado","Dorado",4.26,66.7,7400,"#E8ECFF","F","giant",7.21,4.267,-51.487
+"Acubens","Cancer",4.26,188.3,8600,"#D6E1FF","A","not recorded",57.4,8.975,11.858
+"HR 6546","Scorpius",4.26,165.8,4600,"#FFDCBF","G","not recorded",44.5,17.609,-38.635
+"95 Hercules","Hercules",4.26,417.1,6800,"#FAF6FF","G","not recorded",282,18.025,21.596
+"Kurhah","Cepheus",4.26,96.5,7000,"#F3F2FF","A","not recorded",15.1,22.063,64.628
+"Epsilon Pisces","Pisces",4.27,181.8,4900,"#FFE2CA","K","giant",53,1.049,7.89
+"Mu Cetus","Cetus",4.27,84.1,7400,"#E8ECFF","F","giant",11.3,2.749,10.114
+"Mu Taurus","Taurus",4.27,455.5,10900,"#C4D7FF","B","subgiant",333,4.259,8.892
+"90 Taurus","Taurus",4.27,153.6,8800,"#D4E0FF","A","main sequence",37.8,4.636,12.511
+"Tau Taurus","Taurus",4.27,398.2,11800,"#C0D4FF","B","main sequence",254,4.704,22.957
+"Xi Centaurus","Centaurus",4.27,467.3,13200,"#BBD1FF","B","main sequence",350,13.115,-49.906
+"Mu Lupus","Lupus",4.27,335.6,11300,"#C2D5FF","B","main sequence",181,15.309,-47.875
+"Arkab Posterior","Sagittarius",4.27,134.2,7200,"#EDEFFF","F","giant",28.9,19.387,-44.8
+"Gamma Delphinus","Delphinus",4.27,126.3,4600,"#FFDCBF","K","subgiant",25.6,20.778,16.124
+"Theta Pisces","Pisces",4.27,148.5,4600,"#FFDCBF","K","giant",35.4,23.466,6.379
+"Upsilon Taurus","Taurus",4.28,153.8,7700,"#E2E9FF","A","main sequence",37.6,4.438,22.814
+"HR 3751","Draco",4.28,994.4,3800,"#FFC99D","K","giant",1570,9.618,81.326
+"Alpha Antlia","Antlia",4.28,366.1,3900,"#FFCBA1","K","giant",213,10.453,-31.068
+"45 Ophiuchus","Ophiuchus",4.28,111.6,6900,"#F6F4FF","F","giant",19.8,17.456,-29.867
+"33 Cygnus","Cygnus",4.28,159.3,8900,"#D3DFFF","A","subgiant",40.3,20.223,56.568
+"Iota Capricornus","Capricornus",4.28,196.7,5000,"#FFE4CE","G","giant",61.5,21.371,-16.835
+"Pi Pegasus","Pegasus",4.28,263,6500,"#FFFEFA","F","giant",110,22.166,33.178
+"Theta Grus","Grus",4.28,131.9,6800,"#FAF6FF","F","not recorded",27.6,23.115,-43.52
+"10 Taurus","Taurus",4.29,45.5,6100,"#FFF8F0","F","main sequence",3.27,3.615,0.402
+"Lambda Lepus","Lepus",4.29,851.6,14500,"#B6CEFF","B","subgiant",1140,5.326,-13.177
+"HR 4180","Vela",4.29,840.6,4700,"#FFDEC3","G","giant",1110,10.655,-55.603
+"Beta Hydra","Hydra",4.29,309.7,11600,"#C1D5FF","A","not recorded",151,11.882,-33.908
+"Zeta Ursa Minor","Ursa Minor",4.29,369,9700,"#CCDBFF","A","main sequence",214,15.734,77.794
+"Phi Ophiuchus","Ophiuchus",4.29,243.6,4900,"#FFE2CA","G","not recorded",93.4,16.519,-16.613
+"Iota Aquarius","Aquarius",4.29,175.2,11200,"#C3D6FF","B","main sequence",48.3,22.107,-13.87
+"Beta Piscis Austrinus","Piscis Austrinus",4.29,142.8,10000,"#CADAFF","A","main sequence",32.1,22.525,-32.346
+"Iota Andromeda","Andromeda",4.29,499.5,11300,"#C2D5FF","B","main sequence",393,23.636,43.268
+"Alpha Sculptor","Sculptor",4.3,776.6,12600,"#BDD2FF","B","giant",941,0.977,-29.357
+"Xi Cetus","Cetus",4.3,193.1,10800,"#C5D7FF","B","giant",58.2,2.469,8.46
+"Taygeta","Taurus",4.3,409.2,11700,"#C0D4FF","B","main sequence",261,3.753,24.467
+"HR 1189","Eridanus",4.3,165.5,10600,"#C6D8FF","A","not recorded",42.7,3.81,-37.62
+"Delta Taurus","Taurus",4.3,148.5,9600,"#CDDCFF","A","subgiant",34.4,4.425,17.928
+"Pi Auriga","Auriga",4.3,751.5,3500,"#FFC18D","M","giant",881,5.999,45.937
+"Eta Hydra","Hydra",4.3,586.6,13400,"#BAD0FF","B","main sequence",537,8.72,3.399
+"54 Leo","Leo",4.3,286.9,9900,"#CADAFF","A","not recorded",128,10.927,24.75
+"Upsilon Leo","Leo",4.3,181.5,4800,"#FFE0C7","G","giant",51.4,11.616,-0.824
+"HR 4537","Centaurus",4.3,595.2,12500,"#BDD2FF","B","main sequence",553,11.828,-63.788
+"Eta Corvus","Corvus",4.3,59.6,6900,"#F6F4FF","F","main sequence",5.55,12.535,-16.196
+"HR 5358","Centaurus",4.3,1226.2,9200,"#D0DEFF","B","supergiant",2350,14.339,-56.386
+"Alpha Capricornus","Capricornus",4.3,569.2,4900,"#FFE2CA","G","supergiant",505,20.294,-12.508
+"HR 3457","Carina",4.31,1443.2,11900,"#C0D4FF","B","giant",3220,8.677,-59.761
+"Delta Octans","Octans",4.31,299,4100,"#FFD0AB","K","giant",138,14.449,-83.668
+"Alkalurops","Bootes",4.31,113.1,7400,"#E8ECFF","F","main sequence",19.8,15.408,37.377
+"71 Aquila","Aquila",4.31,337.3,4900,"#FFE2CA","G","giant",176,20.639,-1.105
+"Psi Perseus","Perseus",4.32,583.5,10900,"#C4D7FF","B","main sequence",521,3.608,48.193
+"54 Eridanus","Eridanus",4.32,368.5,3700,"#FFC697","M","not recorded",208,4.674,-19.671
+"119 Taurus","Taurus",4.32,1792.1,3100,"#FFB475","M","supergiant",4920,5.537,18.594
+"Kappa Auriga","Auriga",4.32,177,4700,"#FFDEC3","G","giant",48,6.256,29.498
+"12 Hydra","Hydra",4.32,245,5000,"#FFE4CE","G","giant",92,8.773,-13.548
+"Alterf","Leo",4.32,329.1,3700,"#FFC697","K","giant",166,9.529,22.968
+"Theta Crux","Crux",4.32,235,7600,"#E4EAFF","A","not recorded",84.6,12.05,-63.313
+"Diadem","Coma Berenices",4.32,58.1,6600,"#FFFFFF","F","main sequence",5.18,13.166,17.529
+"3 Centaurus","Centaurus",4.32,343.7,12400,"#BDD2FF","B","not recorded",181,13.864,-32.994
+"Omicron Lupus","Lupus",4.32,404.2,12600,"#BDD2FF","B","subgiant",250,14.861,-43.575
+"Nu Serpens","Serpens",4.32,203.2,9700,"#CCDBFF","A","not recorded",63.3,17.347,-12.847
+"Gamma Canis Minor","Canis Minor",4.33,318.2,3900,"#FFCBA1","K","giant",154,7.469,8.926
+"HR 4888","Centaurus",4.33,294.4,4000,"#FFCEA6","K","not recorded",131,12.885,-48.943
+"Tau Lupus","Lupus",4.33,319.1,6700,"#FEF9FF","A","not recorded",155,14.436,-45.379
+"Guniibuu","Ophiuchus",4.33,19.4,5100,"#FFE6D1","K","not recorded",0.568,17.256,-26.603
+"Pi Pavo","Pavo",4.33,130,8000,"#DDE6FF","A","not recorded",25.6,18.143,-63.669
+"Kappa Lyra","Lyra",4.33,251.7,4400,"#FFD7B7","K","giant",96.1,18.331,36.065
+"Alula Australis","Ursa Major",4.33,34,6000,"#FFF6ED","G","main sequence",1.75,11.303,31.529
+"Pi Andromeda","Andromeda",4.34,598.5,12000,"#BFD3FF","B","main sequence",539,0.615,33.719
+"Epsilon Andromeda","Andromeda",4.34,163.8,5100,"#FFE6D1","G","giant",40.4,0.643,29.312
+"Theta Cassiopeia","Cassiopeia",4.34,133.6,8400,"#D8E3FF","A","main sequence",26.8,1.185,55.15
+"Delta Dorado","Dorado",4.34,149.6,8000,"#DDE6FF","A","main sequence",33.7,5.746,-65.736
+"Xi Canis Major","Canis Major",4.34,1382,14800,"#B6CDFF","B","giant",2870,6.531,-23.418
+"Theta Chamaeleon","Chamaeleon",4.34,155.3,4400,"#FFD7B7","K","giant",36.3,8.344,-77.484
+"HR 3696","Carina",4.34,488.3,3600,"#FFC392","M","giant",358,9.27,-57.541
+"HR 3836","Vela",4.34,105.4,8400,"#D8E3FF","A","main sequence",16.7,9.614,-49.355
+"Omega Lupus","Lupus",4.34,218.6,3900,"#FFCBA1","K","giant",71.8,15.634,-42.567
+"Sigma Ophiuchus","Ophiuchus",4.34,901,3800,"#FFC99D","K","giant",1220,17.442,4.14
+"Zeta Lyra","Lyra",4.34,156.1,8200,"#DAE4FF","A","not recorded",36.6,18.746,37.605
+"111 Hercules","Hercules",4.34,94.2,8600,"#D6E1FF","A","giant",13.4,18.784,18.182
+"9 Pegasus","Pegasus",4.34,926.6,4400,"#FFD7B7","G","supergiant",1290,21.742,17.35
+"5 Lacerta","Lacerta",4.34,1647.3,3500,"#FFC18D","M","giant",4080,22.492,47.707
+"Botein","Aries",4.35,169.7,4700,"#FFDEC3","K","giant",42.9,3.194,19.727
+"HR 2435","Carina",4.35,1364.7,10400,"#C7D9FF","B","giant",2770,6.583,-52.976
+"15 Lynx","Lynx",4.35,178.3,5100,"#FFE6D1","G","giant",47.4,6.955,58.423
+"Epsilon Volans","Volans",4.35,562.3,11800,"#C0D4FF","B","subgiant",471,8.132,-68.617
+"Rho Hydra","Hydra",4.35,354.1,10700,"#C5D7FF","A","main sequence",187,8.807,5.838
+"Gamma Coma Berenices","Coma Berenices",4.35,167.3,4500,"#FFDABB","K","giant",41.7,12.449,28.268
+"2 Lupus","Lupus",4.35,325.8,4500,"#FFDABB","K","giant",158,15.297,-30.149
+"Yildun","Ursa Minor",4.35,172.1,9900,"#CADAFF","A","main sequence",44.1,17.537,86.586
+"Xi Pavo","Pavo",4.35,468.6,3900,"#FFCBA1","M","giant",327,18.387,-61.494
+"Theta Lyra","Lyra",4.35,832,4200,"#FFD3AF","K","giant",1030,19.273,38.134
+"Iota Piscis Austrinus","Piscis Austrinus",4.35,204.2,10800,"#C5D7FF","B","main sequence",62.1,21.749,-33.026
+"Beta Tucana","Tucana",4.36,135.1,11000,"#C4D6FF","B","main sequence",26.9,0.526,-62.958
+"Eta Phoenix","Phoenix",4.36,246.3,9800,"#CBDBFF","A","subgiant",89.6,0.723,-57.463
+"Sigma Perseus","Perseus",4.36,359.6,4000,"#FFCEA6","K","giant",191,3.51,47.995
+"37 Taurus","Taurus",4.36,187.1,4600,"#FFDCBF","K","giant",51.7,4.078,22.082
+"Omega Eridanus","Eridanus",4.36,235,7700,"#E2E9FF","A","subgiant",81.5,4.882,-5.453
+"Kappa Lepus","Lepus",4.36,728,11500,"#C1D5FF","B","main sequence",783,5.221,-12.941
+"Gamma Columba","Columba",4.36,869.7,12800,"#BCD2FF","B","subgiant",1120,5.959,-35.283
+"Iota Canis Major","Canis Major",4.36,2508.9,11000,"#C4D6FF","B","supergiant",9290,6.936,-17.054
+"Zeta Monoceros","Monoceros",4.36,1058.9,4800,"#FFE0C7","G","supergiant",1660,8.143,-2.984
+"Chi Centaurus","Centaurus",4.36,510.4,13500,"#BAD0FF","B","main sequence",384,14.101,-41.18
+"Iota Aquila","Aquila",4.36,391.1,11200,"#C3D6FF","B","giant",226,19.612,-1.287
+"30 Pisces","Pisces",4.37,432,3600,"#FFC392","M","giant",273,0.033,-6.014
+"Kappa Columba","Columba",4.37,182.5,4800,"#FFE0C7","G","giant",48.7,6.276,-35.141
+"Tau Canis Major","Canis Major",4.37,2992.3,12100,"#BFD3FF","O","supergiant",13100,7.312,-24.954
+"HR 4293","Vela",4.37,196.2,8900,"#D3DFFF","A","subgiant",56.3,11.003,-42.226
+"102 Hercules","Hercules",4.37,916.2,12800,"#BCD2FF","B","subgiant",1230,18.146,20.815
+"Theta Sagittarius","Sagittarius",4.37,518.5,12500,"#BDD2FF","B","subgiant",393,19.996,-35.276
+"Theta Virgo","Virgo",4.38,315.7,10200,"#C8D9FF","A","main sequence",144,13.166,-5.539
+"Kappa Cepheus","Cepheus",4.38,314.8,10700,"#C5D7FF","B","giant",144,20.148,77.711
+"99 Aquarius","Aquarius",4.38,283.4,3900,"#FFCBA1","K","giant",116,23.434,-20.642
+"Beta Sculptor","Sculptor",4.38,174,11500,"#C1D5FF","B","subgiant",43.9,23.55,-37.818
+"Psi Phoenix","Phoenix",4.39,341.9,3700,"#FFC697","M","giant",168,1.894,-46.303
+"HR 1155","Camelopardalis",4.39,795.5,3300,"#FFBB81","M","giant",909,3.825,65.526
+"Chi Orion","Orion",4.39,28.3,6000,"#FFF6ED","G","main sequence",1.15,5.906,20.276
+"Epsilon Monoceros","Monoceros",4.39,122.3,8000,"#DDE6FF","A","subgiant",21.5,6.396,4.593
+"HR 3145","Canis Minor",4.39,254,4200,"#FFD3AF","K","giant",92.6,8.038,2.335
+"31 Leo","Leo",4.39,295.4,3900,"#FFCBA1","K","giant",125,10.132,9.998
+"110 Virgo","Virgo",4.39,195.4,4700,"#FFDEC3","K","giant",54.9,15.048,2.091
+"Iota Ophiuchus","Ophiuchus",4.39,245.2,11400,"#C2D5FF","B","main sequence",86.4,16.9,10.165
+"Xi Ophiuchus","Ophiuchus",4.39,56.6,6900,"#F6F4FF","F","not recorded",4.6,17.35,-21.113
+"Sham","Sagitta",4.39,425.2,5400,"#FFECDB","G","giant",260,19.668,18.014
+"Beta Sagitta","Sagitta",4.39,439.6,4600,"#FFDCBF","G","giant",277,19.684,17.476
+"Theta Indus","Indus",4.39,98.8,8200,"#DAE4FF","A","main sequence",14,21.331,-53.449
+"Eta Andromeda","Andromeda",4.4,229.7,4900,"#FFE2CA","G","giant",75.1,0.953,23.418
+"Omicron Puppis","Puppis",4.4,1418.1,11100,"#C3D6FF","B","subgiant",2860,7.801,-25.937
+"16 Puppis","Puppis",4.4,465.3,12700,"#BCD2FF","B","main sequence",308,8.15,-19.245
+"Kappa Pavo","Pavo",4.4,500.2,6300,"#FFFBF5","F","supergiant",356,18.949,-67.233
+"Delta Indus","Indus",4.4,188.1,7500,"#E6EBFF","F","subgiant",50.4,21.965,-54.993
+"HR 2554","Carina",4.41,544.5,5000,"#FFE4CE","G","giant",418,6.831,-53.622
+"Tau Gemini","Gemini",4.41,321,4200,"#FFD3AF","K","giant",145,7.186,30.245
+"HR 5378","Centaurus",4.41,457.4,13200,"#BBD1FF","B","main sequence",295,14.384,-39.512
+"Maasym","Hercules",4.41,369.4,3900,"#FFCBA1","K","giant",192,17.512,26.111
+"Nu Hercules","Hercules",4.41,860.6,7000,"#F3F2FF","F","giant",1040,17.975,30.189
+"Upsilon Cygnus","Cygnus",4.41,642,11600,"#C1D5FF","B","main sequence",581,21.299,34.897
+"Pi Cepheus","Cepheus",4.41,246.7,5300,"#FFEAD8","G","giant",85.8,23.132,75.387
+"Gamma Sculptor","Sculptor",4.41,182.2,4500,"#FFDABB","K","giant",46.8,23.314,-32.532
+"Nu Orion","Orion",4.42,516.1,12800,"#BCD2FF","B","subgiant",372,6.126,14.768
+"HR 2748","Puppis",4.42,208.9,4100,"#FFD0AB","M","not recorded",61,7.226,-44.64
+"27 Canis Major","Canis Major",4.42,1734.9,12900,"#BCD1FF","B","giant",4200,7.238,-26.353
+"HR 3243","Puppis",4.42,298.4,4400,"#FFD7B7","K","giant",124,8.234,-40.348
+"60 Leo","Leo",4.42,126.8,9500,"#CDDCFF","A","not recorded",22.4,11.039,20.18
+"58 Hydra","Hydra",4.42,331.1,4000,"#FFCEA6","K","giant",153,14.838,-27.96
+"Lambda Serpens","Serpens",4.42,39.5,6000,"#FFF6ED","G","main sequence",2.18,15.774,7.353
+"68 Ophiuchus","Ophiuchus",4.42,292.5,9600,"#CDDCFF","A","main sequence",120,18.029,1.305
+"Beta Lacerta","Lacerta",4.42,170,4700,"#FFDEC3","G","giant",40.4,22.393,52.229
+"Alkarab","Pegasus",4.42,170.4,5900,"#FFF4EA","F","subgiant",40.6,23.423,23.404
+"Pi Eridanus","Eridanus",4.43,481.1,3600,"#FFC392","M","giant",320,3.769,-12.102
+"Keid","Eridanus",4.43,16.3,5200,"#FFE8D5","K","main sequence",0.366,4.255,-7.653
+"7 Camelopardalis","Camelopardalis",4.43,371.9,10300,"#C8D9FF","A","main sequence",191,4.955,53.752
+"Aladfar","Lyra",4.43,1387.9,12500,"#BDD2FF","B","subgiant",2670,19.229,39.146
+"62 Sagittarius","Sagittarius",4.43,448.6,3600,"#FFC392","M","giant",278,20.044,-27.71
+"39 Cygnus","Cygnus",4.43,249.9,4100,"#FFD0AB","K","giant",86.5,20.398,32.19
+"Delta Delphinus","Delphinus",4.43,223.2,7400,"#E8ECFF","A","giant",69,20.724,15.075
+"3 Aquarius","Aquarius",4.43,585.6,3600,"#FFC392","M","giant",475,20.796,-5.028
+"7 Cetus","Cetus",4.44,447.4,3600,"#FFC392","M","giant",274,0.244,-18.933
+"Delta Pisces","Pisces",4.44,311.2,3800,"#FFC99D","K","giant",133,0.811,7.585
+"Epsilon Reticulum","Reticulum",4.44,59.5,4600,"#FFDCBF","K","subgiant",4.85,4.275,-59.302
+"Alpha Caelum","Caelum",4.44,65.8,7200,"#EDEFFF","F","main sequence",5.93,4.676,-41.864
+"2 Lynx","Lynx",4.44,156.6,9700,"#CCDBFF","A","main sequence",33.6,6.327,59.011
+"HR 2906","Puppis",4.44,82.5,6300,"#FFFBF5","F","main sequence",9.33,7.568,-22.296
+"HR 3225","Puppis",4.44,1698.7,3700,"#FFC697","K","giant",3960,8.189,-39.619
+"HR 3270","Puppis",4.44,93.4,8000,"#DDE6FF","A","not recorded",12,8.309,-36.659
+"Sigma Lupus","Lupus",4.44,575.2,13100,"#BBD1FF","B","giant",454,14.544,-50.457
+"Anser","Vulpecula",4.44,297.3,3800,"#FFC99D","M","not recorded",121,19.478,24.665
+"Nu Pisces","Pisces",4.45,363.2,4000,"#FFCEA6","K","giant",179,1.691,5.488
+"Beta Fornax","Fornax",4.45,172.7,4800,"#FFE0C7","G","giant",40.5,2.818,-32.406
+"Iota Lepus","Lepus",4.45,231.8,11600,"#C1D5FF","B","main sequence",73,5.205,-11.869
+"Xi Orion","Orion",4.45,607.4,13100,"#BBD1FF","B","subgiant",501,6.199,14.209
+"Minchir","Hydra",4.45,372.7,4300,"#FFD5B3","K","giant",189,8.646,3.341
+"HR 3591","Vela",4.45,210.4,5800,"#FFF3E7","F","not recorded",60.1,9.002,-41.254
+"HR 4159","Carina",4.45,1177.5,3600,"#FFC392","K","not recorded",1880,10.593,-57.558
+"Delta Chamaeleon","Chamaeleon",4.45,350.7,13300,"#BAD0FF","B","subgiant",167,10.763,-80.54
+"Phi Leo","Leo",4.45,184.2,8100,"#DCE5FF","A","subgiant",46.1,11.278,-3.652
+"Omega Ophiuchus","Ophiuchus",4.45,168.6,8700,"#D5E1FF","A","not recorded",38.7,16.536,-21.466
+"Tau Draco","Draco",4.45,146.4,4200,"#FFD3AF","K","giant",29.1,19.259,73.355
+"Mu Aquila","Aquila",4.45,107.6,4400,"#FFD7B7","K","giant",15.7,19.568,7.379
+"Iota Cassiopeia","Cassiopeia",4.46,132.9,8500,"#D7E2FF","A","not recorded",23.8,2.484,67.402
+"32 Eridanus","Eridanus",4.46,313,5700,"#FFF1E4","G","giant",132,3.905,-2.955
+"Rho Orion","Orion",4.46,350,4400,"#FFD7B7","K","giant",165,5.222,2.861
+"15 Ursa Major","Ursa Major",4.46,94,7500,"#E6EBFF","A","not recorded",11.9,9.148,51.605
+"Beta Crater","Crater",4.46,340.1,9800,"#CBDBFF","A","main sequence",156,11.194,-22.826
+"HR 4618","Centaurus",4.46,438.4,12800,"#BCD2FF","B","giant",259,12.135,-50.661
+"Epsilon Norma","Norma",4.46,530.3,11100,"#C3D6FF","B","main sequence",379,16.453,-47.555
+"Gamma Piscis Austrinus","Piscis Austrinus",4.46,215.4,10600,"#C6D8FF","A","giant",62.5,22.875,-32.876
+"HR 999","Aries",4.47,542.7,3700,"#FFC697","K","giant",393,3.339,29.048
+"Lambda Canis Major","Canis Major",4.47,423.6,12900,"#BCD1FF","B","main sequence",239,6.47,-32.58
+"HR 3129","Puppis",4.47,959.3,13100,"#BBD1FF","B","main sequence",1230,7.971,-49.245
+"HR 3643","Carina",4.47,400.7,5900,"#FFF4EA","F","giant",214,9.086,-72.603
+"Kappa Leo","Leo",4.47,201.3,4300,"#FFD5B3","K","giant",54.1,9.411,26.182
+"26 Ursa Major","Ursa Major",4.47,262.2,9800,"#CBDBFF","A","main sequence",91.7,9.58,52.051
+"HR 4546","Centaurus",4.47,433.1,4200,"#FFD3AF","K","giant",250,11.852,-45.173
+"Sigma Bootes","Bootes",4.47,51.6,7100,"#F0F0FF","F","main sequence",3.56,14.578,29.745
+"16 Libra","Libra",4.47,87.7,7300,"#EAEDFF","F","main sequence",10.3,14.953,-4.346
+"Delta Equuleus","Equuleus",4.47,60.3,6300,"#FFFBF5","F","main sequence",4.85,21.241,10.007
+"Lambda Grus","Grus",4.47,242.1,4000,"#FFCEA6","M","giant",78.2,22.102,-39.543
+"Omicron Cassiopeia","Cassiopeia",4.48,702.9,11100,"#C3D6FF","B","giant",653,0.745,48.284
+"Gamma Reticulum","Reticulum",4.48,469.3,3800,"#FFC99D","M","giant",291,4.015,-62.159
+"71 Taurus","Taurus",4.48,160.1,7700,"#E2E9FF","F","main sequence",33.9,4.439,15.618
+"18 Monoceros","Monoceros",4.48,368.1,4500,"#FFDABB","K","giant",179,6.798,2.412
+"Alpha Sextans","Sextans",4.48,283.4,10500,"#C7D8FF","A","giant",106,10.132,-0.372
+"Gamma Circinus","Circinus",4.48,448.6,8400,"#D8E3FF","B","giant",266,15.39,-59.321
+"Psi Ophiuchus","Ophiuchus",4.48,199.5,4800,"#FFE0C7","K","giant",52.6,16.402,-20.037
+"Fumalsamakah","Pisces",4.48,408.2,11800,"#C0D4FF","B","main sequence",220,23.065,3.82
+"86 Aquarius","Aquarius",4.48,216.3,5000,"#FFE4CE","G","giant",61.8,23.111,-23.743
+"48 Cassiopeia","Cassiopeia",4.49,115,8500,"#D7E2FF","A","subgiant",17.3,2.033,70.907
+"30 Gemini","Gemini",4.49,288.9,4400,"#FFD7B7","K","giant",109,6.733,13.228
+"HR 2740","Puppis",4.49,69.9,7300,"#EAEDFF","F","subgiant",6.4,7.209,-46.759
+"HR 3084","Puppis",4.49,648.4,13300,"#BAD0FF","B","main sequence",551,7.877,-38.863
+"21 Leo Minor","Leo Minor",4.49,92.1,8200,"#DAE4FF","A","main sequence",11.1,10.124,35.245
+"Pi Bootes","Bootes",4.49,305.7,10200,"#C8D9FF","B","not recorded",122,14.679,16.418
+"Theta Cygnus","Cygnus",4.49,59.8,6900,"#F6F4FF","F","main sequence",4.68,19.607,50.221
+"24 Capricornus","Capricornus",4.49,456.2,3600,"#FFC392","K","not recorded",272,21.119,-25.006
+"Mu Cygnus","Cygnus",4.49,72.5,6300,"#FFFBF5","F","main sequence",6.89,21.736,28.743
+"Lambda Pisces","Pisces",4.49,106.6,8200,"#DAE4FF","A","main sequence",14.9,23.701,1.78
+"Omega Aquarius","Aquarius",4.49,148.5,10500,"#C7D8FF","B","main sequence",28.9,23.712,-14.545
+"Epsilon Tucana","Tucana",4.49,373.2,11200,"#C3D6FF","B","subgiant",182,23.999,-65.577
+"Omega Orion","Orion",4.5,1382,11500,"#C1D5FF","B","giant",2480,5.653,4.121
+"Gamma Pictor","Pictor",4.5,176.8,4600,"#FFDCBF","K","giant",40.6,5.83,-56.167
+"HR 3498","Carina",4.5,605.1,12900,"#BCD1FF","B","main sequence",475,8.778,-56.77
+"HR 4074","Vela",4.5,1148.4,11600,"#C1D5FF","B","giant",1710,10.349,-56.043
+"93 Leo","Leo",4.5,232.6,6200,"#FFF9F2","A","not recorded",70.2,11.8,20.219
+"Tau Bootes","Bootes",4.5,50.9,6400,"#FFFDF8","F","main sequence",3.37,13.788,17.457
+"23 Vulpecula","Vulpecula",4.5,338.7,4200,"#FFD3AF","K","giant",149,20.263,27.814
+"Nu Aquarius","Aquarius",4.5,159.3,4900,"#FFE2CA","G","giant",32.9,21.16,-11.372
+"36 Capricornus","Capricornus",4.5,171.1,5000,"#FFE4CE","K","giant",38,21.479,-21.807
+"Mu Piscis Austrinus","Piscis Austrinus",4.5,135.8,9500,"#CDDCFF","A","main sequence",23.9,22.14,-32.988
+"HR 8485","Lacerta",4.5,482.5,4000,"#FFCEA6","K","giant",302,22.231,39.715
+"11 Lacerta","Lacerta",4.5,332.8,4100,"#FFD0AB","K","giant",144,22.675,44.276

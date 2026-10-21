@@ -1,5 +1,5 @@
 //! Commands for rendering reports. The work itself lives in the `render`
-//! crate. This file checks that the file is one the person opened, finds
+//! crate. This file checks that the file is one the user opened, finds
 //! the R they chose, and turns progress into "render-event" events for the
 //! interface.
 //!
@@ -58,17 +58,28 @@ fn failed(failure: Failure) -> RenderResult {
     RenderResult { status, outputs: Vec::new(), failure: Some(failure) }
 }
 
-/// Renders a report the person opened, with the R chosen in the app, and
+/// Renders a report the user opened, with the R chosen in the app, and
 /// returns once it has finished, failed, or been stopped.
 #[tauri::command]
 pub async fn render_start(app: AppHandle, state: State<'_, AppState>, renders: State<'_, RenderState>, id: String, file: String, target: Target) -> CommandResult<RenderResult> {
     let source = state.allowed.lock().unwrap().check(Path::new(&file)).map_err(|error| error.to_string())?;
-    let r_home = state.settings.lock().unwrap().r_home.clone();
+    let (r_home, pdf_engine, latex_dir) = {
+        let settings = state.settings.lock().unwrap();
+        (settings.r_home.clone(), settings.pdf_engine.clone(), settings.latex_dir.clone())
+    };
     if r_home.is_empty() {
         return Ok(failed(Failure::NoR));
     }
-    // Looking for Quarto touches only a handful of fixed paths.
-    let tools = Tools::locate(Path::new(&r_home));
+    // Looking for Quarto and LaTeX touches only a handful of fixed paths.
+    let mut tools = Tools::locate(Path::new(&r_home));
+    tools.latex = render::latex::choose(&crate::latex::builtin_root(), &latex_dir);
+    // Left to the app, a PDF uses LaTeX when there is one. Typst is the
+    // fallback that needs nothing installed.
+    tools.pdf_with_latex = match pdf_engine.as_str() {
+        "latex" => true,
+        "typst" => false,
+        _ => tools.latex.is_some(),
+    };
     let plan = match plan::plan(&source, target, &tools) {
         Ok(plan) => plan,
         Err(failure) => return Ok(failed(failure)),

@@ -33,18 +33,25 @@ type Item = (&'static str, &'static str, Option<&'static str>, bool);
 /// Window and Help, so items sit where Mac users already look for them.
 pub fn build<R: Runtime>(app: &AppHandle<R>, state: &MenuState, recent: &[String], projects: &[String]) -> tauri::Result<Menu<R>> {
     let everything = state.layer == "everything";
-    let app_menu = SubmenuBuilder::new(app, "Good For")
+    // The app menu is titled R:, as the app's icon reads. macOS takes the
+    // bold title from CFBundleName rather than from this label, so
+    // tauri.conf.json sets bundle.macOS.bundleName to R: as well, which
+    // applies both to `npm start` and to the built app. The .app file
+    // keeps the product name, so it never collides with CRAN's R.app.
+    let app_menu = SubmenuBuilder::new(app, "R:")
         .item(&MenuItemBuilder::with_id("help.about", "About R: What Is It Good For?").build(app)?)
+        .item(&MenuItemBuilder::with_id("app.updates", "Check for Updates...").build(app)?)
         .separator()
         .item(&MenuItemBuilder::with_id("app.settings", "Settings").accelerator("CmdOrCtrl+,").build(app)?)
+        .item(&MenuItemBuilder::with_id("app.reset", "Reset the App...").build(app)?)
         .separator()
         .item(&PredefinedMenuItem::services(app, None)?)
         .separator()
-        .item(&PredefinedMenuItem::hide(app, Some("Hide Good For"))?)
+        .item(&PredefinedMenuItem::hide(app, Some("Hide R: What Is It Good For?"))?)
         .item(&PredefinedMenuItem::hide_others(app, None)?)
         .item(&PredefinedMenuItem::show_all(app, None)?)
         .separator()
-        .item(&PredefinedMenuItem::quit(app, Some("Quit Good For"))?)
+        .item(&PredefinedMenuItem::quit(app, Some("Quit R: What Is It Good For?"))?)
         .build()?;
 
     // Open Recent lists files by name, as every Mac document app does. Its
@@ -68,6 +75,8 @@ pub fn build<R: Runtime>(app: &AppHandle<R>, state: &MenuState, recent: &[String
     }
     let file = SubmenuBuilder::new(app, "File")
         .item(&MenuItemBuilder::with_id("file.new", "New Script").accelerator("CmdOrCtrl+N").build(app)?)
+        .item(&MenuItemBuilder::with_id("file.newDocument", "New Quarto or R Markdown Document").accelerator("CmdOrCtrl+Alt+N").build(app)?)
+        .item(&MenuItemBuilder::with_id("file.newShinyApp", "New Shiny App...").build(app)?)
         .item(&MenuItemBuilder::with_id("project.new", "New Project...").accelerator("CmdOrCtrl+Shift+N").build(app)?)
         .separator()
         .item(&MenuItemBuilder::with_id("file.open", "Open Script...").accelerator("CmdOrCtrl+O").build(app)?)
@@ -76,8 +85,11 @@ pub fn build<R: Runtime>(app: &AppHandle<R>, state: &MenuState, recent: &[String
         .separator()
         .item(&MenuItemBuilder::with_id("file.save", "Save").accelerator("CmdOrCtrl+S").build(app)?)
         .item(&MenuItemBuilder::with_id("file.saveAs", "Save As...").accelerator("CmdOrCtrl+Shift+S").build(app)?)
+        .item(&MenuItemBuilder::with_id("file.history", "Earlier Versions of This File...").build(app)?)
         .item(&MenuItemBuilder::with_id("file.saveAll", "Save All").accelerator("CmdOrCtrl+Alt+S").build(app)?)
         .item(&MenuItemBuilder::with_id("file.exportPlot", "Export Plot...").accelerator("CmdOrCtrl+Shift+E").build(app)?)
+        .item(&MenuItemBuilder::with_id("results.report", "Save Results as a Report").build(app)?)
+        .item(&MenuItemBuilder::with_id("file.saveExercises", "Save as Exercises for Students...").build(app)?)
         .separator()
         .item(&MenuItemBuilder::with_id("file.close", "Close Tab").accelerator("CmdOrCtrl+W").build(app)?)
         .item(&MenuItemBuilder::with_id("project.close", "Close Project").build(app)?)
@@ -95,12 +107,23 @@ pub fn build<R: Runtime>(app: &AppHandle<R>, state: &MenuState, recent: &[String
         .item(&PredefinedMenuItem::select_all(app, None)?)
         .separator()
         .item(&MenuItemBuilder::with_id("edit.find", "Find and Replace").accelerator("CmdOrCtrl+F").build(app)?)
+        .item(&MenuItemBuilder::with_id("edit.findInFiles", "Find in All Files...").accelerator("CmdOrCtrl+Shift+F").build(app)?)
         .item(&MenuItemBuilder::with_id("edit.comment", "Comment Lines").accelerator("CmdOrCtrl+Shift+C").build(app)?)
+        .separator()
+        // Changes that reach past one line, each undone by one Undo.
+        .item(&MenuItemBuilder::with_id("edit.explain", "What Does This Code Do?").accelerator("CmdOrCtrl+Alt+E").build(app)?)
+        .item(&MenuItemBuilder::with_id("edit.trace", "Where Did This Come From?").build(app)?)
+        .item(&MenuItemBuilder::with_id("edit.makeExercise", "Make This Line an Exercise").build(app)?)
+        .item(&MenuItemBuilder::with_id("edit.rename", "Rename Everywhere in This File...").accelerator("F2").build(app)?)
+        .item(&MenuItemBuilder::with_id("edit.tidy", "Tidy Up My Code").accelerator("CmdOrCtrl+Shift+A").build(app)?)
+        .item(&MenuItemBuilder::with_id("edit.fixProblems", "Fix Problems in This Script").build(app)?)
         .separator()
         // RStudio's own shortcuts for the three things R code types most.
         .item(&MenuItemBuilder::with_id("edit.pipe", "Insert Pipe").accelerator("CmdOrCtrl+Shift+M").build(app)?)
         .item(&MenuItemBuilder::with_id("edit.assign", "Insert Assignment").accelerator("Alt+Minus").build(app)?)
         .item(&MenuItemBuilder::with_id("edit.section", "Insert Section").accelerator("CmdOrCtrl+Shift+R").build(app)?)
+        .item(&MenuItemBuilder::with_id("edit.chunk", "Insert Chunk").accelerator("CmdOrCtrl+Alt+I").build(app)?)
+        .item(&MenuItemBuilder::with_id("edit.cite", "Insert Citation...").build(app)?)
         .build()?;
 
     // The four output layouts behave as one choice, so exactly one carries
@@ -109,15 +132,20 @@ pub fn build<R: Runtime>(app: &AppHandle<R>, state: &MenuState, recent: &[String
         CheckMenuItemBuilder::with_id(id, label).accelerator(key).checked(state.output_layout == value).build(app)
     };
     let mut view = SubmenuBuilder::new(app, "View")
-        .item(&layout("view.output.inline", "Results Under Each Line", "CmdOrCtrl+Alt+1", "inline")?)
-        .item(&layout("view.output.side", "Results Beside the Code", "CmdOrCtrl+Alt+2", "side")?)
-        .item(&layout("view.output.stacked", "Results Below the Code", "CmdOrCtrl+Alt+3", "stacked")?)
-        .item(&layout("view.output.console", "Results in the Console", "CmdOrCtrl+Alt+4", "console")?)
+        .item(&layout("view.output.canvas", "Results in the Canvas", "CmdOrCtrl+Alt+1", "canvas")?)
+        .item(&layout("view.output.inline", "Results Under Each Line", "CmdOrCtrl+Alt+2", "inline")?)
         .item(&CheckMenuItemBuilder::with_id("view.live", "Update Results as You Type").accelerator("CmdOrCtrl+Alt+L").checked(state.live_output).build(app)?)
         .separator()
-        .item(&MenuItemBuilder::with_id("view.sidebar", "Show or Hide Sidebar").accelerator(SIDEBAR_KEY).build(app)?)
-        .item(&MenuItemBuilder::with_id("view.inspector", "Show or Hide Panes").accelerator("CmdOrCtrl+Alt+0").build(app)?)
-        .item(&MenuItemBuilder::with_id("view.console", "Show or Hide Console History").accelerator("CmdOrCtrl+Shift+Y").build(app)?)
+        .item(&MenuItemBuilder::with_id("view.sidebar", "Show or Hide the Sidebar").accelerator(SIDEBAR_KEY).build(app)?)
+        .item(&MenuItemBuilder::with_id("view.inspector", "Show or Hide the Canvas").accelerator("CmdOrCtrl+Alt+0").build(app)?)
+        .item(&MenuItemBuilder::with_id("view.prompt", "Show or Hide the R Prompt").build(app)?)
+        .item(&MenuItemBuilder::with_id("view.timeline", "Show or Hide Earlier Results").build(app)?)
+        .separator()
+        .item(&MenuItemBuilder::with_id("view.resetLayout", "Reset the Layout").build(app)?)
+        .separator()
+        .item(&MenuItemBuilder::with_id("view.history", "Show Past Commands").accelerator("CmdOrCtrl+Shift+Y").build(app)?)
+        .item(&MenuItemBuilder::with_id("view.startScreen", "Show Start Screen").accelerator("CmdOrCtrl+Shift+H").build(app)?)
+        .item(&MenuItemBuilder::with_id("view.focus", "Focus on the Script").accelerator("CmdOrCtrl+Alt+F").build(app)?)
         .separator()
         .item(&CheckMenuItemBuilder::with_id("view.layer.essentials", "Essentials").checked(!everything).build(app)?)
         .item(&CheckMenuItemBuilder::with_id("view.layer.everything", "Everything").checked(everything).build(app)?)
@@ -133,11 +161,14 @@ pub fn build<R: Runtime>(app: &AppHandle<R>, state: &MenuState, recent: &[String
     let run = custom(app, "Run", everything, &[
         ("run.line", "Run Line or Selection", Some("CmdOrCtrl+Enter"), false),
         ("run.file", "Run File", Some("CmdOrCtrl+Shift+Enter"), false),
+        ("run.chunk", "Run Chunk or Section", Some("CmdOrCtrl+Alt+C"), false),
         ("run.toHere", "Run to Here", Some("CmdOrCtrl+Alt+B"), true),
         ("", "", None, false),
         ("run.stop", "Stop", Some("CmdOrCtrl+."), false),
+        ("run.undo", "Undo Last Run", Some("CmdOrCtrl+Alt+Z"), false),
         ("run.restart", "Restart R", Some("CmdOrCtrl+Shift+0"), false),
         ("run.restartRunAll", "Restart R and Run File", None, true),
+        ("run.fresh", "Check It Runs from Scratch", None, false),
         ("run.chooseR", "Choose R Version", None, false),
         ("", "", None, false),
         // Shift Command K is RStudio's Knit, so hands that know it find it.
@@ -147,8 +178,13 @@ pub fn build<R: Runtime>(app: &AppHandle<R>, state: &MenuState, recent: &[String
         ("render.pdf", "Render as PDF", None, true),
         ("render.stop", "Stop Rendering", None, false),
         ("", "", None, false),
+        ("app.run", "Run Shiny App", None, false),
+        ("app.stop", "Stop Shiny App", None, false),
+        ("app.open", "Open Shiny App in Browser", None, true),
+        ("app.share", "Share Shiny App as a Web Page", None, false),
+        ("", "", None, false),
         ("run.clearOutput", "Clear Output", None, false),
-        ("run.clearConsole", "Clear Console", Some("CmdOrCtrl+L"), false),
+        ("run.clearConsole", "Clear All Results", Some("CmdOrCtrl+L"), false),
     ])?;
 
     // Installing automatically is a standing preference, so it is a check
@@ -157,15 +193,19 @@ pub fn build<R: Runtime>(app: &AppHandle<R>, state: &MenuState, recent: &[String
         .item(&MenuItemBuilder::with_id("packages.install", "Install Packages").build(app)?)
         .item(&MenuItemBuilder::with_id("packages.installMissing", "Install Missing for This File").build(app)?)
         .separator()
+        .item(&MenuItemBuilder::with_id("packages.checkUpdates", "Check for Package Updates").build(app)?)
+        .item(&MenuItemBuilder::with_id("packages.updateAll", "Update All Packages...").build(app)?)
+        .separator()
         .item(&CheckMenuItemBuilder::with_id("packages.auto", "Install Missing Automatically").checked(state.auto_install).build(app)?)
         .build()?;
 
     // The assistant's requests act on the code at the cursor, as the run
     // commands do, so they get a menu of their own beside Run.
     let assistant = custom(app, "Assistant", everything, &[
-        ("assistant.explain", "Explain This Code", Some("CmdOrCtrl+Alt+E"), false),
+        ("assistant.explain", "Ask the Assistant to Explain This Code", None, false),
         ("assistant.comment", "Add Comments to This Code", None, false),
         ("assistant.improve", "Suggest a Clearer Version", None, false),
+        ("assistant.writeHere", "Write Code for This Comment", Some("CmdOrCtrl+Alt+G"), false),
         ("assistant.write", "Write Code from a Description", None, false),
         ("", "", None, false),
         ("assistant.setup", "Set Up the Assistant and Models...", None, false),
@@ -179,16 +219,21 @@ pub fn build<R: Runtime>(app: &AppHandle<R>, state: &MenuState, recent: &[String
         .item(&PredefinedMenuItem::maximize(app, Some("Zoom"))?)
         .separator()
         .item(&MenuItemBuilder::with_id("focus.editor", "Editor").accelerator("Ctrl+1").build(app)?)
-        .item(&MenuItemBuilder::with_id("focus.console", "Console").accelerator("Ctrl+2").build(app)?)
+        .item(&MenuItemBuilder::with_id("focus.console", "R Prompt").accelerator("Ctrl+2").build(app)?)
         .item(&MenuItemBuilder::with_id("focus.help", "Help").accelerator("Ctrl+3").build(app)?)
         .item(&MenuItemBuilder::with_id("focus.history", "History").accelerator("Ctrl+4").build(app)?)
-        .item(&MenuItemBuilder::with_id("focus.plots", "Plots").accelerator("Ctrl+6").build(app)?)
+        .item(&MenuItemBuilder::with_id("focus.plots", "Canvas").accelerator("Ctrl+6").build(app)?)
         .item(&MenuItemBuilder::with_id("focus.packages", "Packages").accelerator("Ctrl+7").build(app)?)
-        .item(&MenuItemBuilder::with_id("focus.environment", "Environment").accelerator("Ctrl+8").build(app)?)
+        .item(&MenuItemBuilder::with_id("focus.environment", "Objects").accelerator("Ctrl+8").build(app)?)
         .item(&MenuItemBuilder::with_id("assistant.show", "Assistant").accelerator("Ctrl+9").build(app)?)
         .build()?;
 
     let help = custom(app, "Help", everything, &[
+        ("help.guide", "R: What Is It Good For? Help", Some("CmdOrCtrl+Shift+/"), false),
+        ("help.tour", "Take the Tour", None, false),
+        ("help.firstProject", "Do a First Project...", None, false),
+        ("help.examples", "Open the Example Project", None, false),
+        ("", "", None, false),
         ("help.atCursor", "R Help for the Name at the Cursor", Some("F1"), false),
         ("focus.help", "Search R Help", None, false),
         ("", "", None, false),

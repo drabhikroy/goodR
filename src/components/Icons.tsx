@@ -57,6 +57,16 @@ export const WarnIcon = (props: IconProps) => (
   </Svg>
 );
 
+/** A warning: a circle with an exclamation point, in the warning color, so
+ * its shape differs from the triangle that marks an error. */
+export const AlertIcon = (props: IconProps) => (
+  <Svg {...props}>
+    <circle cx="8" cy="8" r="6.6" fill="var(--warn)" stroke="none" />
+    <path d="M8 4.4v4.4" stroke="var(--surface)" strokeWidth="1.7" />
+    <circle cx="8" cy="11.3" r="1" fill="var(--surface)" stroke="none" />
+  </Svg>
+);
+
 export const StopIcon = (props: IconProps) => (
   <Svg {...props}>
     <rect x="3.5" y="3.5" width="9" height="9" rx="1.8" fill="currentColor" stroke="none" />
@@ -79,6 +89,14 @@ export const PauseIcon = (props: IconProps) => (
 export const HollowIcon = (props: IconProps) => (
   <Svg {...props}>
     <circle cx="8" cy="8" r="6" strokeDasharray="2.4 2.4" />
+  </Svg>
+);
+
+export const HomeIcon = (props: IconProps) => (
+  <Svg {...props}>
+    <path d="M2 7.3 8 2.3l6 5" />
+    <path d="M3.3 6.3V14h9.4V6.3" />
+    <path d="M6.3 14v-4.3h3.4V14" />
   </Svg>
 );
 
@@ -123,6 +141,22 @@ export const CloseIcon = (props: IconProps) => (
 export const RestartIcon = (props: IconProps) => (
   <Svg {...props}>
     <path d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v3h-3" />
+  </Svg>
+);
+
+/** A pencil, for changing something. */
+export const PencilIcon = (props: IconProps) => (
+  <Svg {...props}>
+    <path d="M10.5 2.5l3 3L5.5 13.5H2.5v-3z" />
+    <path d="M9 4l3 3" />
+  </Svg>
+);
+
+/** Undo: an arrow curving back to the left. */
+export const UndoIcon = (props: IconProps) => (
+  <Svg {...props}>
+    <path d="M5.5 3.5L2.5 6.5l3 3" />
+    <path d="M2.8 6.5H10a3.5 3.5 0 0 1 0 7H7" />
   </Svg>
 );
 
@@ -225,6 +259,28 @@ export const SidebarIcon = (props: IconProps) => (
   </Svg>
 );
 
+/** A window with its right column marked, for the side panel. */
+export const PanelIcon = (props: IconProps) => (
+  <Svg {...props}>
+    <rect x="1.5" y="2.5" width="13" height="11" rx="2" />
+    <path d="M10 2.5v11" />
+  </Svg>
+);
+
+/** Arrows out to two corners, for showing something full size. */
+export const ExpandIcon = (props: IconProps) => (
+  <Svg {...props}>
+    <path d="M9.5 2.5h4v4M13.5 2.5 9 7M6.5 13.5h-4v-4M2.5 13.5 7 9" />
+  </Svg>
+);
+
+/** A pin, for keeping an output on the stage. */
+export const PinIcon = (props: IconProps) => (
+  <Svg {...props}>
+    <path d="M6 2.5h4M7 2.5v4L4.5 9h7L9 6.5v-4M8 9v4.5" />
+  </Svg>
+);
+
 /** A prompt: the mark for code going in. */
 export const CodeIcon = (props: IconProps) => (
   <Svg {...props}>
@@ -259,6 +315,12 @@ export const HelpIcon = (props: IconProps) => (
   <Svg {...props}>
     <circle cx="8" cy="8" r="6.5" />
     <path d="M6.2 6.2a1.9 1.9 0 1 1 2.6 1.75c-.5.22-.8.6-.8 1.15v.4M8 11.6v.1" />
+  </Svg>
+);
+
+export const MoreIcon = (props: IconProps) => (
+  <Svg {...props}>
+    <path d="M3.5 8h.01M8 8h.01M12.5 8h.01" strokeWidth="2.4" />
   </Svg>
 );
 

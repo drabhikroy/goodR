@@ -1,0 +1,42 @@
+---
+title: "R Markdown basics"
+output: html_document
+---
+
+R Markdown mixes writing and R. The writing is plain text, with a few
+marks for style: **bold**, *italic*, and `code`. Each grey block below is
+a chunk. Press Run chunk on its header to run it, or Render above the
+script to make the finished page.
+
+```{r}
+planets <- read.csv("data/exoplanets.csv")
+```
+
+## A number in a sentence
+
+The Open Exoplanet Catalogue lists `r nrow(planets)` confirmed planets
+around other stars. `r sum(planets$year >= 2014, na.rm = TRUE)` of them were
+found from 2014 on, most by the Kepler space telescope watching stars dim
+as a planet passed in front. Those numbers come from R when the page is
+rendered, so they are never out of date.
+
+## A table
+
+```{r}
+head(planets[, c("name", "method", "year", "mass_jupiter")])
+```
+
+## A plot
+
+```{r, fig.height = 4}
+barplot(table(planets$year), las = 2, col = "#1F5F8B", border = NA,
+        cex.names = 0.7, ylab = "Planets found")
+```
+
+## Hiding the code
+
+Add `echo = FALSE` to a chunk and only its result shows on the page.
+
+```{r, echo = FALSE}
+sort(table(planets$method), decreasing = TRUE)
+```

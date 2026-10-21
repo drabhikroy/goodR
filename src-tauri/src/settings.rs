@@ -2,6 +2,7 @@
 //! configuration folder on this computer. Nothing here leaves the machine.
 
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 /// Every field has a default so a settings file written by an older version
@@ -9,7 +10,7 @@ use std::path::{Path, PathBuf};
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Settings {
-    /// The R_HOME the person chose. Empty until they choose one.
+    /// The R_HOME the user chose. Empty until they choose one.
     pub r_home: String,
     /// Files opened before, newest first. Only the app's own code adds to
     /// this list, never the interface, because a file listed here can be
@@ -24,15 +25,22 @@ pub struct Settings {
     pub recent_projects: Vec<RecentFile>,
     /// The project open at the last quit, reopened at launch.
     pub session_project: String,
-    /// Height of the console in pixels, as the person last left it.
+    /// Height of the console in pixels, as the user last left it.
     pub console_height: u32,
     /// Height of the console's typing box in pixels.
     pub console_input_height: u32,
+    /// Height of the strip of earlier results under the stage, in pixels.
+    pub timeline_height: u32,
+    /// Which parts of the window are on show.
+    pub show_sidebar: bool,
+    pub show_canvas: bool,
+    pub show_prompt: bool,
+    pub show_timeline: bool,
     /// Width of the right column in pixels.
     pub inspector_width: u32,
     /// Share of the right column given to its top pane, in percent.
     pub pane_split: u32,
-    /// "system", "light", or "dark".
+    /// "system", "light", "dark", or "paper".
     pub appearance: String,
     /// "standard", "deuteranopia", "protanopia", "tritanopia", or "monochrome".
     pub palette: String,
@@ -41,8 +49,13 @@ pub struct Settings {
     pub reduce_motion: bool,
     /// "essentials" or "everything".
     pub layer: String,
-    /// "inline", "side", or "stacked".
+    /// "canvas" or "inline".
     pub output_layout: String,
+    /// Set once the user chooses where results go. Until then results go
+    /// to the canvas, whatever an earlier version saved.
+    pub layout_chosen: bool,
+    /// Set once the tour has been seen, so it opens by itself only once.
+    pub tour_seen: bool,
     /// "ask" or "auto".
     pub missing_packages: String,
     /// The code typeface: "dm-mono", "jetbrains-mono", "ibm-plex-mono",
@@ -69,6 +82,45 @@ pub struct Settings {
     pub assistant_route: String,
     /// The model the assistant answers with.
     pub assistant_model: String,
+    /// What the Run button does for a file the user chose a default
+    /// for, by path: "line", "chunk", or "file". Files not listed run a
+    /// line in a script and a chunk in a document.
+    pub run_defaults: BTreeMap<String, String>,
+    /// Whether R keeps the objects as they were before each run, so the
+    /// last run can be undone. On by default.
+    pub undo_runs: bool,
+    /// Whether package installs and updates show R's own log rather than
+    /// progress by package. Off by default.
+    pub show_package_log: bool,
+    /// "auto" looks for updates once a day at most, "manual" only when
+    /// asked.
+    pub update_checks: String,
+    /// When updates were last looked for, in milliseconds since 1970.
+    pub last_update_check: u64,
+    /// Whether edited files are saved by themselves shortly after typing
+    /// stops. Off by default, since it changes what Save means.
+    pub autosave: bool,
+    /// Whether a report rendered once renders again each time it is saved.
+    pub render_on_save: bool,
+    /// How Render as PDF makes a PDF: "auto", LaTeX when there is one and
+    /// Typst otherwise, or "typst", or "latex".
+    pub pdf_engine: String,
+    /// The folder of the LaTeX to use, or empty to use the first found.
+    pub latex_dir: String,
+    /// Whether the editor points out habits that cause trouble later.
+    pub hints: bool,
+    /// Whether Return tidies the line it finishes.
+    pub format_on_type: bool,
+    /// Whether comments use a script italic beside the code's typeface.
+    pub script_italics: bool,
+    /// Whether results are kept and shown again when the app opens.
+    pub keep_results: bool,
+    /// Whether new plots take the app's colors and type.
+    pub plot_style: bool,
+    /// Tighter spacing around panes.
+    pub compact: bool,
+    /// Whether document text keeps to a comfortable line length.
+    pub reading_width: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
@@ -112,16 +164,23 @@ impl Default for Settings {
             session_active: String::new(),
             recent_projects: Vec::new(),
             session_project: String::new(),
-            console_height: 260,
+            console_height: 230,
             console_input_height: 96,
-            inspector_width: 360,
+            timeline_height: 184,
+            show_sidebar: true,
+            show_canvas: true,
+            show_prompt: true,
+            show_timeline: true,
+            inspector_width: 520,
             pane_split: 45,
             appearance: "system".into(),
             palette: "standard".into(),
             text_size: 100,
             reduce_motion: false,
             layer: "essentials".into(),
-            output_layout: "inline".into(),
+            output_layout: "canvas".into(),
+            layout_chosen: false,
+            tour_seen: false,
             missing_packages: "ask".into(),
             code_font: "dm-mono".into(),
             code_size: 15,
@@ -137,6 +196,22 @@ impl Default for Settings {
             copy_results: true,
             assistant_route: String::new(),
             assistant_model: String::new(),
+            run_defaults: BTreeMap::new(),
+            undo_runs: true,
+            show_package_log: false,
+            update_checks: "auto".into(),
+            last_update_check: 0,
+            autosave: false,
+            render_on_save: true,
+            pdf_engine: "auto".into(),
+            latex_dir: String::new(),
+            hints: true,
+            format_on_type: true,
+            script_italics: false,
+            keep_results: true,
+            plot_style: false,
+            compact: false,
+            reading_width: true,
         }
     }
 }

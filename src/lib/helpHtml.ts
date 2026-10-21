@@ -24,7 +24,15 @@ export type HelpLink = { package: string; file: string; topic: string };
 export function parseHelpLink(href: string): HelpLink | null {
   const match = /^(?:\.\.\/\.\.\/)?([A-Za-z][A-Za-z0-9.]*)\/(html|help)\/([^/#?]+)\.html(?:#.*)?$/.exec(href);
   if (!match) return null;
-  return { package: match[1], file: match[2] === "html" ? decodeURIComponent(match[3]) : "", topic: match[2] === "help" ? decodeURIComponent(match[3]) : "" };
+  // A stray percent sign makes the name unreadable, and the link is then
+  // shown as plain text.
+  let name: string;
+  try {
+    name = decodeURIComponent(match[3]);
+  } catch {
+    return null;
+  }
+  return { package: match[1], file: match[2] === "html" ? name : "", topic: match[2] === "help" ? name : "" };
 }
 
 /** Copies one node and its children across, keeping only what is allowed. */

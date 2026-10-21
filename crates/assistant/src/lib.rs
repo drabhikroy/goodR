@@ -4,7 +4,7 @@
 //!
 //! The pieces follow the setup steps the interface walks through:
 //! `runtime` finds Ollama or installs a private copy, `specs` reads this
-//! computer's memory and disk only when the person agrees, `catalog` lists
+//! computer's memory and disk only when the user agrees, `catalog` lists
 //! models with their strengths and weaknesses for this work, and `ollama`
 //! talks to the running server. `prompts` builds the requests.
 

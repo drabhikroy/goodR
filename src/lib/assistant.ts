@@ -1,9 +1,9 @@
 // The assistant's actions: setting it up, asking it things, and putting its
-// code into the script. It is optional and stays off until the person sets
+// code into the script. It is optional and stays off until the user sets
 // it up, and everything it does runs on this computer through Ollama.
 //
 // Answers are suggestions. Code from the model is never run by the app.
-// It goes into the script only when the person presses Insert or Replace,
+// It goes into the script only when the user presses Insert or Replace,
 // and R's own parser checks first whether it can read the code, so a
 // broken suggestion is labeled before anyone relies on it.
 
@@ -15,7 +15,7 @@ import { statementAt, statementRanges } from "./statements";
 export { codeBlocks, isOneOffStep, likeness } from "./suggestions";
 import { getState, setState, type AssistantState, type AssistantTurn } from "./store";
 import type { AnswerEvent, AssistantContext, AssistantTask, MachineSpecs, ModelCatalog, SetupEvent } from "./types";
-import { historyToConsole, notify, openDialog, showTopPane, updateSettings } from "./app";
+import { historyToConsole, notify, openDialog, showPanel, updateSettings } from "./app";
 
 let api: Backend;
 
@@ -82,7 +82,7 @@ export function cancelAssistantSetup() {
   api.assistantCancelSetup().catch(() => {});
 }
 
-/** Reads this computer's specs. Called only after the person agrees. */
+/** Reads this computer's specs. Called only after the user agrees. */
 export function readMachineSpecs(): Promise<MachineSpecs> {
   return api.assistantSpecs();
 }
@@ -138,8 +138,11 @@ export function chooseModel(id: string) {
   patch({ model: id });
 }
 
-/** Opens the setup steps. */
-export function openAssistantSetup() {
+/** Opens the setup steps, after checking Ollama afresh, so a person
+ * without it running starts at the first step rather than at a list of
+ * models that cannot be reached. */
+export async function openAssistantSetup() {
+  await refreshAssistant().catch(() => patch({ status: null, model: "" }));
   openDialog("assistantSetup");
 }
 
@@ -149,7 +152,17 @@ function onSetup(event: SetupEvent) {
   patch({ setup: event.done ? null : event });
 }
 
+// Answers that go somewhere other than the conversation, such as a draft
+// in the script, by request id.
+const answerListeners = new Map<string, (event: AnswerEvent) => void>();
+
 function onAnswer(event: AnswerEvent) {
+  const listener = answerListeners.get(event.id);
+  if (listener) {
+    listener(event);
+    if (event.done) answerListeners.delete(event.id);
+    return;
+  }
   patch((current) => ({
     turns: current.turns.map((turn) =>
       turn.id === event.id ? { ...turn, text: turn.text + event.text, done: event.done, error: event.error ? event.error.replace(/^Error: /, "") : turn.error } : turn,
@@ -180,7 +193,7 @@ export async function askAssistant(task: AssistantTask, label: string, replace: 
     notify("The assistant is still answering. Stop it first, or wait for it to finish.");
     return;
   }
-  showTopPane("assistant");
+  showPanel("assistant");
   const id = crypto.randomUUID();
   // Earlier turns give a follow up question its background. Failed or
   // stopped answers are left out, since they would only confuse the model.
@@ -202,6 +215,32 @@ export async function askAssistant(task: AssistantTask, label: string, replace: 
   }
 }
 
+/**
+ * Asks the assistant for code outside the conversation, handing each piece
+ * of the answer to `onText` as it arrives and the outcome to `onDone`.
+ * Returns false when no model is set up, after opening the setup.
+ */
+export async function askForCode(request: string, onText: (text: string) => void, onDone: (error: string) => void): Promise<boolean> {
+  const { model } = getState().assistant;
+  if (!model) {
+    notify("Set up the assistant first. It runs on this computer and takes a few minutes.");
+    openAssistantSetup();
+    return false;
+  }
+  const id = crypto.randomUUID();
+  answerListeners.set(id, (event) => {
+    if (event.text) onText(event.text);
+    if (event.done) onDone(event.error ? event.error.replace(/^Error: /, "") : "");
+  });
+  try {
+    await api.assistantAsk(id, model, { kind: "writeCode", request }, context(), []);
+  } catch (error) {
+    answerListeners.delete(id);
+    onDone(String(error).replace(/^Error: /, ""));
+  }
+  return true;
+}
+
 export function stopAnswer() {
   api.assistantStop().catch(() => {});
 }
@@ -213,7 +252,7 @@ export function clearConversation() {
 
 /** The selected code, or the statement under the cursor when nothing is
  * selected, with the lines it covers. */
-function codeAtCursor(): { file: string; code: string; from: number; to: number } | null {
+export function codeAtCursor(): { file: string; code: string; from: number; to: number } | null {
   const { active } = getState();
   if (!active || active.startsWith("data:")) return null;
   const position = editor.cursor(active);
@@ -269,13 +308,13 @@ export function askAssistantAboutError(blockId: string) {
 /** Whether R's parser can read some code, without running it. */
 export async function checkCode(code: string): Promise<"complete" | "incomplete" | "invalid" | "unknown"> {
   if (getState().r.status !== "ready") return "unknown";
-  const status = await api.isComplete(code).catch(() => "unknown");
+  const status = await api.isComplete(getState().activeSession, code).catch(() => "unknown");
   return status === "complete" || status === "incomplete" || status === "invalid" ? status : "unknown";
 }
 
 /** Puts an answer's code in the console's typing box, to read and run
  * there. It suits one off steps, such as installing a package, that do not
- * belong in the script. Nothing runs until the person presses Return. */
+ * belong in the script. Nothing runs until the user presses Return. */
 export function codeToConsole(code: string) {
   historyToConsole(code);
 }

@@ -1,7 +1,7 @@
 //! The words sent to the model for each kind of help. Every request carries
 //! the same short instructions: plain language, short answers, R code in one
 //! fenced block, no invented functions. It also carries what the model needs
-//! to know about the person's session: the R version and the names of the
+//! to know about the user's session: the R version and the names of the
 //! objects in it, with column names for tables. Values inside the data are
 //! never sent, even though the model runs on this computer, because a
 //! name is enough to write correct code and values can be private.
@@ -9,7 +9,7 @@
 use crate::ollama::ChatMessage;
 use serde::Deserialize;
 
-/// What the person asked for.
+/// What the user asked for.
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum Task {
@@ -19,7 +19,7 @@ pub enum Task {
     ExplainError { code: String, message: String, plain: String },
     /// What some code does.
     ExplainCode { code: String },
-    /// Code that does what the person describes.
+    /// Code that does what the user describes.
     WriteCode { request: String },
     /// A clearer or safer version of some code.
     Improve { code: String },
@@ -40,6 +40,8 @@ pub struct Context {
 
 const INSTRUCTIONS: &str = "You help people write and understand R code inside an R editor. \
 Write for someone who is new to R. Use plain, everyday words, and when a technical word is needed, explain it in a few words. \
+Avoid jargon such as coerce, vectorized, argument, scope, or namespace. If one of these is truly needed, say what it means right after, in everyday words. \
+Use short sentences, mostly under twenty words, and the second person: say what the person should do. No headings, no tables. \
 Keep answers short: a few sentences, then code if code helps. \
 Put R code in a single fenced block that starts with ```r. \
 Use base R unless the person's code already uses a package, and then prefer that package. \

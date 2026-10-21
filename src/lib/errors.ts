@@ -2,17 +2,8 @@
 // that went wrong, and says what to try next. Where the fix is clear, it is
 // offered as one button.
 //
-// R's own messages are written for people who already know R. They name
-// internal functions, quote jargon such as "closure" and "binary operator",
-// and rarely say which part of a line failed. Each message here has three
-// parts, in this order: a short headline that says what happened, a plain
-// explanation of why, and one thing to try. The original message is always
-// kept and one click away. Studies of rewritten compiler messages show mixed
-// results (Becker et al. 2019), so the plain version adds location and a
-// likely fix rather than replacing what R said. Locating the failing spot
-// follows the finding that people repair errors faster when the message
-// points at the code than when it only describes the problem (Marceau,
-// Fisler, and Krishnamurthi 2011).
+// Each explanation is a headline, a sentence on why, and one thing to try.
+// R's original message is kept alongside, one click away.
 
 import type { RObject } from "./types";
 
@@ -53,10 +44,10 @@ function plain(text: string): string {
 }
 
 /**
- * The calls in a traceback that came from the person's code, in order from
+ * The calls in a traceback that came from the user's code, in order from
  * outermost to innermost. ark lists them as "1. lm(y ~ x)". Its own error
  * handler and R's stop() are left out, since they say nothing about where
- * the person's code went wrong.
+ * the user's code went wrong.
  */
 export function userFrames(traceback: string[]): string[] {
   return traceback
@@ -69,7 +60,7 @@ export function userFrames(traceback: string[]): string[] {
  * The function an error came from. R sometimes says so in the message, as
  * in "Error in lm.fit(x, y) :", and ark lists the calls in its traceback.
  * With the code at hand, the innermost call that appears in the code is
- * chosen, since that is the part the person wrote and can change. lm.fit
+ * chosen, since that is the part the user wrote and can change. lm.fit
  * is inside lm, and only lm is in the script.
  */
 export function callName(message: string, traceback: string[] = [], code = ""): string | undefined {
@@ -131,8 +122,17 @@ export function maskText(code: string): string {
   let i = 0;
   while (i < code.length) {
     const ch = code[i];
+    const raw = ch === "r" || ch === "R" ? /^[rR](["'])(-*)([([{])/.exec(code.slice(i, i + 40)) : null;
     if (ch === "#") {
       while (i < code.length && code[i] !== "\n") out[i++] = " ";
+    } else if (raw && !/[\w.]/.test(code[i - 1] ?? "")) {
+      // A raw string, such as r"(a "quoted" word)", ends only at its own
+      // closing bracket and quote, so the quotes inside it are text.
+      const closer = { "(": ")", "[": "]", "{": "}" }[raw[3]] + raw[2] + raw[1];
+      const close = code.indexOf(closer, i + raw[0].length);
+      const stop = close === -1 ? code.length : close + closer.length;
+      for (let at = i + raw[0].length; at < stop - (close === -1 ? 0 : closer.length); at += 1) if (code[at] !== "\n") out[at] = " ";
+      i = stop;
     } else if (ch === '"' || ch === "'" || ch === "`") {
       i += 1;
       while (i < code.length && code[i] !== ch) {
@@ -263,8 +263,8 @@ const UNEXPECTED_HINT = "Look just before the marked spot for a missing comma, a
 
 // The rules, grouped by what went wrong. The first rule that matches wins,
 // so the specific wording of a parse error comes before the general one.
-// Each headline names the thing in the person's terms, and each hint is one
-// step the person can take now.
+// Each headline names the thing in the user's terms, and each hint is one
+// step the user can take now.
 const RULES: Rule[] = [
   // Names R could not find: objects, packages, and functions.
   {
@@ -288,6 +288,16 @@ const RULES: Rule[] = [
       detail: `A package is a set of extra tools for R. ${name} is not on this computer yet, so R cannot use it.`,
       hint: "Install it once with the button below. After that it stays installed.",
       fix: { kind: "install", name, label: `Install ${name}` },
+    }),
+  },
+  // Shiny: an input read where its changes cannot be followed.
+  {
+    // Shiny writes "Can" and "t" with either a straight or a curly quote.
+    test: /Can.t access reactive value '([^']+)' outside of reactive consumer/,
+    make: ([, name]) => ({
+      title: `input$${name} was read outside a reactive`,
+      detail: `Inputs change while the app runs, so they can only be read inside code that reruns when they do: a render function such as renderPlot, a reactive(), or an observe(). This one was read in the server function itself, which runs only once.`,
+      hint: `Move the line that reads input$${name} into the render function or reactive that needs it.`,
     }),
   },
   {
@@ -409,7 +419,7 @@ const RULES: Rule[] = [
     test: /invalid argument to unary operator/,
     make: () => ({
       title: "A minus sign or an exclamation mark was put in front of text",
-      detail: "Placing - or ! in front of a value means negate it, and that works only for numbers and TRUE or FALSE.",
+      detail: "A - in front of a value makes a number negative, and a ! swaps TRUE and FALSE. Neither one works on text.",
       hint: "Check the value right after the marked sign. Text must be turned into numbers first.",
     }),
   },
@@ -461,15 +471,15 @@ const RULES: Rule[] = [
     test: /subscript out of bounds/,
     make: () => ({
       title: "The line asks for a position that does not exist",
-      detail: "An index is larger than the object it points into, such as asking for item 12 of a list that holds 10.",
+      detail: "The number in the square brackets is bigger than the object, such as asking for item 12 of a list that holds only 10.",
       hint: "Check the number inside the square brackets against the size of the object. length() and nrow() give the sizes.",
     }),
   },
   {
     test: /incorrect number of dimensions/,
     make: () => ({
-      title: "Too many or too few indexes were used",
-      detail: "A table takes two indexes, rows and columns, as in data[1, 2]. A plain list of values takes only one.",
+      title: "The square brackets have too many or too few positions",
+      detail: "A table takes two positions, rows then columns, as in data[1, 2]. A plain list of values takes only one.",
       hint: "Check whether the object is a table or a single list of values.",
     }),
   },
@@ -601,7 +611,7 @@ const RULES: Rule[] = [
     test: /invalid \(NULL\) left side of assignment/,
     make: () => ({
       title: "The thing being assigned to does not exist",
-      detail: "The left side of <- names something R cannot store a value in, often a column that does not exist yet on an object that is empty.",
+      detail: "R cannot store a value in the thing named on the left of <-. Often it is a new column on an object that is empty.",
       hint: "Check the name on the left of the arrow.",
     }),
   },
@@ -639,7 +649,7 @@ export function explainError(message: string, objects: RObject[], code = "", tra
   // A message with no plain version yet. R's words are kept and framed so the
   // person knows the line did not run and where to look.
   return {
-    title: "R stopped with a message that has no plain version yet",
+    title: "R stopped, and this message has no plain explanation yet",
     detail: original ? `R said: ${original}` : "R stopped but gave no message.",
     hint: call ? `The message names ${call}(). Open the Help tab and look up ${call} to see what it expects.` : undefined,
     original,

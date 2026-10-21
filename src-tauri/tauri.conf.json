@@ -28,7 +28,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self'; frame-src asset: http://asset.localhost; connect-src ipc: http://ipc.localhost",
+      "csp": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self'; frame-src asset: http://asset.localhost http://127.0.0.1:*; connect-src ipc: http://ipc.localhost",
       "assetProtocol": {
         "enable": true,
         "scope": []
@@ -64,6 +64,7 @@
       "resources/ark/NOTICE": "licenses/ark/NOTICE"
     },
     "macOS": {
+      "bundleName": "R:",
       "minimumSystemVersion": "12.0",
       "hardenedRuntime": true,
       "entitlements": "entitlements.plist"
@@ -101,5 +102,13 @@
         "mimeType": "text/x-quarto"
       }
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "",
+      "endpoints": [
+        "https://github.com/drabhikroy/goodR/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

@@ -6,7 +6,8 @@
 // are read live from the session and never copied anywhere else.
 
 import { useEffect, useState } from "react";
-import { dataMeta, dataRows, runInConsole } from "../lib/app";
+import { changeData, dataMeta, dataRows, runInConsole } from "../lib/app";
+import { openTrace } from "../lib/trace";
 import { useStore } from "../lib/store";
 import type { DataColumn, DataMeta, DataRow } from "../lib/types";
 import { ArrowIcon, ChartIcon } from "./Icons";
@@ -44,7 +45,12 @@ type Sort = { column: string; descending: boolean } | null;
 export function DataViewer({ name }: { name: string }) {
   // The object's summary changes when the data does, which is the signal
   // to read the columns again.
-  const summary = useStore((state) => state.objects.find((object) => object.name === name)?.summary ?? "");
+  // A renamed or removed column leaves the summary as it was, so the
+  // column names are part of the signal too.
+  const summary = useStore((state) => {
+    const object = state.objects.find((item) => item.name === name);
+    return object ? `${object.summary}|${object.columns.join(",")}` : "";
+  });
   const rStatus = useStore((state) => state.r.status);
   const [meta, setMeta] = useState<DataMeta | null>(null);
   const [rows, setRows] = useState<DataRow[]>([]);
@@ -62,7 +68,7 @@ export function DataViewer({ name }: { name: string }) {
         setMeta(next);
         setError("");
       })
-      .catch(() => current && setError(`${name} is not in R right now. Run the code that creates it, then open it again from the Objects list.`));
+      .catch(() => current && setError(`${name} is not in R right now. Run the code that creates it, then open it again from its card on the canvas.`));
     return () => {
       current = false;
     };
@@ -108,6 +114,9 @@ export function DataViewer({ name }: { name: string }) {
           {meta.rows.toLocaleString()} rows, {meta.columns.length} columns
         </span>
         <span className="muted data-sorted">{sortedBy}</span>
+        <button type="button" className="button small quiet" onClick={() => openTrace(name)}>
+          Where it came from
+        </button>
       </header>
       <div className="data-body">
         <div className="data-table-wrap">
@@ -237,6 +246,145 @@ function ColumnDetails({ frame, column, rows, sort, onSort }: { frame: string; c
           )}
         </div>
       </div>
+      <ChangeData frame={frame} column={column} />
     </aside>
+  );
+}
+
+/** R code naming a column inside subset(), backquoted when its name needs
+ * it. */
+function bareColumn(column: string) {
+  return /^[A-Za-z.][A-Za-z0-9._]*$/.test(column) ? column : `\`${column.replace(/`/g, "\\`")}\``;
+}
+
+const COMPARISONS: { op: string; words: string }[] = [
+  { op: ">", words: "more than" },
+  { op: ">=", words: "at least" },
+  { op: "<", words: "less than" },
+  { op: "<=", words: "at most" },
+  { op: "==", words: "equal to" },
+  { op: "!=", words: "not equal to" },
+];
+
+/**
+ * Changing the data from the viewer. Each change writes one line of base
+ * R into the script and runs it, so it becomes part of the analysis and
+ * runs again with it, rather than a change made by hand that nobody can
+ * repeat. One form opens at a time, under its button.
+ */
+function ChangeData({ frame, column }: { frame: string; column: DataColumn }) {
+  const [open, setOpen] = useState<"keep" | "rename" | null>(null);
+  const [op, setOp] = useState(">");
+  const [value, setValue] = useState("");
+  const [chosen, setChosen] = useState<string[]>([]);
+  const [newName, setNewName] = useState(column.name);
+  // A different column starts its forms afresh.
+  useEffect(() => {
+    setOpen(null);
+    setValue("");
+    setChosen([]);
+    setNewName(column.name);
+  }, [column.name]);
+  const numeric = NUMERIC.has(column.type);
+  const col = bareColumn(column.name);
+  const validName = /^[A-Za-z.][A-Za-z0-9._]*$/.test(newName) && !/^\.\d/.test(newName);
+
+  const keep = () => {
+    if (numeric) {
+      if (value.trim() === "" || Number.isNaN(Number(value))) return;
+      const words = COMPARISONS.find((item) => item.op === op)?.words ?? op;
+      changeData(`${frame} <- subset(${frame}, ${col} ${op} ${Number(value)})`, `kept the rows where ${column.name} is ${words} ${value}`);
+    } else {
+      if (!chosen.length) return;
+      const list = chosen.map((item) => JSON.stringify(item)).join(", ");
+      changeData(`${frame} <- subset(${frame}, ${col} %in% c(${list}))`, `kept the rows where ${column.name} is ${chosen.join(" or ")}`);
+    }
+    setOpen(null);
+  };
+
+  return (
+    <section className="change-data" aria-labelledby={`change-${column.name}`}>
+      <h3 id={`change-${column.name}`}>Change the data</h3>
+      <p className="muted">Each change adds a line of R to your script and runs it.</p>
+      <div className="button-row">
+        <button type="button" className="button quiet" aria-expanded={open === "keep"} onClick={() => setOpen(open === "keep" ? null : "keep")}>
+          Keep only some rows
+        </button>
+        <button type="button" className="button quiet" aria-expanded={open === "rename"} onClick={() => setOpen(open === "rename" ? null : "rename")}>
+          Rename
+        </button>
+        <button type="button" className="button quiet" onClick={() => changeData(`${columnRef(frame, column.name)} <- NULL`, `removed the column ${column.name}`)}>
+          Remove this column
+        </button>
+        {column.missing > 0 && (
+          <button type="button" className="button quiet" onClick={() => changeData(`${frame} <- subset(${frame}, !is.na(${col}))`, `removed the rows where ${column.name} is missing`)}>
+            Remove rows where it is missing
+          </button>
+        )}
+      </div>
+      {open === "keep" && (
+        <form
+          className="change-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            keep();
+          }}
+        >
+          {numeric ? (
+            <div className="change-row">
+              <span>Keep rows where {column.name} is</span>
+              <select aria-label="Comparison" value={op} onChange={(event) => setOp(event.target.value)}>
+                {COMPARISONS.map((item) => (
+                  <option key={item.op} value={item.op}>
+                    {item.words}
+                  </option>
+                ))}
+              </select>
+              <input type="number" aria-label="Value" value={value} step="any" onChange={(event) => setValue(event.target.value)} />
+            </div>
+          ) : (
+            <fieldset className="change-values">
+              <legend>Keep rows where {column.name} is</legend>
+              {column.top.map((item) => (
+                <label key={item.value} className="check">
+                  <input
+                    type="checkbox"
+                    checked={chosen.includes(item.value)}
+                    onChange={(event) => setChosen(event.target.checked ? [...chosen, item.value] : chosen.filter((other) => other !== item.value))}
+                  />
+                  {item.value}
+                </label>
+              ))}
+            </fieldset>
+          )}
+          <p className="hint">Rows where {column.name} is missing are left out too.</p>
+          <button type="submit" className="button primary" disabled={numeric ? value.trim() === "" : !chosen.length}>
+            Keep these rows
+          </button>
+        </form>
+      )}
+      {open === "rename" && (
+        <form
+          className="change-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!validName || newName === column.name) return;
+            changeData(`names(${frame})[names(${frame}) == ${JSON.stringify(column.name)}] <- ${JSON.stringify(newName)}`, `renamed ${column.name} to ${newName}`);
+            setOpen(null);
+          }}
+        >
+          <label className="change-row">
+            <span>New name</span>
+            <input value={newName} spellCheck={false} aria-invalid={!validName} aria-describedby={`rename-hint-${column.name}`} onChange={(event) => setNewName(event.target.value)} />
+          </label>
+          <p className="hint" id={`rename-hint-${column.name}`}>
+            {validName ? "Letters, numbers, dots, and underscores, starting with a letter." : "A name starts with a letter and holds only letters, numbers, dots, and underscores."}
+          </p>
+          <button type="submit" className="button primary" disabled={!validName || newName === column.name}>
+            Rename
+          </button>
+        </form>
+      )}
+    </section>
   );
 }

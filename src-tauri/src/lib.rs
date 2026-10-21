@@ -1,19 +1,32 @@
 //! The desktop shell: holds app state and exposes commands to the interface.
 //!
 //! The interface never touches R or the disk directly. It calls the commands
-//! below, and R output reaches it as "r-event" events. Keeping that boundary
+//! below, and R output reaches it as "r-event" events.
+//!
+//! Each project has an R of its own, and so does each script that belongs
+//! to no project, so work in one never reaches another's objects. A
+//! session is named by a key: `project:` and the project folder,
+//! `file:` and the script, or `scratch` for untitled work. Keeping that boundary
 //! narrow means the interface code can be tested in a browser against a
 //! stand-in backend, and that the file rules in `files.rs` cannot be skipped.
 
 mod assistant;
+mod bib;
+mod examples;
 mod files;
+mod fresh;
+mod history;
 mod menu;
+mod latex;
 mod render;
 mod settings;
+mod shiny;
+mod updates;
 
 use rsession::{parse_helper_json, Event, RInstall, Session, SessionConfig};
 use serde::Serialize;
 use serde_json::Value;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex as StdMutex};
@@ -24,22 +37,31 @@ use tokio::sync::Mutex;
 struct AppState {
     settings_path: PathBuf,
     settings: StdMutex<settings::Settings>,
-    /// The files the person chose. Every read and write checks this first.
+    /// The files the user chose. Every read and write checks this first.
     allowed: StdMutex<files::Allowed>,
     /// Files handed to the app before the interface was ready to open them,
     /// from the command line or from Finder at launch.
     pending: StdMutex<Vec<String>>,
-    /// The open project's folder, which R starts in and stays in.
-    project: StdMutex<Option<PathBuf>>,
+    /// The open projects' folders, each with its project file. A project's
+    /// R starts in its folder and stays there.
+    projects: StdMutex<HashMap<PathBuf, PathBuf>>,
     /// The last folder chosen in the New Project dialog. Creating a project
     /// is allowed only there, so the interface cannot create one anywhere
     /// it likes.
     chosen_folder: StdMutex<Option<PathBuf>>,
-    session: Mutex<Option<Arc<Session>>>,
+    /// The running R sessions, by key.
+    sessions: Mutex<HashMap<String, Slot>>,
     /// Counts sessions. Each event is tagged with the session that sent it,
     /// so a late message from a session that was just restarted cannot be
     /// mistaken for output from the new one.
     generation: AtomicU64,
+}
+
+/// One running R and the generation its events carry.
+#[derive(Clone)]
+struct Slot {
+    session: Arc<Session>,
+    generation: u64,
 }
 
 /// Commands return text errors because the interface shows them to people.
@@ -51,6 +73,7 @@ fn text_error(error: impl std::fmt::Display) -> String {
 
 #[derive(Clone, Serialize)]
 struct TaggedEvent {
+    session: String,
     generation: u64,
     event: Event,
 }
@@ -58,6 +81,7 @@ struct TaggedEvent {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct SessionInfo {
+    session: String,
     generation: u64,
     version: String,
     working_dir: String,
@@ -143,7 +167,7 @@ fn update_menu(app: AppHandle, state: State<'_, AppState>, menu_state: menu::Men
     Ok(())
 }
 
-/// Grants access to files the person chose outside the interface, from a
+/// Grants access to files the user chose outside the interface, from a
 /// drop, Finder, or the command line, and records them as recent. Anything
 /// that is not an existing script is skipped.
 fn accept(state: &AppState, paths: impl IntoIterator<Item = PathBuf>) -> Vec<String> {
@@ -170,7 +194,7 @@ fn accept(state: &AppState, paths: impl IntoIterator<Item = PathBuf>) -> Vec<Str
 
 /// Shows the system Open dialog for scripts and returns the files chosen.
 /// The dialog runs here rather than in the interface so that the paths it
-/// returns are known to come from the person.
+/// returns are known to come from the user.
 #[tauri::command]
 async fn choose_files(app: AppHandle, state: State<'_, AppState>) -> CommandResult<Vec<String>> {
     let (tx, rx) = tokio::sync::oneshot::channel();
@@ -187,11 +211,18 @@ async fn choose_files(app: AppHandle, state: State<'_, AppState>) -> CommandResu
 }
 
 /// Shows the system Save dialog and grants access to the file named there.
-/// Returns nothing when the person cancels.
+/// Returns nothing when the user cancels.
 #[tauri::command]
 async fn choose_save_path(app: AppHandle, state: State<'_, AppState>, suggested: String) -> CommandResult<Option<String>> {
     let (tx, rx) = tokio::sync::oneshot::channel();
-    let mut dialog = app.dialog().file().set_title("Save R Script").add_filter("R script", &["R"]).set_file_name(&suggested);
+    // The filter follows the kind of file being saved, so a new Quarto or
+    // R Markdown document keeps its extension.
+    let (title, label, extension) = match Path::new(&suggested).extension().and_then(|ext| ext.to_str()) {
+        Some("qmd") => ("Save Quarto Document", "Quarto document", "qmd"),
+        Some("Rmd") | Some("rmd") => ("Save R Markdown Document", "R Markdown document", "Rmd"),
+        _ => ("Save R Script", "R script", "R"),
+    };
+    let mut dialog = app.dialog().file().set_title(title).add_filter(label, &[extension]).set_file_name(&suggested);
     if let Some(documents) = dirs::document_dir() {
         dialog = dialog.set_directory(documents);
     }
@@ -208,7 +239,7 @@ async fn choose_save_path(app: AppHandle, state: State<'_, AppState>, suggested:
 }
 
 /// Reopens a file from the recent list or from the last session. Both lists
-/// are written only by this file, so a path in them was chosen by the person
+/// are written only by this file, so a path in them was chosen by the user
 /// at some point. Files that have since been deleted or moved are dropped
 /// from the list, and the interface is told plainly.
 #[tauri::command]
@@ -231,7 +262,7 @@ fn reopen(state: State<'_, AppState>, path: String) -> CommandResult<String> {
     Ok(path)
 }
 
-/// Removes a file from the recent list, at the person's request.
+/// Removes a file from the recent list, at the user's request.
 #[tauri::command]
 fn forget_recent(state: State<'_, AppState>, path: String) {
     state.settings.lock().unwrap().recent_files.retain(|recent| recent.path != path);
@@ -258,8 +289,8 @@ fn remember_session(state: State<'_, AppState>, files: Vec<String>, active: Stri
 /// as recent and as the session's project, and lists what it holds.
 fn open_project_file(state: &AppState, file: &Path) -> CommandResult<files::ProjectInfo> {
     let info = files::scan_project(file).map_err(text_error)?;
-    state.allowed.lock().unwrap().set_project(Some(Path::new(&info.root))).map_err(text_error)?;
-    *state.project.lock().unwrap() = Some(PathBuf::from(&info.root));
+    let root = state.allowed.lock().unwrap().add_project(Path::new(&info.root)).map_err(text_error)?;
+    state.projects.lock().unwrap().insert(root, file.to_path_buf());
     {
         let mut settings = state.settings.lock().unwrap();
         settings.note_project(&info.file);
@@ -299,24 +330,63 @@ fn reopen_project(state: State<'_, AppState>, file: String) -> CommandResult<fil
     open_project_file(&state, Path::new(&file))
 }
 
-/// Lists the open project again, after a save adds a script to it.
+/// Lists an open project again, after a save adds a script to it.
 #[tauri::command]
-fn refresh_project(state: State<'_, AppState>) -> CommandResult<Option<files::ProjectInfo>> {
-    let file = state.settings.lock().unwrap().session_project.clone();
-    if file.is_empty() || state.project.lock().unwrap().is_none() {
-        return Ok(None);
-    }
-    files::scan_project(Path::new(&file)).map(Some).map_err(text_error)
+fn refresh_project(state: State<'_, AppState>, root: String) -> CommandResult<Option<files::ProjectInfo>> {
+    let root = Path::new(&root).canonicalize().map_err(text_error)?;
+    let Some(file) = state.projects.lock().unwrap().get(&root).cloned() else { return Ok(None) };
+    files::scan_project(&file).map(Some).map_err(text_error)
 }
 
-/// Closes the project. Its scripts that were opened one by one stay open.
+/// Closes a project and ends its R. Its scripts that were opened one by
+/// one stay available.
 #[tauri::command]
-fn close_project(state: State<'_, AppState>) -> CommandResult<()> {
-    state.allowed.lock().unwrap().set_project(None).map_err(text_error)?;
-    *state.project.lock().unwrap() = None;
-    state.settings.lock().unwrap().session_project.clear();
+async fn close_project(state: State<'_, AppState>, root: String) -> CommandResult<()> {
+    let root = Path::new(&root).canonicalize().map_err(text_error)?;
+    state.allowed.lock().unwrap().remove_project(&root);
+    state.projects.lock().unwrap().remove(&root);
+    {
+        let mut settings = state.settings.lock().unwrap();
+        if Path::new(&settings.session_project).parent() == Some(root.as_path()) {
+            settings.session_project.clear();
+        }
+    }
     persist(&state);
+    let slot = state.sessions.lock().await.remove(&project_key(&root));
+    if let Some(slot) = slot {
+        slot.session.shutdown().await;
+    }
     Ok(())
+}
+
+/// The key of a project's session.
+fn project_key(root: &Path) -> String {
+    format!("project:{}", root.to_string_lossy())
+}
+
+/// Where a script runs: in its project's R when it sits inside a project,
+/// and in an R of its own when it does not.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SessionContext {
+    /// The session's key, which every R command takes.
+    key: String,
+    /// The project, when the script belongs to one. Finding it opens it.
+    project: Option<files::ProjectInfo>,
+}
+
+/// Works out which R a script the user opened runs in. A script inside a
+/// folder with a .Rproj file belongs to that project, wherever it was
+/// opened from, so it always meets that project's objects and never
+/// another's. Any other script gets an R of its own.
+#[tauri::command]
+fn session_for(state: State<'_, AppState>, file: String) -> CommandResult<SessionContext> {
+    let path = state.allowed.lock().unwrap().check(Path::new(&file)).map_err(text_error)?;
+    if let Some(project_file) = files::find_project(&path) {
+        let info = open_project_file(&state, &project_file)?;
+        return Ok(SessionContext { key: project_key(Path::new(&info.root)), project: Some(info) });
+    }
+    Ok(SessionContext { key: format!("file:{}", path.to_string_lossy()), project: None })
 }
 
 /// Removes a project from the recent list. Its files are untouched.
@@ -355,6 +425,15 @@ fn create_project(state: State<'_, AppState>, parent: String, name: String, temp
     open_project_file(&state, &file)
 }
 
+/// Copies the example project into the Documents folder, restoring any
+/// file that was deleted, and opens it.
+#[tauri::command]
+fn open_examples(state: State<'_, AppState>) -> CommandResult<files::ProjectInfo> {
+    let folder = examples::default_folder().map_err(text_error)?;
+    let file = examples::install(&folder).map_err(text_error)?;
+    open_project_file(&state, &file)
+}
+
 /// Files that arrived before the interface was listening, handed over once.
 #[tauri::command]
 fn take_pending(state: State<'_, AppState>) -> Vec<String> {
@@ -367,13 +446,83 @@ fn read_text(state: State<'_, AppState>, path: String) -> CommandResult<String> 
     files::read_text(&path).map_err(text_error)
 }
 
+/// Adds a BibTeX entry to references.bib beside a document the user
+/// opened, and returns the key to cite it by.
 #[tauri::command]
+fn bib_add(state: State<'_, AppState>, document: String, entry: String) -> CommandResult<String> {
+    let document = state.allowed.lock().unwrap().check(Path::new(&document)).map_err(text_error)?;
+    let file = document.parent().ok_or("The document has no folder.")?.join("references.bib");
+    let existing = if file.exists() { files::read_text(&file).map_err(text_error)? } else { String::new() };
+    let (text, key) = bib::add_entry(&existing, &entry)?;
+    if text != existing {
+        files::write_bytes(&file, text.as_bytes()).map_err(text_error)?;
+    }
+    Ok(key)
+}
+
+/// Looks up a citation in R, which reaches doi.org and Crossref with its
+/// own web access: the BibTeX for a DOI, or the works matching a title.
+#[tauri::command]
+async fn r_cite(state: State<'_, AppState>, session: String, kind: String, query: String) -> CommandResult<Value> {
+    let call = rsession::helpers::cite_call(&kind, &query).ok_or("kind must be doi or search")?;
+    let text = current(&state, &session).await?.query(&call).await.map_err(text_error)?;
+    parse_helper_json(&text).map_err(text_error)
+}
+
+// Saving also keeps a version, which reads and lists files, so it runs off
+// the interface's thread.
+#[tauri::command(async)]
 fn write_text(state: State<'_, AppState>, path: String, contents: String) -> CommandResult<()> {
     let path = state.allowed.lock().unwrap().check(Path::new(&path)).map_err(text_error)?;
+    // A script keeps its earlier versions. A failure to keep one never
+    // stops the save itself.
+    if files::is_script(&path) {
+        let _ = history::keep(&history_root(&state), &path, &contents);
+    }
     files::write_bytes(&path, contents.as_bytes()).map_err(text_error)
 }
 
-/// Saves a plot image wherever the person chooses in the Save dialog. The
+/// Where earlier versions of files are kept: beside the settings, in the
+/// app's own folder.
+fn history_root(state: &AppState) -> PathBuf {
+    state.settings_path.parent().map(|dir| dir.join("history")).unwrap_or_else(|| PathBuf::from("history"))
+}
+
+/// Part of putting the app back as it was new: forgets the recent files and
+/// projects, and deletes the earlier versions of every file, when asked.
+/// The files themselves are never touched.
+#[tauri::command(async)]
+fn reset_app(state: State<'_, AppState>, recent: bool, history: bool) -> CommandResult<()> {
+    if recent {
+        let mut current = state.settings.lock().unwrap();
+        current.recent_files.clear();
+        current.recent_projects.clear();
+        settings::save(&state.settings_path, &current).map_err(text_error)?;
+    }
+    if history {
+        let root = history_root(&state);
+        if root.exists() {
+            std::fs::remove_dir_all(&root).map_err(text_error)?;
+        }
+    }
+    Ok(())
+}
+
+/// The saved versions of a file, newest first.
+#[tauri::command(async)]
+fn file_history(state: State<'_, AppState>, path: String) -> CommandResult<Vec<history::Version>> {
+    let path = state.allowed.lock().unwrap().check(Path::new(&path)).map_err(text_error)?;
+    Ok(history::list(&history_root(&state), &path))
+}
+
+/// The text of one saved version of a file.
+#[tauri::command(async)]
+fn file_version(state: State<'_, AppState>, path: String, id: String) -> CommandResult<String> {
+    let path = state.allowed.lock().unwrap().check(Path::new(&path)).map_err(text_error)?;
+    history::read(&history_root(&state), &path, &id).map_err(text_error)
+}
+
+/// Saves a plot image wherever the user chooses in the Save dialog. The
 /// data arrives as base64 text because that is how R hands plots over.
 #[tauri::command]
 async fn save_plot(app: AppHandle, data: String, suggested: String) -> CommandResult<Option<String>> {
@@ -392,12 +541,12 @@ async fn save_plot(app: AppHandle, data: String, suggested: String) -> CommandRe
     Ok(Some(path.to_string_lossy().to_string()))
 }
 
-/// Exports a plot at a chosen size and format. The person picks where the
+/// Exports a plot at a chosen size and format. The user picks where the
 /// file goes in the Save dialog, then R draws the plot again from the code
 /// that made it, so a PDF or SVG stays sharp at any size rather than being
 /// a screen image enlarged.
 #[tauri::command]
-async fn export_plot(app: AppHandle, state: State<'_, AppState>, code: String, format: String, width: f64, height: f64, dpi: u32, suggested: String) -> CommandResult<Option<String>> {
+async fn export_plot(app: AppHandle, state: State<'_, AppState>, session: String, code: String, format: String, width: f64, height: f64, dpi: u32, suggested: String) -> CommandResult<Option<String>> {
     let (label, extension) = match format.as_str() {
         "png" => ("PNG image", "png"),
         "pdf" => ("PDF document", "pdf"),
@@ -415,7 +564,7 @@ async fn export_plot(app: AppHandle, state: State<'_, AppState>, code: String, f
     // Inside a project, figures belong with the project: its figures
     // folder when it has one, as the analysis template makes, or else its
     // root. Outside a project, the Pictures folder.
-    let root = state.project.lock().unwrap().clone();
+    let root = project_root(&state, &session);
     let start = root.map(|root| if root.join("figures").is_dir() { root.join("figures") } else { root }).or_else(dirs::picture_dir);
     if let Some(start) = start {
         dialog = dialog.set_directory(start);
@@ -429,7 +578,7 @@ async fn export_plot(app: AppHandle, state: State<'_, AppState>, code: String, f
         path.set_extension(extension);
     }
     let call = rsession::helpers::export_call(&code, &path.to_string_lossy(), extension, width, height, dpi);
-    let text = current(&state).await?.query(&call).await.map_err(text_error)?;
+    let text = current(&state, &session).await?.query(&call).await.map_err(text_error)?;
     let value = parse_helper_json(&text).map_err(text_error)?;
     if let Some(problem) = value.get("error").and_then(Value::as_str) {
         return Err(format!("R could not draw the plot again: {problem}"));
@@ -437,13 +586,13 @@ async fn export_plot(app: AppHandle, state: State<'_, AppState>, code: String, f
     Ok(Some(path.to_string_lossy().to_string()))
 }
 
-/// Moves R to the folder of a script the person chose, before running code
+/// Moves R to the folder of a script the user chose, before running code
 /// from it. Returns the folder so the console can say where R now is.
 #[tauri::command]
-async fn r_set_working_dir(state: State<'_, AppState>, file: String) -> CommandResult<String> {
+async fn r_set_working_dir(state: State<'_, AppState>, session: String, file: String) -> CommandResult<String> {
     let path = state.allowed.lock().unwrap().check(Path::new(&file)).map_err(text_error)?;
     let dir = path.parent().ok_or("the file has no folder")?.to_string_lossy().to_string();
-    let text = current(&state).await?.query(&rsession::helpers::setwd_call(&dir)).await.map_err(text_error)?;
+    let text = current(&state, &session).await?.query(&rsession::helpers::setwd_call(&dir)).await.map_err(text_error)?;
     let value = parse_helper_json(&text).map_err(text_error)?;
     Ok(value.as_str().unwrap_or(&dir).to_string())
 }
@@ -465,23 +614,45 @@ fn ark_path() -> CommandResult<PathBuf> {
     }
 }
 
-/// Starts R, replacing any session already running. R begins in the folder
-/// of `file` when it is a script the person opened, and in the home folder
-/// otherwise, which is where R itself starts from a terminal. With a project
-/// open, R starts in the project folder instead.
+/// The folder of the open project a session key names, if it names one.
+fn project_root(state: &AppState, session: &str) -> Option<PathBuf> {
+    let root = PathBuf::from(session.strip_prefix("project:")?);
+    state.projects.lock().unwrap().contains_key(&root).then_some(root)
+}
+
+/// The folder a session's R starts in: the project folder for a project,
+/// the script's folder for a script on its own, and the home folder for
+/// untitled work, which is where R itself starts from a terminal. A key
+/// naming a project that is not open, or a script the user did not
+/// open, is refused, so the interface cannot start R anywhere it likes.
+fn session_folder(state: &AppState, session: &str) -> CommandResult<PathBuf> {
+    if session == "scratch" {
+        return Ok(dirs::home_dir().unwrap_or_else(std::env::temp_dir));
+    }
+    if let Some(root) = session.strip_prefix("project:") {
+        return project_root(state, session).ok_or_else(|| format!("{root} is not an open project"));
+    }
+    if let Some(file) = session.strip_prefix("file:") {
+        let path = state.allowed.lock().unwrap().check(Path::new(file)).map_err(text_error)?;
+        return path.parent().map(Path::to_path_buf).ok_or_else(|| "the file has no folder".to_string());
+    }
+    Err(format!("{session} does not name a session"))
+}
+
+/// Starts the R for one session, replacing that session's R if it is
+/// already running. Other sessions are left alone.
 #[tauri::command]
-async fn start_session(app: AppHandle, state: State<'_, AppState>, r_home: String, file: Option<String>) -> CommandResult<SessionInfo> {
-    let project = state.project.lock().unwrap().clone();
-    let folder = project
-        .or_else(|| file.and_then(|file| state.allowed.lock().unwrap().check(Path::new(&file)).ok()).and_then(|path| path.parent().map(Path::to_path_buf)))
-        .or_else(dirs::home_dir)
-        .unwrap_or_else(std::env::temp_dir);
-    let mut slot = state.session.lock().await;
-    if let Some(old) = slot.take() {
-        old.shutdown().await;
+async fn start_session(app: AppHandle, state: State<'_, AppState>, r_home: String, session: String) -> CommandResult<SessionInfo> {
+    let folder = session_folder(&state, &session)?;
+    let old = state.sessions.lock().await.remove(&session);
+    if let Some(old) = old {
+        old.session.shutdown().await;
     }
     let generation = state.generation.fetch_add(1, Ordering::SeqCst) + 1;
-    let runtime_dir = std::env::temp_dir().join("goodfor").join(format!("session-{}-{generation}", std::process::id()));
+    // The folder holds the connection file with the session's signing key,
+    // so it is made fresh and private rather than at a name another user
+    // could guess and prepare.
+    let runtime_dir = files::private_dir(&format!("goodfor-session-{generation}")).map_err(text_error)?;
     let config = SessionConfig {
         ark_path: ark_path()?,
         r_home: PathBuf::from(&r_home),
@@ -491,59 +662,78 @@ async fn start_session(app: AppHandle, state: State<'_, AppState>, r_home: Strin
 
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
     let forwarder = app.clone();
+    let key = session.clone();
     tokio::spawn(async move {
         while let Some(event) = rx.recv().await {
-            let _ = forwarder.emit("r-event", TaggedEvent { generation, event });
+            let _ = forwarder.emit("r-event", TaggedEvent { session: key.clone(), generation, event });
         }
     });
 
-    let session = Session::start(config, tx).await.map_err(text_error)?;
+    let started = Session::start(config, tx).await.map_err(text_error)?;
+    let result = match describe(&session, generation, &started).await {
+        Ok(result) => result,
+        Err(error) => {
+            started.shutdown().await;
+            return Err(error);
+        }
+    };
+    // Two starts for one key can overlap, since the lock is not held while R
+    // starts. The R this one replaces is ended rather than left running
+    // with nothing pointing at it.
+    let replaced = state.sessions.lock().await.insert(session, Slot { session: started, generation });
+    if let Some(replaced) = replaced {
+        replaced.session.shutdown().await;
+    }
+    Ok(result)
+}
+
+/// A session's version and folder, for the interface.
+async fn describe(key: &str, generation: u64, session: &Session) -> CommandResult<SessionInfo> {
     let info = parse_helper_json(&session.query(".gf_info()").await.map_err(text_error)?).map_err(text_error)?;
-    let result = SessionInfo {
+    Ok(SessionInfo {
+        session: key.to_string(),
         generation,
         version: info["version"].as_str().unwrap_or_default().to_string(),
         working_dir: info["wd"].as_str().unwrap_or_default().to_string(),
         log_path: session.log_path.to_string_lossy().to_string(),
-    };
-    *slot = Some(session);
-    Ok(result)
+    })
 }
 
 /// Names that could complete the text before the cursor, from R's own
 /// completion engine.
 #[tauri::command]
-async fn r_complete(state: State<'_, AppState>, line: String, cursor: usize) -> CommandResult<Value> {
-    let text = current(&state).await?.query(&rsession::helpers::complete_call(&line, cursor)).await.map_err(text_error)?;
+async fn r_complete(state: State<'_, AppState>, session: String, line: String, cursor: usize) -> CommandResult<Value> {
+    let text = current(&state, &session).await?.query(&rsession::helpers::complete_call(&line, cursor)).await.map_err(text_error)?;
     parse_helper_json(&text).map_err(text_error)
 }
 
 /// A help page for the Help pane, by topic or by file within a package.
 #[tauri::command]
-async fn r_help(state: State<'_, AppState>, topic: String, package: String, file: String) -> CommandResult<Value> {
-    let text = current(&state).await?.query(&rsession::helpers::help_call(&topic, &package, &file)).await.map_err(text_error)?;
+async fn r_help(state: State<'_, AppState>, session: String, topic: String, package: String, file: String) -> CommandResult<Value> {
+    let text = current(&state, &session).await?.query(&rsession::helpers::help_call(&topic, &package, &file)).await.map_err(text_error)?;
     parse_helper_json(&text).map_err(text_error)
 }
 
 /// Installed packages for the Packages pane.
 #[tauri::command]
-async fn r_packages(state: State<'_, AppState>) -> CommandResult<Value> {
-    let text = current(&state).await?.query(".gf_packages()").await.map_err(text_error)?;
+async fn r_packages(state: State<'_, AppState>, session: String) -> CommandResult<Value> {
+    let text = current(&state, &session).await?.query(".gf_packages()").await.map_err(text_error)?;
     parse_helper_json(&text).map_err(text_error)
 }
 
 /// The first rows of a data file as R reads them, for the Import Data
 /// preview. R reads the file; the app itself never opens data files.
 #[tauri::command]
-async fn r_preview(state: State<'_, AppState>, code: String) -> CommandResult<Value> {
-    let text = current(&state).await?.query(&rsession::helpers::preview_call(&code)).await.map_err(text_error)?;
+async fn r_preview(state: State<'_, AppState>, session: String, code: String) -> CommandResult<Value> {
+    let text = current(&state, &session).await?.query(&rsession::helpers::preview_call(&code)).await.map_err(text_error)?;
     parse_helper_json(&text).map_err(text_error)
 }
 
 /// Where R's parser stops on code that will not parse, as R words it with
 /// the line and column. Empty when the code parses. Nothing runs.
 #[tauri::command]
-async fn r_parse_problem(state: State<'_, AppState>, code: String) -> CommandResult<String> {
-    let text = current(&state).await?.query(&rsession::helpers::parse_problem_call(&code)).await.map_err(text_error)?;
+async fn r_parse_problem(state: State<'_, AppState>, session: String, code: String) -> CommandResult<String> {
+    let text = current(&state, &session).await?.query(&rsession::helpers::parse_problem_call(&code)).await.map_err(text_error)?;
     let value = parse_helper_json(&text).map_err(text_error)?;
     Ok(value["message"].as_str().unwrap_or_default().to_string())
 }
@@ -551,10 +741,10 @@ async fn r_parse_problem(state: State<'_, AppState>, code: String) -> CommandRes
 /// Asks which data file to import. The path is only ever handed to R in
 /// the import code; it is not added to the files the app may open.
 #[tauri::command]
-async fn choose_data_file(app: AppHandle, state: State<'_, AppState>) -> CommandResult<Option<String>> {
+async fn choose_data_file(app: AppHandle, state: State<'_, AppState>, session: String) -> CommandResult<Option<String>> {
     let (tx, rx) = tokio::sync::oneshot::channel();
     let mut dialog = app.dialog().file().set_title("Import Data").add_filter("Data files", files::IMPORT_EXTENSIONS);
-    let root = state.project.lock().unwrap().clone();
+    let root = project_root(&state, &session);
     if let Some(start) = root.map(|root| if root.join("data").is_dir() { root.join("data") } else { root }) {
         dialog = dialog.set_directory(start);
     }
@@ -565,119 +755,188 @@ async fn choose_data_file(app: AppHandle, state: State<'_, AppState>) -> Command
     Ok(Some(picked.into_path().map_err(text_error)?.to_string_lossy().to_string()))
 }
 
-/// The R session already running, if any. When the window reloads, the
-/// interface starts over but R does not, so the interface asks for this
-/// first and reconnects instead of starting a second R and losing the
+/// The R sessions already running. When the window reloads, the
+/// interface starts over but R does not, so the interface asks for these
+/// first and reconnects instead of starting new ones and losing the
 /// person's objects.
 #[tauri::command]
-async fn current_session(state: State<'_, AppState>) -> CommandResult<Option<SessionInfo>> {
-    let session = state.session.lock().await.clone();
-    let Some(session) = session.filter(|session| session.is_running()) else { return Ok(None) };
-    let info = parse_helper_json(&session.query(".gf_info()").await.map_err(text_error)?).map_err(text_error)?;
-    Ok(Some(SessionInfo {
-        generation: state.generation.load(Ordering::SeqCst),
-        version: info["version"].as_str().unwrap_or_default().to_string(),
-        working_dir: info["wd"].as_str().unwrap_or_default().to_string(),
-        log_path: session.log_path.to_string_lossy().to_string(),
-    }))
+async fn running_sessions(state: State<'_, AppState>) -> CommandResult<Vec<SessionInfo>> {
+    let slots: Vec<(String, Slot)> = state.sessions.lock().await.iter().map(|(key, slot)| (key.clone(), slot.clone())).collect();
+    let mut found = Vec::new();
+    for (key, slot) in slots {
+        if slot.session.is_running() {
+            found.push(describe(&key, slot.generation, &slot.session).await?);
+        }
+    }
+    Ok(found)
 }
 
-/// The running session, cloned out of the lock so a long R call does not
+/// One running session, cloned out of the lock so a long R call does not
 /// block other commands such as Stop.
-async fn current(state: &State<'_, AppState>) -> CommandResult<Arc<Session>> {
-    state.session.lock().await.clone().ok_or_else(|| "R is not running".to_string())
+async fn current(state: &State<'_, AppState>, session: &str) -> CommandResult<Arc<Session>> {
+    state.sessions.lock().await.get(session).map(|slot| slot.session.clone()).ok_or_else(|| "R is not running".to_string())
 }
 
-/// Ends R, used before choosing another R version.
+/// Ends one session's R, as when its script closes or before choosing
+/// another R version.
 #[tauri::command]
-async fn shutdown_session(state: State<'_, AppState>) -> CommandResult<()> {
-    if let Some(session) = state.session.lock().await.take() {
-        session.shutdown().await;
+async fn shutdown_session(state: State<'_, AppState>, session: String) -> CommandResult<()> {
+    let slot = state.sessions.lock().await.remove(&session);
+    if let Some(slot) = slot {
+        slot.session.shutdown().await;
     }
     Ok(())
 }
 
-/// Runs code the person asked for and returns the run id output will carry.
+/// Runs code the user asked for and returns the run id output will carry.
 #[tauri::command]
-async fn execute(state: State<'_, AppState>, code: String, run_id: String) -> CommandResult<String> {
-    current(&state).await?.execute_as(&code, &run_id).await.map_err(text_error)
+async fn execute(state: State<'_, AppState>, session: String, code: String, run_id: String) -> CommandResult<String> {
+    current(&state, &session).await?.execute_as(&code, &run_id).await.map_err(text_error)
 }
 
 #[tauri::command]
-async fn is_complete(state: State<'_, AppState>, code: String) -> CommandResult<String> {
-    current(&state).await?.is_complete(&code).await.map_err(text_error)
+async fn is_complete(state: State<'_, AppState>, session: String, code: String) -> CommandResult<String> {
+    current(&state, &session).await?.is_complete(&code).await.map_err(text_error)
 }
 
 #[tauri::command]
-async fn interrupt(state: State<'_, AppState>) -> CommandResult<()> {
-    current(&state).await?.interrupt().await.map_err(text_error)
+async fn interrupt(state: State<'_, AppState>, session: String) -> CommandResult<()> {
+    current(&state, &session).await?.interrupt().await.map_err(text_error)
 }
 
 #[tauri::command]
-async fn send_input(state: State<'_, AppState>, value: String) -> CommandResult<()> {
-    current(&state).await?.send_input(&value).await.map_err(text_error)
+async fn send_input(state: State<'_, AppState>, session: String, value: String) -> CommandResult<()> {
+    current(&state, &session).await?.send_input(&value).await.map_err(text_error)
 }
 
 /// The Objects list, refreshed after every visible run finishes.
 #[tauri::command]
-async fn r_objects(state: State<'_, AppState>) -> CommandResult<Value> {
-    let text = current(&state).await?.query(".gf_objects()").await.map_err(text_error)?;
+async fn r_objects(state: State<'_, AppState>, session: String) -> CommandResult<Value> {
+    let text = current(&state, &session).await?.query(".gf_objects()").await.map_err(text_error)?;
     parse_helper_json(&text).map_err(text_error)
 }
 
 /// The columns of a data frame, for the data viewer's headers.
 #[tauri::command]
-async fn r_data_meta(state: State<'_, AppState>, name: String) -> CommandResult<Value> {
-    let text = current(&state).await?.query(&rsession::helpers::data_meta_call(&name)).await.map_err(text_error)?;
+async fn r_data_meta(state: State<'_, AppState>, session: String, name: String) -> CommandResult<Value> {
+    let text = current(&state, &session).await?.query(&rsession::helpers::data_meta_call(&name)).await.map_err(text_error)?;
     parse_helper_json(&text).map_err(text_error)
 }
 
 /// One page of a data frame's rows. Pages are capped so a request can
 /// never ask R to format a whole large table at once.
 #[tauri::command]
-async fn r_data_rows(state: State<'_, AppState>, name: String, offset: u32, count: u32, sort_by: String, descending: bool) -> CommandResult<Value> {
+async fn r_data_rows(state: State<'_, AppState>, session: String, name: String, offset: u32, count: u32, sort_by: String, descending: bool) -> CommandResult<Value> {
     let call = rsession::helpers::data_rows_call(&name, offset, count.min(500), &sort_by, descending);
-    let text = current(&state).await?.query(&call).await.map_err(text_error)?;
+    let text = current(&state, &session).await?.query(&call).await.map_err(text_error)?;
+    parse_helper_json(&text).map_err(text_error)
+}
+
+/// Marks the boundary between runs, for undo and for finding out why a
+/// run was slow. Returns where the statement before spent its time, when
+/// `summarize` asked for it.
+#[tauri::command]
+async fn r_step(state: State<'_, AppState>, session: String, summarize: bool, fresh: bool, keep: bool, profile: bool) -> CommandResult<Value> {
+    let call = rsession::helpers::step_call(summarize, fresh, keep, profile);
+    let text = current(&state, &session).await?.query(&call).await.map_err(text_error)?;
+    parse_helper_json(&text).map_err(text_error)
+}
+
+/// Puts the workspace back as it was before the last run.
+#[tauri::command]
+async fn r_undo(state: State<'_, AppState>, session: String) -> CommandResult<Value> {
+    let text = current(&state, &session).await?.query(".gf_undo()").await.map_err(text_error)?;
+    parse_helper_json(&text).map_err(text_error)
+}
+
+/// Checks a student's statement against an exercise's answer, in R.
+#[tauri::command]
+async fn r_exercise(state: State<'_, AppState>, session: String, student: String, answer: String) -> CommandResult<Value> {
+    let text = current(&state, &session).await?.query(&rsession::helpers::exercise_call(&student, &answer)).await.map_err(text_error)?;
+    parse_helper_json(&text).map_err(text_error)
+}
+
+/// The write-up of a statistical test or model: an APA sentence and its
+/// assumptions checked, or found false for any other statement.
+#[tauri::command]
+async fn r_stats(state: State<'_, AppState>, session: String, code: String) -> CommandResult<Value> {
+    let text = current(&state, &session).await?.query(&rsession::helpers::stats_call(&code)).await.map_err(text_error)?;
+    parse_helper_json(&text).map_err(text_error)
+}
+
+/// Code restyled by styler, for Tidy code.
+#[tauri::command]
+async fn r_style(state: State<'_, AppState>, session: String, code: String) -> CommandResult<Value> {
+    let text = current(&state, &session).await?.query(&rsession::helpers::style_call(&code)).await.map_err(text_error)?;
+    parse_helper_json(&text).map_err(text_error)
+}
+
+/// The installed packages with newer versions on CRAN.
+#[tauri::command]
+async fn r_outdated(state: State<'_, AppState>, session: String) -> CommandResult<Value> {
+    let text = current(&state, &session).await?.query(".gf_outdated()").await.map_err(text_error)?;
+    parse_helper_json(&text).map_err(text_error)
+}
+
+/// Data samples and versions for a question to ask online.
+#[tauri::command]
+async fn r_reprex(state: State<'_, AppState>, session: String, names: Vec<String>) -> CommandResult<Value> {
+    let text = current(&state, &session).await?.query(&rsession::helpers::reprex_call(&names)).await.map_err(text_error)?;
+    parse_helper_json(&text).map_err(text_error)
+}
+
+/// A function's title, package, and usage, for quick help on hover.
+#[tauri::command]
+async fn r_brief(state: State<'_, AppState>, session: String, name: String) -> CommandResult<Value> {
+    let text = current(&state, &session).await?.query(&rsession::helpers::brief_call(&name)).await.map_err(text_error)?;
     parse_helper_json(&text).map_err(text_error)
 }
 
 /// Which of the packages a file uses are not installed, for the banner that
 /// offers to install them.
 #[tauri::command]
-async fn r_missing_packages(state: State<'_, AppState>, names: Vec<String>) -> CommandResult<Vec<String>> {
+async fn r_missing_packages(state: State<'_, AppState>, session: String, names: Vec<String>) -> CommandResult<Vec<String>> {
     if names.is_empty() {
         return Ok(Vec::new());
     }
     let call = rsession::helpers::missing_call(&names);
-    let text = current(&state).await?.query(&call).await.map_err(text_error)?;
+    let text = current(&state, &session).await?.query(&call).await.map_err(text_error)?;
     serde_json::from_value(parse_helper_json(&text).map_err(text_error)?).map_err(text_error)
 }
 
-/// Matches new plots to the inspector's size and the display's pixel
-/// density, so plots arrive sharp instead of being scaled after the fact.
+/// Turns the app's plot style on or off in one session. The four colors
+/// are the background, text, quieter text, and grid, checked as hex values.
+#[tauri::command]
+async fn r_plot_style(state: State<'_, AppState>, session: String, on: bool, colors: Vec<String>) -> CommandResult<()> {
+    let call = rsession::helpers::plot_style_call(on, &colors).ok_or_else(|| "plot colors must be four hex values such as #1F5F8B".to_string())?;
+    current(&state, &session).await?.query(&call).await.map(|_| ()).map_err(text_error)
+}
+
 /// Sets the default plot colors to the chosen color vision palette, for
 /// base graphics and for ggplot2 discrete scales. Only hex colors pass, so
 /// nothing but colors can reach R through this call.
 #[tauri::command]
-async fn r_set_palette(state: State<'_, AppState>, colors: Vec<String>) -> CommandResult<()> {
+async fn r_set_palette(state: State<'_, AppState>, session: String, colors: Vec<String>) -> CommandResult<()> {
     let valid = colors.iter().all(|color| color.len() == 7 && color.starts_with('#') && color[1..].chars().all(|c| c.is_ascii_hexdigit()));
     if !valid || colors.is_empty() {
         return Err("plot colors must be hex values such as #1F5F8B".into());
     }
     let list: Vec<String> = colors.iter().map(|color| format!("\"{color}\"")).collect();
     let call = format!(".gf_palette(c({}))", list.join(", "));
-    current(&state).await?.query(&call).await.map(|_| ()).map_err(text_error)
+    current(&state, &session).await?.query(&call).await.map(|_| ()).map_err(text_error)
 }
 
+/// Matches new plots to the inspector's size and the display's pixel
+/// density, so plots arrive sharp instead of being scaled after the fact.
 #[tauri::command]
-async fn r_set_plot_size(state: State<'_, AppState>, width: f64, height: f64, ratio: f64) -> CommandResult<()> {
+async fn r_set_plot_size(state: State<'_, AppState>, session: String, width: f64, height: f64, ratio: f64) -> CommandResult<()> {
     // Rounded and bounded so a pane being dragged to nothing cannot ask R
     // for an impossible plot.
     let width = width.clamp(160.0, 4000.0).round();
     let height = height.clamp(120.0, 4000.0).round();
     let ratio = ratio.clamp(1.0, 4.0);
     let call = format!(".gf_plot_size({width}, {height}, {ratio})");
-    current(&state).await?.query(&call).await.map(|_| ()).map_err(text_error)
+    current(&state, &session).await?.query(&call).await.map(|_| ()).map_err(text_error)
 }
 
 /// Hands newly accepted files to the interface. They are also queued, in
@@ -701,22 +960,28 @@ pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(AppState {
             settings_path,
             settings: StdMutex::new(loaded.clone()),
             allowed: StdMutex::new(files::Allowed::default()),
             pending: StdMutex::new(Vec::new()),
-            project: StdMutex::new(None),
+            projects: StdMutex::new(HashMap::new()),
             chosen_folder: StdMutex::new(None),
-            session: Mutex::new(None),
+            sessions: Mutex::new(HashMap::new()),
             generation: AtomicU64::new(0),
         })
         .manage(assistant::AssistantState::new())
         .manage(render::RenderState::default())
+        .manage(latex::LatexState::new())
+        .manage(fresh::FreshState::default())
+        .manage(shiny::ShinyState::default())
         .setup(move |app| {
             let state = menu::MenuState {
                 layer: loaded.layer.clone(),
-                output_layout: loaded.output_layout.clone(),
+                // Results go to the canvas until the user chooses, as the
+                // interface decides at startup, so the menu agrees with it.
+                output_layout: if loaded.layout_chosen && loaded.output_layout == "inline" { "inline".into() } else { "canvas".into() },
                 auto_install: loaded.missing_packages == "auto",
                 live_output: false,
             };
@@ -758,19 +1023,25 @@ pub fn run() {
             // R is ended along with the window so no stray process remains.
             tauri::WindowEvent::Destroyed => {
                 let state = window.app_handle().state::<AppState>();
-                let session = state.session.try_lock().ok().and_then(|mut slot| slot.take());
-                if let Some(session) = session {
-                    tauri::async_runtime::block_on(session.shutdown());
+                let slots: Vec<Slot> = state.sessions.try_lock().map(|mut sessions| sessions.drain().map(|(_, slot)| slot).collect()).unwrap_or_default();
+                for slot in slots {
+                    tauri::async_runtime::block_on(slot.session.shutdown());
                 }
                 // An Ollama the app started goes with it too.
                 window.app_handle().state::<assistant::AssistantState>().shutdown();
                 // So does a report still rendering, with every R it started.
                 render::shutdown(window.app_handle());
+                window.app_handle().state::<latex::LatexState>().shutdown();
+                // And a Shiny app still running.
+                shiny::shutdown(window.app_handle());
             }
             _ => {}
         })
         .invoke_handler(tauri::generate_handler![
             app_info,
+            updates::latest_versions,
+            updates::install_app_update,
+            updates::restart_app,
             list_r_installs,
             load_settings,
             save_settings,
@@ -788,11 +1059,13 @@ pub fn run() {
             forget_project,
             choose_project_folder,
             create_project,
+            open_examples,
             read_text,
             write_text,
             save_plot,
             export_plot,
-            current_session,
+            running_sessions,
+            session_for,
             r_complete,
             r_help,
             r_packages,
@@ -807,8 +1080,22 @@ pub fn run() {
             send_input,
             r_objects,
             r_missing_packages,
+            r_step,
+            r_undo,
+            r_brief,
+            r_reprex,
+            r_outdated,
+            file_history,
+            reset_app,
+            file_version,
+            r_style,
             r_set_plot_size,
             r_set_palette,
+            r_plot_style,
+            r_cite,
+            r_stats,
+            r_exercise,
+            bib_add,
             r_set_working_dir,
             r_data_meta,
             r_data_rows,
@@ -824,8 +1111,22 @@ pub fn run() {
             assistant::assistant_ask,
             assistant::assistant_stop,
             render::render_start,
+            latex::latex_status,
+            fresh::fresh_check,
+            fresh::fresh_stop,
+            latex::latex_install,
+            latex::latex_cancel,
+            latex::latex_remove,
             render::render_stop,
             render::render_open,
+            shiny::app_start,
+            shiny::app_stop,
+            shiny::app_open,
+            shiny::app_bundle_files,
+            shiny::app_export,
+            shiny::app_export_stop,
+            shiny::app_preview,
+            shiny::app_reveal,
         ])
         .build(tauri::generate_context!())
         .expect("the app could not start");

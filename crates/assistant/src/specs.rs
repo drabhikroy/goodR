@@ -1,5 +1,5 @@
 //! What this computer can hold: memory, free disk space, and the chip. Read
-//! only when the person agrees in the setup steps, and never sent anywhere.
+//! only when the user agrees in the setup steps, and never sent anywhere.
 //! The numbers decide which models are marked as a good fit.
 
 use serde::{Deserialize, Serialize};

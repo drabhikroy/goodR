@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Audits every color pairing the interface uses, in both appearances and
+// Audits every color pairing the interface uses, in every appearance and
 // all five color vision palettes.
 //
 // Two kinds of check run here:
@@ -85,70 +85,71 @@ function needContrast(label, fg, bg, minimum) {
   if (ratio < minimum) failures.push(`${label}: ${fg} on ${bg} is ${ratio.toFixed(2)} to 1, needs ${minimum}`);
 }
 
-for (const [modeName, mode] of Object.entries(tokens.modes)) {
+// A palette can recolor the accent family too, the blue of buttons, links,
+// focus rings, and selection, so the window as a whole follows it. Every
+// check below runs on each mode as each palette leaves it.
+for (const [modeName, base] of Object.entries(tokens.modes)) for (const [paletteName, palette] of Object.entries(tokens.palettes)) {
+  const mode = { ...base, ...palette[modeName] };
+  const label = `${modeName} ${paletteName}`;
   const grounds = ["window", "sunken", "surface", "raised", "hover", "activeLine", "codeBg", "consoleBg", "desk", "sidebar", "cellIn", "cellOut", "cellHead", "cellOutHead", "backdrop", "panel"];
   for (const ground of grounds) {
-    needContrast(`${modeName} text on ${ground}`, mode.text, mode[ground], TEXT_MIN);
-    needContrast(`${modeName} textMuted on ${ground}`, mode.textMuted, mode[ground], TEXT_MIN);
-    needContrast(`${modeName} link on ${ground}`, mode.link, mode[ground], TEXT_MIN);
+    needContrast(`${label} text on ${ground}`, mode.text, mode[ground], TEXT_MIN);
+    needContrast(`${label} textMuted on ${ground}`, mode.textMuted, mode[ground], TEXT_MIN);
+    needContrast(`${label} link on ${ground}`, mode.link, mode[ground], TEXT_MIN);
   }
   // A card's outline sets it apart from the page around it, so it needs
   // the 3 to 1 of a graphic against both the page and the desk.
   for (const ground of ["codeBg", "desk", "cellOut", "cellIn"]) {
-    needContrast(`${modeName} cardEdge on ${ground}`, mode.cardEdge, mode[ground], NON_TEXT_MIN);
+    needContrast(`${label} cardEdge on ${ground}`, mode.cardEdge, mode[ground], NON_TEXT_MIN);
   }
   // The rule down the left of a result ties it to its code, so it needs the
   // 3 to 1 of a graphic against every surface it runs beside.
   for (const ground of ["codeBg", "cellOut", "cellIn"]) {
-    needContrast(`${modeName} cellRule on ${ground}`, mode.cellRule, mode[ground], NON_TEXT_MIN);
+    needContrast(`${label} cellRule on ${ground}`, mode.cellRule, mode[ground], NON_TEXT_MIN);
   }
   for (const ground of ["surface", "raised", "codeBg", "activeLine", "sunken", "cellIn"]) {
-    needContrast(`${modeName} textFaint on ${ground}`, mode.textFaint, mode[ground], TEXT_MIN);
+    needContrast(`${label} textFaint on ${ground}`, mode.textFaint, mode[ground], TEXT_MIN);
   }
-  needContrast(`${modeName} text on selection`, mode.text, mode.selection, TEXT_MIN);
-  needContrast(`${modeName} text on accentSoft`, mode.text, mode.accentSoft, TEXT_MIN);
-  needContrast(`${modeName} onAccent on accent`, mode.onAccent, mode.accent, TEXT_MIN);
-  needContrast(`${modeName} onAccent on accentHover`, mode.onAccent, mode.accentHover, TEXT_MIN);
-  needContrast(`${modeName} brand on window`, mode.brand, mode.window, TEXT_MIN);
+  needContrast(`${label} text on selection`, mode.text, mode.selection, TEXT_MIN);
+  needContrast(`${label} text on accentSoft`, mode.text, mode.accentSoft, TEXT_MIN);
+  needContrast(`${label} onAccent on accent`, mode.onAccent, mode.accent, TEXT_MIN);
+  needContrast(`${label} onAccent on accentHover`, mode.onAccent, mode.accentHover, TEXT_MIN);
+  needContrast(`${label} brand on window`, mode.brand, mode.window, TEXT_MIN);
   for (const ground of ["window", "surface", "raised", "sunken", "sidebar", "backdrop", "panel"]) {
-    needContrast(`${modeName} borderStrong on ${ground}`, mode.borderStrong, mode[ground], NON_TEXT_MIN);
-    needContrast(`${modeName} focus on ${ground}`, mode.focus, mode[ground], NON_TEXT_MIN);
+    needContrast(`${label} borderStrong on ${ground}`, mode.borderStrong, mode[ground], NON_TEXT_MIN);
+    needContrast(`${label} focus on ${ground}`, mode.focus, mode[ground], NON_TEXT_MIN);
   }
-  needContrast(`${modeName} accent fill on window`, mode.accent, mode.window, NON_TEXT_MIN);
+  needContrast(`${label} accent fill on window`, mode.accent, mode.window, NON_TEXT_MIN);
   // The signal color marks the lines R is running. It is a bar beside the
   // code, never text, so it needs the 3 to 1 of a graphic.
   for (const ground of ["codeBg", "activeLine", "window", "surface", "signalSoft"]) {
-    needContrast(`${modeName} signal on ${ground}`, mode.signal, mode[ground], NON_TEXT_MIN);
+    needContrast(`${label} signal on ${ground}`, mode.signal, mode[ground], NON_TEXT_MIN);
   }
-  needContrast(`${modeName} text on signalSoft`, mode.text, mode.signalSoft, TEXT_MIN);
+  needContrast(`${label} text on signalSoft`, mode.text, mode.signalSoft, TEXT_MIN);
 
-  for (const [paletteName, palette] of Object.entries(tokens.palettes)) {
-    const colors = palette[modeName];
-    const label = `${modeName} ${paletteName}`;
-    for (const status of ["ok", "warn", "danger"]) {
-      for (const ground of ["surface", "raised", "window", "sunken", "sidebar", "cellOut", "cellOutHead"]) {
-        needContrast(`${label} ${status} on ${ground}`, colors[status], mode[ground], TEXT_MIN);
-      }
-      needContrast(`${label} ${status} on its soft ground`, colors[status], colors[`${status}Soft`], TEXT_MIN);
-      needContrast(`${label} text on ${status}Soft`, mode.text, colors[`${status}Soft`], TEXT_MIN);
+  for (const status of ["ok", "warn", "danger"]) {
+    for (const ground of ["surface", "raised", "window", "sunken", "sidebar", "cellOut", "cellOutHead"]) {
+      needContrast(`${label} ${status} on ${ground}`, mode[status], mode[ground], TEXT_MIN);
     }
-    for (const role of ["keyword", "string", "comment", "function", "number"]) {
-      for (const ground of ["codeBg", "activeLine", "raised", "cellIn"]) {
-        needContrast(`${label} syntax ${role} on ${ground}`, colors[role], mode[ground], TEXT_MIN);
-      }
+    needContrast(`${label} ${status} on its soft ground`, mode[status], mode[`${status}Soft`], TEXT_MIN);
+    needContrast(`${label} text on ${status}Soft`, mode.text, mode[`${status}Soft`], TEXT_MIN);
+  }
+  for (const role of ["keyword", "string", "comment", "function", "number"]) {
+    for (const ground of ["codeBg", "activeLine", "raised", "cellIn"]) {
+      needContrast(`${label} syntax ${role} on ${ground}`, mode[role], mode[ground], TEXT_MIN);
     }
-    // Monochrome relies on shape and lightness alone by design, so it has
-    // no hue separation to check.
-    if (paletteName === "monochrome") continue;
-    const vision = paletteName === "standard" ? "normal" : paletteName;
-    const pairs = [["ok", "warn"], ["ok", "danger"], ["warn", "danger"]];
-    for (const [a, b] of pairs) {
-      checks += 1;
-      const distance = separation(colors[a], colors[b], vision);
-      if (verbose) console.log(`${distance.toFixed(3).padStart(6)}  ${label} ${a} and ${b} under ${vision} vision`);
-      if (distance < SEPARATION_MIN) {
-        failures.push(`${label}: ${a} and ${b} are only ${distance.toFixed(3)} apart in Oklab under ${vision} vision, need ${SEPARATION_MIN}`);
-      }
+  }
+  // Monochrome relies on shape and lightness alone by design, so it has
+  // no hue separation to check.
+  if (paletteName === "monochrome") continue;
+  const vision = paletteName === "standard" ? "normal" : paletteName;
+  const pairs = [["ok", "warn"], ["ok", "danger"], ["warn", "danger"]];
+  for (const [a, b] of pairs) {
+    checks += 1;
+    const distance = separation(mode[a], mode[b], vision);
+    if (verbose) console.log(`${distance.toFixed(3).padStart(6)}  ${label} ${a} and ${b} under ${vision} vision`);
+    if (distance < SEPARATION_MIN) {
+      failures.push(`${label}: ${a} and ${b} are only ${distance.toFixed(3)} apart in Oklab under ${vision} vision, need ${SEPARATION_MIN}`);
     }
   }
 }
@@ -162,8 +163,10 @@ for (const modeName of Object.keys(tokens.modes)) {
   if (a === b) failures.push(`${modeName}: protanopia and deuteranopia share the same error color`);
   // Under protanopia, the protanopia error color must keep more lightness
   // than the deuteranopia one, which is the point of having two palettes.
+  // On a light page, Light or Paper, both error colors are dark by need, so
+  // the rule applies to the dark appearance.
   const kept = (hex) => oklab(simulate(hexToLinear(hex), "protanopia"))[0];
-  if (modeName === "light" ? false : kept(a) < kept(b)) {
+  if (modeName === "dark" && kept(a) < kept(b)) {
     failures.push(`${modeName}: the protanopia error color loses more lightness under protanopia than the deuteranopia one`);
   }
 }
@@ -173,4 +176,4 @@ if (failures.length) {
   console.error(`\n${failures.length} of ${checks} color checks failed.`);
   process.exit(1);
 }
-console.log(`Color audit passed: ${checks} checks across 2 appearances and ${Object.keys(tokens.palettes).length} palettes.`);
+console.log(`Color audit passed: ${checks} checks across ${Object.keys(tokens.modes).length} appearances and ${Object.keys(tokens.palettes).length} palettes.`);

@@ -1,0 +1,11 @@
+The star data in bright_stars.csv comes from the HYG Database, version
+4.1, by David Nash (astronexus), https://github.com/astronexus/HYG-Database,
+and is used under the Creative Commons Attribution-ShareAlike 4.0
+International License, https://creativecommons.org/licenses/by-sa/4.0/.
+
+It keeps the stars of magnitude 4.5 or brighter, about the faintest seen
+from a town. Names are each star's proper name, or else its Greek letter
+or number and constellation. Distance is converted from parsecs to light
+years. Temperature is worked out from the B-V color index (Ballesteros
+2012), and color is the color a star of that temperature appears. This
+derived file is shared under the same license.

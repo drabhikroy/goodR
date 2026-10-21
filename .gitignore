@@ -17,3 +17,7 @@ playwright-report/
 # Operating system files
 .DS_Store
 Thumbs.db
+
+# Disk images made by scripts/release-mac.sh
+Good-For.dmg
+Good-For.dmg.sha256

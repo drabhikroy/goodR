@@ -63,8 +63,10 @@ export function tokenize(text: string): Token[] {
       const startLine = line;
       i += 1;
       while (i < text.length && text[i] !== ch) {
+        // An escaped character is skipped, and still counted when it is a
+        // newline, as a backslash at the end of a line inside a string is.
         if (text[i] === "\\") i += 1;
-        else if (text[i] === "\n") line += 1;
+        if (text[i] === "\n") line += 1;
         i += 1;
       }
       i += 1;

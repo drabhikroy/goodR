@@ -162,7 +162,7 @@ describe("explainError", () => {
 
   it("keeps messages with no plain version, framed so the line is still findable", () => {
     const unknown = explainError("Error: something rare happened", []);
-    expect(unknown.title).toBe("R stopped with a message that has no plain version yet");
+    expect(unknown.title).toBe("R stopped, and this message has no plain explanation yet");
     expect(unknown.detail).toBe("R said: something rare happened");
     expect(unknown.original).toBe("something rare happened");
   });

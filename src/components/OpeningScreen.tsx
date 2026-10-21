@@ -1,9 +1,10 @@
-// The screen the app opens on when nothing is open. One main way to start,
-// a new project, three smaller ones beside it, and the projects and scripts
-// opened before, newest first. Fewer, clearer choices are faster to make
-// (Hick 1952; Hyman 1953), and recent work is recognized rather than
-// recalled (Nielsen 1994). R is already starting while this screen shows.
+// Opening screen: new project, script, report, or app, and the recent
+// projects and scripts. R starts in the background while it shows.
+//
+// Home in the title bar brings it back over open work without closing
+// anything; Continue working or Escape returns to the workspace.
 
+import { useEffect } from "react";
 import {
   baseName,
   chooseAndOpen,
@@ -11,19 +12,25 @@ import {
   folderOf,
   forgetProject,
   forgetRecent,
+  hideStartScreen,
   newFile,
   openDialog,
+  openExamples,
+  openNewProject,
   openRecent,
   openRecentProject,
   openUrl,
   rescanR,
   shortPath,
+  showHelpScreen,
+  startTour,
 } from "../lib/app";
 import { keyLabel } from "../lib/commands";
+import { startGuide } from "../lib/firstProject";
 import { isSupportedR, OLDEST_R } from "../lib/rversion";
 import { useStore } from "../lib/store";
 import type { RecentFile } from "../lib/types";
-import { CloseIcon, FileIcon, FolderIcon, PlusIcon } from "./Icons";
+import { AppWindowIcon, ArrowIcon, CloseIcon, FileIcon, FolderIcon, PlusIcon, ReportIcon } from "./Icons";
 
 function group(recents: RecentFile[]) {
   const startOfToday = new Date();
@@ -46,20 +53,56 @@ function when(seconds: number) {
   return date.toLocaleDateString([], { month: "short", day: "numeric" });
 }
 
+/** One choice on the opening screen: what it makes, in a word and a line. */
+function StartButton({ label, Icon, title, hint, keys, onClick }: { label: string; Icon: typeof FileIcon; title: string; hint: string; keys?: string; onClick: () => void }) {
+  return (
+    <button type="button" className="start" aria-label={label} aria-description={hint} title={keys ? `${label}, ${keyLabel(keys)}` : label} onClick={onClick}>
+      <span className="start-icon" aria-hidden="true">
+        <Icon size={18} />
+      </span>
+      <span className="start-text">
+        <strong>{title}</strong>
+        <span className="start-hint">{hint}</span>
+      </span>
+    </button>
+  );
+}
+
 export function OpeningScreen() {
   const platform = useStore((state) => state.info?.platform);
   const recents = useStore((state) => state.settings.recentFiles);
   const projects = useStore((state) => state.settings.recentProjects);
   const version = useStore((state) => state.info?.version);
+  // Reached from Home, over work still open behind it, rather than shown
+  // because nothing is open at all.
+  const hasWorkspace = useStore((state) => state.tabs.length > 0 || state.project !== null);
+  useEffect(() => {
+    if (!hasWorkspace) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") hideStartScreen();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [hasWorkspace]);
   return (
     <div className="opening">
       <header className={`opening-bar ${platform === "macos" ? "has-traffic-lights" : ""}`} data-tauri-drag-region>
-        <button type="button" className="button quiet" onClick={() => openDialog("about")}>
-          About
-        </button>
-        <button type="button" className="button quiet" onClick={() => openDialog("settings")}>
-          Settings
-        </button>
+        <div className="opening-bar-start">
+          {hasWorkspace && (
+            <button type="button" className="button quiet" onClick={hideStartScreen}>
+              <ArrowIcon direction="left" size={13} />
+              Continue working
+            </button>
+          )}
+        </div>
+        <div className="opening-bar-end">
+          <button type="button" className="button quiet" onClick={showHelpScreen}>
+            Help
+          </button>
+          <button type="button" className="button quiet" onClick={() => openDialog("settings")}>
+            Settings
+          </button>
+        </div>
       </header>
       <main className="opening-grid">
         <section className="opening-hero" aria-labelledby="app-title">
@@ -70,31 +113,46 @@ export function OpeningScreen() {
             Good For?
           </h1>
           <p className="tagline">Absolutely everything.</p>
-          <p className="lede">Write a line of R and its result appears right beneath it, as one card: your code, then what it made.</p>
+          {/* Starting and opening are two groups, each in the order of
+              what people make most: a script, a document, an app, then a
+              whole project. Each choice says what it makes in a line, so
+              nobody has to know the words first. */}
           <div className="start-actions">
-            <button type="button" className="start primary" onClick={() => openDialog("newProject")}>
-              <PlusIcon size={18} />
-              <span>New project</span>
-              <kbd className="on-accent">{keyLabel("⇧⌘N")}</kbd>
-            </button>
-            <div className="start-row">
-              <button type="button" className="start small" onClick={chooseAndOpenProject}>
-                <FolderIcon size={16} />
-                <span>Open project</span>
-              </button>
-              <button type="button" className="start small" onClick={newFile}>
-                <PlusIcon size={16} />
-                <span>New script</span>
-              </button>
-              <button type="button" className="start small" onClick={chooseAndOpen}>
-                <FileIcon size={16} />
-                <span>Open script</span>
-              </button>
+            <h2 className="start-heading">Start something new</h2>
+            <div className="start-grid">
+              <StartButton label="New script" Icon={FileIcon} title="Script" hint="A plain R file" keys="⌘N" onClick={newFile} />
+              <StartButton label="New report" Icon={ReportIcon} title="Report" hint="Quarto or R Markdown" keys="⌥⌘N" onClick={() => openDialog("newDocument")} />
+              <StartButton label="New Shiny app" Icon={AppWindowIcon} title="Shiny app" hint="An interactive web app" onClick={() => openNewProject("shiny")} />
+              <StartButton label="New project" Icon={PlusIcon} title="Project" hint="A folder with its own R" keys="⇧⌘N" onClick={() => openNewProject("analysis")} />
+            </div>
+            <h2 className="start-heading">Open</h2>
+            <div className="start-grid">
+              <StartButton label="Open script" Icon={FileIcon} title="Script" hint="An .R, .Rmd, or .qmd file" keys="⌘O" onClick={chooseAndOpen} />
+              <StartButton label="Open project" Icon={FolderIcon} title="Project" hint="A folder with an .Rproj file" keys="⇧⌘O" onClick={chooseAndOpenProject} />
             </div>
           </div>
           <RLine />
         </section>
         <section className="opening-recents" aria-label="Recent work">
+          {/* Three ways in for someone new to the app or to R, each with a
+              line saying what it is, as Start here in Help shows them. */}
+          <div className="examples-card">
+            <h2>New here?</h2>
+            <div className="examples-actions">
+              <button type="button" className="examples-action" aria-labelledby="way-examples" aria-describedby="way-examples-hint" onClick={openExamples}>
+                <span id="way-examples" className="examples-action-title">Open the examples</span>
+                <span id="way-examples-hint" className="examples-action-hint">Seven scripts and documents to try things on</span>
+              </button>
+              <button type="button" className="examples-action" aria-labelledby="way-tour" aria-describedby="way-tour-hint" onClick={startTour}>
+                <span id="way-tour" className="examples-action-title">Take the tour</span>
+                <span id="way-tour-hint" className="examples-action-hint">Eleven short steps around the workspace</span>
+              </button>
+              <button type="button" className="examples-action" aria-labelledby="way-first" aria-describedby="way-first-hint" onClick={startGuide}>
+                <span id="way-first" className="examples-action-title">Do a first project</span>
+                <span id="way-first-hint" className="examples-action-hint">Five steps with your own data, from a file to a report</span>
+              </button>
+            </div>
+          </div>
           {projects.length > 0 && (
             <div className="recent-block">
               <h2>Projects</h2>
@@ -107,7 +165,7 @@ export function OpeningScreen() {
                       </span>
                       <span className="recent-text">
                         <strong>{baseName(recent.path).replace(/\.Rproj$/, "")}</strong>
-                        <span className="muted truncate">{shortPath(folderOf(recent.path))}</span>
+                        <span className="muted recent-path" title={folderOf(recent.path)}>{shortPath(folderOf(recent.path))}</span>
                       </span>
                       <span className="muted recent-when">{when(recent.openedAt)}</span>
                     </button>
@@ -132,7 +190,7 @@ export function OpeningScreen() {
                         <FileIcon size={16} />
                         <span className="recent-text">
                           <strong>{baseName(recent.path)}</strong>
-                          <span className="muted truncate">{shortPath(folderOf(recent.path))}</span>
+                          <span className="muted recent-path" title={folderOf(recent.path)}>{shortPath(folderOf(recent.path))}</span>
                         </span>
                         <span className="muted recent-when">{when(recent.openedAt)}</span>
                       </button>
@@ -151,14 +209,13 @@ export function OpeningScreen() {
       <footer className="opening-footer">
         <span>Version {version}</span>
         <span>PolyForm Noncommercial 1.0.0</span>
-        <span>No telemetry, no accounts</span>
       </footer>
     </div>
   );
 }
 
 /** One line about R: which version is in use, or what to do when there
- * is none. A whole card for this was more weight than it deserved. */
+ * is none. */
 function RLine() {
   const installs = useStore((state) => state.installs);
   const status = useStore((state) => state.r.status);

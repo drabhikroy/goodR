@@ -346,3 +346,65 @@ async fn the_parser_names_the_line_and_column_that_the_console_leaves_out() {
     let fine = session.query(&rsession::helpers::parse_problem_call("x <- \"a \\\" quote\"")).await.unwrap();
     assert_eq!(parse_helper_json(&fine).unwrap()["message"], "");
 }
+
+#[tokio::test]
+async fn two_sessions_run_side_by_side_and_keep_their_own_objects() {
+    // The app runs one R per project and per script on its own. Two must
+    // be able to run at once, each in its own folder, without seeing the
+    // other's objects, and ending one must leave the other working.
+    let (first, mut first_rx, first_dir) = start().await;
+    let (second, mut second_rx, second_dir) = start().await;
+    let run = first.execute("shared_name <- 'first'").await.unwrap();
+    collect(&mut first_rx, &run).await;
+    let run = second.execute("exists('shared_name')").await.unwrap();
+    assert!(texts(&collect(&mut second_rx, &run).await).contains("FALSE"));
+    let run = second.execute("cat(basename(getwd()))").await.unwrap();
+    let folder = second_dir.path().canonicalize().unwrap();
+    assert!(texts(&collect(&mut second_rx, &run).await).contains(folder.file_name().unwrap().to_str().unwrap()));
+    first.shutdown().await;
+    let run = second.execute("1 + 1").await.unwrap();
+    assert!(texts(&collect(&mut second_rx, &run).await).contains("[1] 2"));
+    second.shutdown().await;
+    drop(first_dir);
+}
+
+/// Warnings arrive on the error stream, in the form the interface reads to
+/// explain them in plain words.
+#[tokio::test]
+async fn warnings_arrive_on_the_error_stream() {
+    let (session, mut rx, _dir) = start().await;
+    let run = session.execute("as.numeric(c('1', 'x'))").await.unwrap();
+    let events = collect(&mut rx, &run).await;
+    let stderr: String = events
+        .iter()
+        .filter_map(|event| match event {
+            Event::Stream { name, text, .. } if name == "stderr" => Some(text.clone()),
+            _ => None,
+        })
+        .collect();
+    eprintln!("stderr was: {stderr:?}");
+    assert!(stderr.contains("NAs introduced by coercion"), "{stderr}");
+    assert!(stderr.contains("Warning message"), "{stderr}");
+    session.shutdown().await;
+}
+
+/// Undo puts back what a run changed, and a timed statement can be
+/// summarized, with the helper calls kept out of the event stream.
+#[tokio::test]
+async fn a_run_can_be_undone_and_timed() {
+    let (session, mut rx, _dir) = start().await;
+    let run = session.execute("x <- 1").await.unwrap();
+    collect(&mut rx, &run).await;
+    let step = parse_helper_json(&session.query(&rsession::helpers::step_call(false, true, true, true)).await.unwrap()).unwrap();
+    assert!(step["profile"].is_null());
+    let run = session.execute("x <- 2; y <- 3; z <- sum(sqrt(seq_len(2e6)))").await.unwrap();
+    collect(&mut rx, &run).await;
+    let step = parse_helper_json(&session.query(&rsession::helpers::step_call(true, false, false, false)).await.unwrap()).unwrap();
+    assert!(step["profile"]["calls"].is_array(), "{step}");
+    let undone = parse_helper_json(&session.query(".gf_undo()").await.unwrap()).unwrap();
+    assert_eq!(undone["restored"], serde_json::json!(["x"]));
+    assert_eq!(undone["removed"], serde_json::json!(["y", "z"]));
+    let run = session.execute("cat(x, exists('y'))").await.unwrap();
+    assert_eq!(texts(&collect(&mut rx, &run).await), "1 FALSE");
+    session.shutdown().await;
+}

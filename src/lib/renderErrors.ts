@@ -52,10 +52,10 @@ export function explainRender(failure: RenderFailure, text: string): RenderExpla
       };
     case "latex":
       return {
-        title: "This PDF needs LaTeX, which is not set up",
-        detail: "The document's header asks for a PDF made with LaTeX, a large typesetting system that is installed separately.",
-        hint: "Choose Render as PDF instead. It makes the PDF with Typst, which comes with Quarto, so nothing else needs installing.",
-        action: { label: "Render as PDF", kind: "pdf" },
+        title: "This PDF needs LaTeX, which is not on this computer yet",
+        detail: "LaTeX is the typesetting system most journals and templates use for PDFs. It is installed separately from R.",
+        hint: "Install TinyTeX below, a small LaTeX the app looks after, and the report renders again once it is ready. Or make the PDF with Typst, which needs nothing more.",
+        action: { label: "Make it with Typst instead", kind: "pdf" },
       };
     case "stopped":
       return { title: "Rendering stopped", detail: "Nothing in your script changed. Render again when you are ready.", action: { label: "Render again", kind: "again" } };

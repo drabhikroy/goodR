@@ -34,7 +34,7 @@ describe("explainRender", () => {
     expect(explainRender({ kind: "noPandoc" }, "").action?.kind).toBe("quarto");
     expect(explainRender({ kind: "noR" }, "").action?.kind).toBe("chooseR");
     const latex = explainRender({ kind: "latex" }, "");
-    expect(latex.action).toEqual({ label: "Render as PDF", kind: "pdf" });
+    expect(latex.action).toEqual({ label: "Make it with Typst instead", kind: "pdf" });
     expect(latex.hint).toContain("Typst");
   });
 

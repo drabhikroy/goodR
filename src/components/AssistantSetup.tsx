@@ -103,7 +103,7 @@ function OllamaStep({ onNext }: { onNext: () => void }) {
     <>
       <div className="dialog-body">
         <p>
-          The assistant runs a language model on this Mac with Ollama, a free program. Nothing you type, and none of your code or data, leaves this computer.
+          The assistant uses Ollama, a free program, to run an AI model on this Mac. Nothing you type, and none of your work, leaves this computer.
         </p>
         <fieldset>
           <legend>Which Ollama should the assistant use?</legend>
@@ -128,7 +128,7 @@ function OllamaStep({ onNext }: { onNext: () => void }) {
                 <span className="muted">
                   {found?.privateInstalled
                     ? `Installed, version ${found.privateVersion}.`
-                    : `Version ${found?.privateVersion ?? ""}, a 167 MB download, checked against Ollama's published checksum.`}{" "}
+                    : `Version ${found?.privateVersion ?? ""}, a 167 MB download. The app checks that it matches the one Ollama published.`}{" "}
                   It lives in the app's own folder, runs only while the app is open, and can be removed here in one step.
                 </span>
               </span>
@@ -247,7 +247,7 @@ function ModelsStep({ specs, onBack }: { specs: MachineSpecs | null; onBack: () 
   const installed = assistant.status?.installed ?? [];
   const installedIds = new Set(installed.map((model) => model.id));
   const known = new Set(catalog?.models.map((model) => model.id));
-  // Models the person downloaded with Ollama themselves, from the terminal
+  // Models the user downloaded with Ollama themselves, from the terminal
   // or another app, are found and can be used too.
   const others = installed.filter((model) => !known.has(model.id));
   const downloading = assistant.setup && assistant.setup.target !== "runtime" ? assistant.setup.target : null;

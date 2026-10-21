@@ -41,7 +41,8 @@ function codeOnly(text: string): string {
       out += "\n";
       continue;
     }
-    if (ch === '"' || ch === "'") quote = ch;
+    // A backtick name, such as `my data`, can hold a # that is not a comment.
+    if (ch === '"' || ch === "'" || ch === "`") quote = ch;
     out += ch;
   }
   return out;
@@ -68,4 +69,50 @@ export function referencedPackages(text: string): PackageReference[] {
     note(match[1], match.index ?? 0);
   }
   return [...found].map(([name, line]) => ({ name, line })).sort((a, b) => a.line - b.line);
+}
+
+/** Where an install or update stands, read from what R prints: which
+ * packages it is fetching, which are in place, and which failed. */
+export type PackageProgress = { names: string[]; done: string[]; failed: string[]; current: string | null; upToDate: boolean };
+
+// The quotes R puts around package names, straight or curly.
+const Q = "['‘’]";
+
+/** Reads install.packages() and update.packages() output as it arrives.
+ * Each package shows up when its download starts, and counts as done once
+ * it is unpacked or built, or failed once R says its install failed. */
+export function packageProgress(output: string): PackageProgress {
+  const names: string[] = [];
+  const done: string[] = [];
+  const failed: string[] = [];
+  const add = (list: string[], name: string) => list.includes(name) || list.push(name);
+  let current: string | null = null;
+  for (const line of output.split("\n")) {
+    const fetching = /trying URL '[^']*\/([A-Za-z][A-Za-z0-9.]*)_[^/']*'/.exec(line);
+    if (fetching) {
+      add(names, fetching[1]);
+      current = fetching[1];
+      continue;
+    }
+    const finished = new RegExp(`package ${Q}([A-Za-z][A-Za-z0-9.]*)${Q} successfully unpacked`).exec(line) ?? /^\* DONE \(([A-Za-z][A-Za-z0-9.]*)\)/.exec(line);
+    if (finished) {
+      add(names, finished[1]);
+      add(done, finished[1]);
+      continue;
+    }
+    const building = new RegExp(`^\\* installing \\*\\w+\\* package ${Q}([A-Za-z][A-Za-z0-9.]*)${Q}`).exec(line);
+    if (building) {
+      add(names, building[1]);
+      current = building[1];
+      continue;
+    }
+    const broken = new RegExp(`installation of package ${Q}([A-Za-z][A-Za-z0-9.]*)${Q} had non-zero exit status`).exec(line);
+    if (broken) {
+      add(names, broken[1]);
+      add(failed, broken[1]);
+    }
+  }
+  const settled = (name: string) => done.includes(name) || failed.includes(name);
+  if (current && settled(current)) current = names.find((name) => !settled(name)) ?? null;
+  return { names, done, failed, current, upToDate: names.length === 0 && /up to date|no packages/i.test(output) };
 }
