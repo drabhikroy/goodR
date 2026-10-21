@@ -15,6 +15,7 @@
     "fetch-ark": "node scripts/fetch-ark.mjs",
     "test": "vitest run",
     "test:ui": "playwright test",
+    "screenshots": "playwright test -c playwright.screenshots.config.ts",
     "standards": "node scripts/standards/check.mjs",
     "audit:contrast": "node scripts/standards/contrast.mjs",
     "verify": "npm run standards && npm run audit:contrast && npm run build && npm test && cargo test --workspace"

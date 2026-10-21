@@ -50,7 +50,6 @@ unset APPLE_ID APPLE_PASSWORD APPLE_API_KEY APPLE_API_ISSUER APPLE_API_KEY_PATH
 rustup target add aarch64-apple-darwin x86_64-apple-darwin
 npm ci
 node scripts/fetch-ark.mjs universal-apple-darwin
-node scripts/fetch-ark.mjs
 
 npm run standards
 npm run audit:contrast

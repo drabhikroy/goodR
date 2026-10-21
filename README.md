@@ -14,7 +14,10 @@ for people who use it every day. Mac first; Windows and Linux later.
 Absolutely everything, as the opening screen says. Clean your data, run the
 analysis, write the report, and build the Shiny app in one place.
 
-![Opening screen in dark mode: new and open choices on the left, the examples, tour, and recent work on the right](docs/images/opening-dark.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/opening-dark.png">
+  <img alt="The opening screen. On the left, the app name and buttons to start a new script, report, Shiny app, or project, or open one. On the right, the examples, the tour, a first project, and recent projects and scripts." src="docs/images/opening-light.png">
+</picture>
 
 ## What it does
 
@@ -40,6 +43,45 @@ analysis, write the report, and build the Shiny app in one place.
 
 The full list, with how each part behaves, is in
 [docs/FEATURES.md](docs/FEATURES.md).
+
+## A look around
+
+Results land on the canvas beside the line that made them.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/workspace-dark.png">
+  <img alt="The workspace with the penguins project. The script is on the left. On the right, the canvas shows the bar chart that lines 15 and 16 drew, with Edit labels, Full size, and Export, and the strip of earlier results runs underneath. A band above the script offers to install gt, which line 19 uses." src="docs/images/workspace-light.png">
+</picture>
+
+The data viewer summarizes each column, and every change it makes is a line of R in your script.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/data-viewer-dark.png">
+  <img alt="The data viewer showing penguins, 344 rows and 6 columns. Each column header has its type, a small chart of its values, and its missing count. The species column is selected, and the panel beside the table lists its most common values, a Plot this column button, sorting, and changes that each add a line of R to the script." src="docs/images/data-viewer-light.png">
+</picture>
+
+Reports render beside the code, and again each time you save.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/report-dark.png">
+  <img alt="A Quarto report, report.qmd, in the editor, with its chunk on a tinted band. The Report view on the right shows the rendered page with the chunk's code and output, the time it took, and Open in browser." src="docs/images/report-light.png">
+</picture>
+
+Shiny apps run beside their code, with a map of how their parts connect.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/shiny-dark.png">
+  <img alt="A Shiny app about space launches in the editor. The App view on the right maps how its parts connect: two inputs feed a reactive called shown, which feeds two outputs. output$failures is selected, its path is highlighted, and a note says it reads shown(), with a button to go to line 33." src="docs/images/shiny-light.png">
+</picture>
+
+Help, the tour, and the examples are always one press away.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/help-dark.png">
+  <img alt="Help. On the left, a search box and topics in groups. Start here is open, with cards for the tour, the examples, and a first project, a small map of the window whose parts can be pressed to find them, and common questions." src="docs/images/help-light.png">
+</picture>
+
+More screenshots are in [the full feature list](docs/FEATURES.md).
 
 ## What it does not do
 
@@ -242,17 +284,15 @@ your computer.
    Models you already downloaded with Ollama are found and can be used.
    Add, remove, and switch models at any time.
 
-![The assistant's third setup step, Models. Four model cards are listed,
-each with its size, a note on how well it fits this Mac, and what it is
-good and weaker at. One is marked Suggested for this Mac, and the largest
-is marked too large for this Mac's memory.](docs/images/assistant-setup.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/assistant-setup-dark.png">
+  <img alt="The assistant's third setup step, Models. Each model card gives its size, how well it fits this Mac, and what it is good and weaker at. One is marked Suggested for this Mac." src="docs/images/assistant-setup-light.png">
+</picture>
 
-![The workspace with the Assistant sheet open over the canvas, after Ask
-the assistant on a line that failed because the package gt is not
-installed. The assistant's answer explains the problem in two sentences
-and suggests install.packages("gt"), with a note that R can read the code,
-and buttons to put it at the R prompt, insert it at the cursor, or copy
-it](docs/images/assistant-dark.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/assistant-dark.png">
+  <img alt="The Assistant view after asking why line 2 did not run. The answer says R looked for a column called flipper_length_mm, but the penguins table names it flipper_len, and offers the corrected line, marked as code R can read, with Replace line 2, Insert at cursor, and Copy." src="docs/images/assistant-light.png">
+</picture>
 
 What the assistant sees: the code you ask about, R's error message, the R
 version, and the names of the objects in your session, with column names
@@ -403,7 +443,7 @@ scripts/             Downloading ark, the standards gate, and the color
 design/icon/         The icon source and the script that builds every
                      size from it.
 docs/               The design rationale, with its sources.
-  images/           Screenshots and icon variants for this README.
+  images/           Screenshots, made by npm run screenshots, and icon variants.
 ```
 
 ### Dependencies
@@ -473,6 +513,10 @@ and stop a long render and confirm its R is gone. They need Quarto and the
 rmarkdown and knitr packages, and say so and pass without rendering on a
 machine that lacks them. The continuous integration machines have all of
 them, and shiny too.
+
+`npm run screenshots` remakes every screenshot in this README and in
+`docs/FEATURES.md`, in light and dark, from the same browser build the
+interface tests use. Run it after a change to how the app looks.
 
 `npm run test:ui` runs the interface tests in Chromium, including axe
 accessibility checks in every appearance and the 44 pixel target check on

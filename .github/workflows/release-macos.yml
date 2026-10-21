@@ -72,7 +72,6 @@ jobs:
       - name: Download ark
         run: |
           node scripts/fetch-ark.mjs universal-apple-darwin
-          node scripts/fetch-ark.mjs
 
       - name: Checks before building
         run: |

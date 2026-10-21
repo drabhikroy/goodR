@@ -349,62 +349,42 @@ The README has the short version. This is the long one.
 - **Every R on the machine.** The app looks in the standard install folders
   for every R version, lists the newest first, and lets you switch
 
-![The workspace in dark mode with the penguins project open. The title
-bar holds a Home icon, the open script's tab, a search field for help and
-commands, a Help button, the R session's name, penguins, in a pill, and a
-button to hide the canvas. The project's scripts and data are listed in
-the sidebar on the left. The script sits on one raised panel under a bar
-holding its folder, the section menu, Results, and a Run line split
-button. On the right, the canvas shows the objects in R as small cards along its
-top, beside buttons for R help, Packages, History, and the Assistant.
-Below them, the stage shows the bar chart from lines 15 to 16 filling the
-space, with Pin, Full size, and Export. Under the stage, the timeline
-previews every output: the table from line 9, the confidence intervals
-from line 13, the chart, and line 19, which did not run because the
-package gt is not installed. The R prompt is a box under the script.
-Lines 15 and 16 carry a bar down their left edge, marking them as the
-source of what is on the stage](images/workspace-dark.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/workspace-dark.png">
+  <img alt="The workspace with the penguins project. The script is on the left. On the right, the canvas shows the bar chart that lines 15 and 16 drew, with Edit labels, Full size, and Export, and the strip of earlier results runs underneath. A band above the script offers to install gt, which line 19 uses." src="images/workspace-light.png">
+</picture>
 
-![A Shiny app in dark mode with three likely problems found by reading
-its code, listed above the script in a warning band. The first says that
-output$mas on line 11 has no place in the UI, which has mass instead, with
-Go to line 11 and Change to mass buttons. The second says that sizes on
-line 12 is a reactive, so it is read as sizes(). In the script, mas,
-sizes, and bin are underlined with dotted lines](images/shiny-check-dark.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/shiny-check-dark.png">
+  <img alt="A Shiny app with a likely problem found by reading the code before it runs. A band above the script says output$mas on line 9 has no place in the UI, which has mass, with Go to line 9 and Change to mass buttons. mas is underlined in the script." src="images/shiny-check-light.png">
+</picture>
 
-![The Code text section of Settings. A sample of R at the top shows the
-chosen typeface, JetBrains Mono, at 17 points. Below are six typefaces,
-each named in its own letters, a size slider, three line spacings, and an
-option to join symbols such as the assignment arrow into single
-shapes.](images/settings-code.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/settings-code-dark.png">
+  <img alt="The Code text section of Settings. A sample of R at the top shows the chosen typeface. Below it, each typeface is a choice named in its own letters." src="images/settings-code-light.png">
+</picture>
 
-![A Quarto report in dark mode. The script, report.qmd, is in the editor,
-its chunk on a tinted band with a Run chunk button on its header, under a
-bar with Render and Run chunk. The Report sheet on the canvas shows the
-rendered page: the title, a heading, and the chunk's code with its output,
-with the time the render took, Open in browser, and a button to show the
-file in Finder above it. A Report button has joined the canvas's
-buttons](images/report-dark.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/report-dark.png">
+  <img alt="A Quarto report, report.qmd, in the editor, with its chunk on a tinted band. The Report view on the right shows the rendered page with the chunk's code and output, the time it took, and Open in browser." src="images/report-light.png">
+</picture>
 
-![Help in dark mode. On the left, a search box and the topics in groups:
-Get started, Writing and running, Making things, When things go wrong,
-and Reference. Start here is open on the right, with two cards, Take the
-tour and Open the examples, a small map of the window whose parts can be
-pressed to find them, and a few common questions](images/help-dark.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/help-dark.png">
+  <img alt="Help. On the left, a search box and topics in groups. Start here is open, with cards for the tour, the examples, and a first project, a small map of the window whose parts can be pressed to find them, and common questions." src="images/help-light.png">
+</picture>
 
-![The tour's third step over the example project in dark mode. A card in
-the middle of the window shows a small picture of bars rising on a chart,
-the title Plots fill the stage, two sentences about the stage, a row of
-dots for the nine steps with the third one long, and Back, Show me, and
-Next buttons](images/tour-dark.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/tour-dark.png">
+  <img alt="A step of the tour over the example project. The card shows a small bar chart, the title Plots, a short explanation, a row of dots for the steps, and Back, Show me, and Next buttons." src="images/tour-light.png">
+</picture>
 
-![The Import Data dialog. A semicolon separated survey file is chosen. The
-options on the left show the guessed separator, semicolon, and decimal
-mark, comma. The preview on the right shows three typed columns, and below
-it is the line of R that will run.](images/import-data.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/import-data-dark.png">
+  <img alt="The Import data dialog for penguins.csv. The choices on the left are the name in R, the separator, the header row, the decimal mark, and how missing values are written. The preview on the right shows the first rows with their types, and below it the line of R that will run." src="images/import-data-light.png">
+</picture>
 
-![The data viewer. Each column header shows a type badge, a small bar
-chart of the column's values, its range, and its missing count. The
-selected column, species, has its details beside the table: its most
-common values as bars, its missing count, a Plot this column button, and
-sort buttons.](images/data-viewer.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/data-viewer-dark.png">
+  <img alt="The data viewer showing penguins, 344 rows and 6 columns. Each column header has its type, a small chart of its values, and its missing count. The species column is selected, and the panel beside the table lists its most common values, a Plot this column button, sorting, and changes that each add a line of R to the script." src="images/data-viewer-light.png">
+</picture>

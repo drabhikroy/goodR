@@ -8,6 +8,7 @@
 
 import type { Backend } from "./backend";
 import type { AnswerEvent, AppEvent, ExportEvent, AssistantTask, DataMeta, DataRow, MachineSpecs, ModelCatalog, ModelFit, ProjectInfo, REvent, RenderEvent, RenderResult, RenderTarget, RObject, SetupEvent, Settings } from "./types";
+import { version as packageVersion } from "../../package.json";
 
 // Where the example scripts appear to live.
 const ROOT = "/Users/demo/Documents/penguins";
@@ -535,7 +536,7 @@ export function createMockBackend(): Backend {
 
   return {
     native: false,
-    appInfo: async () => ({ name: "R: What Is It Good For?", version: "0.1.0", arkVersion: "0.1.252", platform: "browser", git: true }),
+    appInfo: async () => ({ name: "R: What Is It Good For?", version: packageVersion, arkVersion: "0.1.252", platform: "browser", git: true }),
     listRInstalls: async () => [
       { version: "4.5.1", home: "/Library/Frameworks/R.framework/Versions/4.5/Resources", source: "CRAN installer" },
       { version: "4.4.3", home: "/opt/homebrew/Cellar/r/4.4.3/lib/R", source: "Homebrew" },

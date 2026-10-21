@@ -58,14 +58,22 @@ async function download(asset) {
   return bytes;
 }
 
+// Is ark in place, at the pinned version, for this triple?
+function placed(triple) {
+  const exe = triple.includes("windows") ? ".exe" : "";
+  const stamp = join(binaries, `.ark-${triple}.version`);
+  return existsSync(join(binaries, `ark-${triple}${exe}`)) && existsSync(stamp) && readFileSync(stamp, "utf8") === ARK_VERSION;
+}
+
 async function main() {
   const triple = process.argv[2] ?? hostTriple();
   const asset = TRIPLES[triple];
   if (!asset) throw new Error(`No ark build is pinned for ${triple}`);
-  const exe = triple.includes("windows") ? ".exe" : "";
-  const destination = join(binaries, `ark-${triple}${exe}`);
-  const stamp = join(binaries, `.ark-${triple}.version`);
-  if (existsSync(destination) && existsSync(stamp) && readFileSync(stamp, "utf8") === ARK_VERSION) {
+  // A universal Mac build compiles each chip on its own before joining
+  // them, and Tauri looks for ark under each chip's name as well.
+  const triples = triple === "universal-apple-darwin" ? [triple, "aarch64-apple-darwin", "x86_64-apple-darwin"] : [triple];
+  const missing = triples.filter((each) => !placed(each));
+  if (!missing.length) {
     console.log(`ark ${ARK_VERSION} is already in place for ${triple}`);
     return;
   }
@@ -74,17 +82,21 @@ async function main() {
   try {
     const zip = join(work, "ark.zip");
     writeFileSync(zip, await download(asset));
+    const exe = triple.includes("windows") ? ".exe" : "";
     if (exe) execFileSync("tar", ["-xf", zip, "-C", work]);
     else execFileSync("unzip", ["-q", "-o", zip, "-d", work]);
     mkdirSync(binaries, { recursive: true });
     mkdirSync(notices, { recursive: true });
-    copyFileSync(join(work, `ark${exe}`), destination);
-    if (!exe) chmodSync(destination, 0o755);
+    for (const each of missing) {
+      const destination = join(binaries, `ark-${each}${exe}`);
+      copyFileSync(join(work, `ark${exe}`), destination);
+      if (!exe) chmodSync(destination, 0o755);
+      writeFileSync(join(binaries, `.ark-${each}.version`), ARK_VERSION);
+      console.log(`Placed ark ${ARK_VERSION} at ${destination}`);
+    }
     // ark's license requires its notice to travel with the binary.
     copyFileSync(join(work, "LICENSE"), join(notices, "LICENSE"));
     copyFileSync(join(work, "NOTICE"), join(notices, "NOTICE"));
-    writeFileSync(stamp, ARK_VERSION);
-    console.log(`Placed ark ${ARK_VERSION} at ${destination}`);
   } finally {
     rmSync(work, { recursive: true, force: true });
   }
