@@ -515,8 +515,8 @@ allow it to load libR and package libraries signed by the R Foundation and
 other developers.
 
 Releases are built on GitHub Actions by
-`.github/workflows/release-macos.yml`, which runs when a version tag is
-pushed or by hand with `gh workflow run release-macos.yml`. It signs and
+`.github/workflows/release-macos.yml`, which runs by hand with
+`gh workflow run release-macos.yml --ref v1.2.3`. It signs and
 notarizes the app, confirms ark carries its entitlement, runs the R
 integration tests against the signed ark, notarizes and staples the disk
 image, and attaches it to a draft release. The certificate and Apple
@@ -528,17 +528,17 @@ Store Connect. The certificate signs; the key only notarizes, so both are
 needed.
 
 To make the same signed disk image on a Mac instead, with the certificate in
-the login keychain:
+the login keychain, save the API key as a notarization profile once, then
+run the script:
 
 ```bash
-export APPLE_API_KEY_PATH=~/keys/AuthKey_ABCDE12345.p8
-export APPLE_API_KEY=ABCDE12345
-export APPLE_API_ISSUER=00000000-0000-0000-0000-000000000000
+xcrun notarytool store-credentials "GoodFor" \
+  --key ~/private/AuthKey_XXXXXXXXXX.p8 --key-id XXXXXXXXXX --issuer ISSUER-ID
 scripts/release-mac.sh
 ```
 
-It runs the checks, builds, signs, and notarizes the app, notarizes and
-staples `Good-For.dmg`, and writes `Good-For.dmg.sha256` beside it.
+It runs the checks, then builds, signs, notarizes, and staples the app and
+`Good-For.dmg`, and writes `Good-For.dmg.sha256` beside it.
 
 Installed copies update themselves through Tauri's updater, which checks
 each download against a public key built into the app. To turn this on,

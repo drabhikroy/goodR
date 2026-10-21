@@ -3,9 +3,11 @@
 # draft release. Nothing is published until the draft is reviewed and
 # published by hand.
 #
-# Runs when a version tag is pushed, or by hand from the Actions tab or
-# with `gh workflow run release-macos.yml`, in which case the disk image
-# is kept as a workflow artifact and no release is made.
+# Runs only by hand, from the Actions tab or with
+# `gh workflow run release-macos.yml --ref v1.2.3`, so a release made on a
+# Mac with scripts/release-mac.sh never starts it. Run on a version tag, it
+# makes a draft release. Run on a branch, it keeps the disk image as a
+# workflow artifact and makes no release.
 #
 # Repository secrets used:
 #   CSC_LINK                      base64 of the exported .p12 certificate
@@ -25,8 +27,6 @@
 name: Release macOS
 
 on:
-  push:
-    tags: ['v*']
   workflow_dispatch:
 
 permissions:
