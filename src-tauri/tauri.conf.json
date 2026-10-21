@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Good For",
+  "productName": "goodR",
   "version": "0.2.0",
   "identifier": "app.goodfor.ide",
   "build": {

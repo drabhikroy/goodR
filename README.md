@@ -147,17 +147,17 @@ app from source as described under [Running from source](#running-from-source).
 
 Once it is published:
 
-1. Download [Good-For.dmg](https://github.com/drabhikroy/goodR/releases/latest/download/Good-For.dmg).
+1. Download [goodR.dmg](https://github.com/drabhikroy/goodR/releases/latest/download/goodR.dmg).
    One universal disk image runs on both Apple Silicon and Intel Macs.
 2. Open the downloaded `.dmg`.
-3. Drag Good For to the **Applications** folder.
-4. Open Good For from **Applications**.
+3. Drag goodR to the **Applications** folder.
+4. Open goodR from **Applications**.
 
 Each release lists a SHA256 checksum beside the disk image. To compare it
 with your download:
 
 ```bash
-shasum -a 256 ~/Downloads/Good-For.dmg
+shasum -a 256 ~/Downloads/goodR.dmg
 ```
 
 ## Using R: What Is It Good For?
@@ -576,13 +576,13 @@ the login keychain, save the API key as a notarization profile once, then
 run the script:
 
 ```bash
-xcrun notarytool store-credentials "GoodFor" \
+xcrun notarytool store-credentials "goodR" \
   --key ~/private/AuthKey_XXXXXXXXXX.p8 --key-id XXXXXXXXXX --issuer ISSUER-ID
 scripts/release-mac.sh
 ```
 
 It runs the checks, then builds, signs, notarizes, and staples the app and
-`Good-For.dmg`, and writes `Good-For.dmg.sha256` beside it.
+`goodR.dmg`, and writes `goodR.dmg.sha256` beside it.
 
 Installed copies update themselves through Tauri's updater, which checks
 each download against a public key built into the app. To turn this on,
@@ -597,15 +597,15 @@ secrets `TAURI_SIGNING_PRIVATE_KEY` and
 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, and the public key, the text in
 `~/.tauri/goodr.key.pub`, as the repository variable
 `GOODR_UPDATER_PUBKEY`. A release built with them carries
-`Good-For.app.tar.gz` and `latest.json`, which installed copies read once
+`goodR.app.tar.gz` and `latest.json`, which installed copies read once
 the release is published. A build without them still works, and its
 Updates page links to the release page instead.
 
 To confirm an installed copy is signed and notarized:
 
 ```bash
-codesign --verify --deep --strict --verbose=4 "/Applications/Good For.app"
-spctl --assess --type execute --verbose=4 "/Applications/Good For.app"
+codesign --verify --deep --strict --verbose=4 "/Applications/goodR.app"
+spctl --assess --type execute --verbose=4 "/Applications/goodR.app"
 ```
 
 The second command should report `accepted` and `source=Notarized Developer

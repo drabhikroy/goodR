@@ -19,5 +19,5 @@ playwright-report/
 Thumbs.db
 
 # Disk images made by scripts/release-mac.sh
-Good-For.dmg
-Good-For.dmg.sha256
+goodR.dmg
+goodR.dmg.sha256

@@ -36,7 +36,7 @@ jobs:
   build:
     runs-on: macos-14
     env:
-      APP: ${{ github.workspace }}/target/universal-apple-darwin/release/bundle/macos/Good For.app
+      APP: ${{ github.workspace }}/target/universal-apple-darwin/release/bundle/macos/goodR.app
       HAS_UPDATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -126,12 +126,12 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
         run: |
           source="$(ls target/universal-apple-darwin/release/bundle/dmg/*.dmg)"
-          cp "$source" Good-For.dmg
-          xcrun notarytool submit Good-For.dmg --key "$APPLE_API_KEY_PATH" --key-id "$APPLE_API_KEY" --issuer "$APPLE_API_ISSUER" --wait
-          xcrun stapler staple Good-For.dmg
-          xcrun stapler validate Good-For.dmg
+          cp "$source" goodR.dmg
+          xcrun notarytool submit goodR.dmg --key "$APPLE_API_KEY_PATH" --key-id "$APPLE_API_KEY" --issuer "$APPLE_API_ISSUER" --wait
+          xcrun stapler staple goodR.dmg
+          xcrun stapler validate goodR.dmg
           spctl --assess --type execute --verbose=4 "$APP"
-          shasum -a 256 Good-For.dmg | tee Good-For.dmg.sha256
+          shasum -a 256 goodR.dmg | tee goodR.dmg.sha256
 
       # The notarized app, packed as Tauri's updater fetches it. The update
       # key is given to this step alone, which only packs and signs, so
@@ -142,8 +142,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
-          tar -czf Good-For.app.tar.gz -C "$(dirname "$APP")" "$(basename "$APP")"
-          npx tauri signer sign --app-version "${GITHUB_REF_NAME#v}" Good-For.app.tar.gz
+          tar -czf goodR.app.tar.gz -C "$(dirname "$APP")" "$(basename "$APP")"
+          npx tauri signer sign --app-version "${GITHUB_REF_NAME#v}" goodR.app.tar.gz
 
       # The small file that tells installed copies a new version is out.
       # Both Mac chips use the one universal build.
@@ -151,8 +151,8 @@ jobs:
         if: env.HAS_UPDATE_KEY == 'true'
         run: |
           version="${GITHUB_REF_NAME#v}"
-          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/Good-For.app.tar.gz"
-          jq -n --arg version "$version" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg url "$url" --rawfile signature Good-For.app.tar.gz.sig \
+          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/goodR.app.tar.gz"
+          jq -n --arg version "$version" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg url "$url" --rawfile signature goodR.app.tar.gz.sig \
             '{version: $version, pub_date: $date, platforms: {"darwin-aarch64": {signature: $signature, url: $url}, "darwin-x86_64": {signature: $signature, url: $url}}}' > latest.json
 
       - name: Keep the disk image as a workflow artifact
@@ -160,8 +160,8 @@ jobs:
         with:
           name: goodr-mac
           path: |
-            Good-For.dmg
-            Good-For.dmg.sha256
+            goodR.dmg
+            goodR.dmg.sha256
           if-no-files-found: error
 
       - name: Attach to a draft release
@@ -170,8 +170,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           notes="docs/release-notes/${GITHUB_REF_NAME}.md"
-          files="Good-For.dmg Good-For.dmg.sha256"
-          if [ -f latest.json ]; then files="$files Good-For.app.tar.gz latest.json"; fi
+          files="goodR.dmg goodR.dmg.sha256"
+          if [ -f latest.json ]; then files="$files goodR.app.tar.gz latest.json"; fi
           if [ -f "$notes" ]; then
             gh release create "$GITHUB_REF_NAME" $files --draft --title "$GITHUB_REF_NAME" --notes-file "$notes"
           else

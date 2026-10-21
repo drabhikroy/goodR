@@ -8,7 +8,7 @@
 # Notarization uses a profile saved in the keychain once, with the App
 # Store Connect API key:
 #
-#   xcrun notarytool store-credentials "GoodFor" \
+#   xcrun notarytool store-credentials "goodR" \
 #     --key ~/private/AuthKey_XXXXXXXXXX.p8 --key-id XXXXXXXXXX --issuer ISSUER-ID
 #
 # NOTARY_PROFILE names a different profile. APPLE_SIGNING_IDENTITY may name
@@ -21,7 +21,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-profile="${NOTARY_PROFILE:-GoodFor}"
+profile="${NOTARY_PROFILE:-goodR}"
 
 if [ "$(uname)" != "Darwin" ]; then
   echo "This builds the Mac disk image, so it runs on a Mac only." >&2
@@ -60,7 +60,7 @@ npm test
 npx tauri build --target universal-apple-darwin --bundles app
 
 # A full path, since the R tests below run from inside their own crate.
-app="$PWD/target/universal-apple-darwin/release/bundle/macos/Good For.app"
+app="$PWD/target/universal-apple-darwin/release/bundle/macos/goodR.app"
 
 # Without this entitlement on ark, R fails to start in the signed app.
 codesign -d --entitlements - "$app/Contents/MacOS/ark" 2>&1 | grep -q "disable-library-validation"
@@ -69,7 +69,7 @@ GOODFOR_ARK="$app/Contents/MacOS/ark" cargo test -p rsession --test integration
 # The app is notarized and stapled first, so it opens without a warning
 # even when it is copied off the disk image with no internet connection.
 work="$(mktemp -d)"
-trap 'rm -rf "$work"' EXIT
+trap 'hdiutil detach "$work/mount" > /dev/null 2>&1; rm -rf "$work"' EXIT
 ditto -c -k --keepParent "$app" "$work/app.zip"
 xcrun notarytool submit "$work/app.zip" --keychain-profile "$profile" --wait
 xcrun stapler staple "$app"
@@ -77,18 +77,26 @@ xcrun stapler staple "$app"
 # Then the disk image: the app beside a link to Applications, to drag
 # across, signed and notarized in its own right.
 mkdir "$work/stage"
-ditto "$app" "$work/stage/Good For.app"
+# Copied without extended attributes: a synced folder can add Finder ones,
+# which strict signature checks refuse. The signature and the stapled
+# ticket are files inside the app, so they come across.
+ditto --norsrc --noextattr "$app" "$work/stage/goodR.app"
 ln -s /Applications "$work/stage/Applications"
-rm -f Good-For.dmg
-hdiutil create -volname "Good For" -srcfolder "$work/stage" -format UDZO Good-For.dmg
-codesign --sign "$APPLE_SIGNING_IDENTITY" --timestamp Good-For.dmg
-xcrun notarytool submit Good-For.dmg --keychain-profile "$profile" --wait
-xcrun stapler staple Good-For.dmg
+rm -f goodR.dmg
+hdiutil create -volname "goodR" -srcfolder "$work/stage" -format UDZO goodR.dmg
+codesign --sign "$APPLE_SIGNING_IDENTITY" --timestamp goodR.dmg
+xcrun notarytool submit goodR.dmg --keychain-profile "$profile" --wait
+xcrun stapler staple goodR.dmg
 
-xcrun stapler validate Good-For.dmg
-codesign --verify --deep --strict --verbose=2 "$app"
-spctl --assess --type execute --verbose=4 "$app"
-spctl --assess --type open --context context:primary-signature --verbose=4 Good-For.dmg
-shasum -a 256 Good-For.dmg | tee Good-For.dmg.sha256
+xcrun stapler validate goodR.dmg
 
-echo "Good-For.dmg is signed, notarized, and ready to share."
+# The checks run on the app inside the disk image, the copy people get.
+mkdir "$work/mount"
+hdiutil attach -nobrowse -readonly -mountpoint "$work/mount" goodR.dmg > /dev/null
+codesign --verify --deep --strict --verbose=2 "$work/mount/goodR.app"
+spctl --assess --type execute --verbose=4 "$work/mount/goodR.app"
+hdiutil detach "$work/mount" > /dev/null
+spctl --assess --type open --context context:primary-signature --verbose=4 goodR.dmg
+shasum -a 256 goodR.dmg | tee goodR.dmg.sha256
+
+echo "goodR.dmg is signed, notarized, and ready to share."
