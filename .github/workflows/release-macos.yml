@@ -1,0 +1,121 @@
+# Builds the universal Mac app, signs it with the Developer ID certificate,
+# notarizes the app and the disk image, and attaches the disk image to a
+# draft release. Nothing is published until the draft is reviewed and
+# published by hand.
+#
+# Runs when a version tag is pushed, or by hand from the Actions tab or
+# with `gh workflow run release-macos.yml`, in which case the disk image
+# is kept as a workflow artifact and no release is made.
+#
+# Repository secrets used, with the same names as the other portfolio apps:
+#   CSC_LINK                      base64 of the exported .p12 certificate
+#   CSC_KEY_PASSWORD              password for that .p12
+#   APPLE_ID                      Apple ID email used for notarization
+#   APPLE_APP_SPECIFIC_PASSWORD   app specific password for that Apple ID
+#   APPLE_TEAM_ID                 ten character team identifier
+name: Release macOS
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14
+    env:
+      APP: target/universal-apple-darwin/release/bundle/macos/Good For.app
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download ark
+        run: |
+          node scripts/fetch-ark.mjs universal-apple-darwin
+          node scripts/fetch-ark.mjs
+
+      - name: Checks before building
+        run: |
+          npm run standards
+          npm run audit:contrast
+          npm test
+
+      # Tauri imports the certificate into a temporary keychain, signs ark
+      # and the app with the hardened runtime and entitlements.plist, then
+      # notarizes and staples the app.
+      - name: Build, sign, and notarize the app
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.CSC_LINK }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: npx tauri build --target universal-apple-darwin --bundles app,dmg
+
+      # ark loads libR from the R Foundation build, which is signed by a
+      # different team. Without this entitlement on ark itself, R fails to
+      # start in the released app even though every check above passes.
+      - name: Confirm ark carries the library validation entitlement
+        run: |
+          codesign -d --entitlements - "$APP/Contents/MacOS/ark" 2>&1 | tee entitlements.txt
+          grep -q "disable-library-validation" entitlements.txt
+
+      - name: Run the R tests against the signed ark
+        env:
+          GOODFOR_ARK: ${{ env.APP }}/Contents/MacOS/ark
+        run: cargo test -p rsession --test integration
+
+      # Tauri notarizes the app inside the disk image but not the disk image
+      # itself, so the disk image gets its own ticket here.
+      - name: Notarize and staple the disk image
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          source="$(ls target/universal-apple-darwin/release/bundle/dmg/*.dmg)"
+          cp "$source" Good-For.dmg
+          xcrun notarytool submit Good-For.dmg --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+          xcrun stapler staple Good-For.dmg
+          xcrun stapler validate Good-For.dmg
+          spctl --assess --type execute --verbose=4 "$APP"
+          shasum -a 256 Good-For.dmg | tee Good-For.dmg.sha256
+
+      - name: Keep the disk image as a workflow artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: goodr-mac
+          path: |
+            Good-For.dmg
+            Good-For.dmg.sha256
+          if-no-files-found: error
+
+      - name: Attach to a draft release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes="docs/release-notes/${GITHUB_REF_NAME}.md"
+          if [ -f "$notes" ]; then
+            gh release create "$GITHUB_REF_NAME" Good-For.dmg Good-For.dmg.sha256 --draft --title "$GITHUB_REF_NAME" --notes-file "$notes"
+          else
+            gh release create "$GITHUB_REF_NAME" Good-For.dmg Good-For.dmg.sha256 --draft --title "$GITHUB_REF_NAME" --notes ""
+          fi

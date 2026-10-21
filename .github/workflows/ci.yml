@@ -1,0 +1,88 @@
+# Runs every check on each push and pull request. Linux carries the full
+# set, including the interface tests. The Mac job runs the Rust tests
+# against a real R from CRAN, since the Mac is the primary platform and
+# the place R is installed most differently.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install R and the libraries Tauri needs
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y r-base r-cran-rmarkdown r-cran-knitr libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+
+      # The render tests use a real Quarto, so reports are checked end to
+      # end rather than against a stand-in.
+      - uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: 1.6.42
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download ark
+        run: node scripts/fetch-ark.mjs
+
+      - name: Writing standards
+        run: npm run standards
+
+      - name: Color contrast audit
+        run: npm run audit:contrast
+
+      - name: Type check and build the interface
+        run: npm run build
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Interface tests
+        run: |
+          npx playwright install --with-deps chromium
+          npm run test:ui
+
+      - name: Rust tests with real R
+        run: cargo test --workspace
+
+  mac:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+
+      - uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: 1.6.42
+
+      - name: Install the packages reports render with
+        run: Rscript -e 'install.packages(c("rmarkdown", "knitr"), repos = "https://cloud.r-project.org")'
+
+      - name: Download ark
+        run: node scripts/fetch-ark.mjs
+
+      - name: Rust tests with real R
+        run: cargo test --workspace

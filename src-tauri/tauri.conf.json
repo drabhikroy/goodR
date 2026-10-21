@@ -1,0 +1,105 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Good For",
+  "version": "0.2.0",
+  "identifier": "app.goodfor.ide",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "R: What Is It Good For?",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 960,
+        "minHeight": 600,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "trafficLightPosition": {
+          "x": 18,
+          "y": 26
+        },
+        "dragDropEnabled": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self'; frame-src asset: http://asset.localhost; connect-src ipc: http://ipc.localhost",
+      "assetProtocol": {
+        "enable": true,
+        "scope": []
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "app",
+      "dmg",
+      "deb",
+      "appimage",
+      "nsis"
+    ],
+    "category": "DeveloperTool",
+    "shortDescription": "A desktop workspace for R",
+    "longDescription": "R: What Is It Good For? A desktop workspace for R with results beside the code that made them.",
+    "copyright": "Copyright 2026 Abhik Roy",
+    "publisher": "Abhik Roy",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "externalBin": [
+      "binaries/ark"
+    ],
+    "resources": {
+      "resources/ark/LICENSE": "licenses/ark/LICENSE",
+      "resources/ark/NOTICE": "licenses/ark/NOTICE"
+    },
+    "macOS": {
+      "minimumSystemVersion": "12.0",
+      "hardenedRuntime": true,
+      "entitlements": "entitlements.plist"
+    },
+    "fileAssociations": [
+      {
+        "ext": [
+          "R",
+          "r"
+        ],
+        "name": "R Script",
+        "description": "R script",
+        "role": "Editor",
+        "rank": "Alternate",
+        "mimeType": "text/x-r-source"
+      },
+      {
+        "ext": [
+          "Rmd"
+        ],
+        "name": "R Markdown Document",
+        "description": "R Markdown document",
+        "role": "Editor",
+        "rank": "Alternate",
+        "mimeType": "text/x-r-markdown"
+      },
+      {
+        "ext": [
+          "qmd"
+        ],
+        "name": "Quarto Document",
+        "description": "Quarto document",
+        "role": "Editor",
+        "rank": "Alternate",
+        "mimeType": "text/x-quarto"
+      }
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+[package]
+name = "goodr"
+version.workspace = true
+rust-version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "R: What Is It Good For? A desktop workspace for R."
+publish = false
+
+[lib]
+name = "goodr_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.6", features = [] }
+
+[dependencies]
+anyhow = "1"
+assistant = { path = "../crates/assistant" }
+render = { path = "../crates/render" }
+dirs = "6"
+rsession = { path = "../crates/rsession" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2.12", features = ["protocol-asset"] }
+tauri-plugin-dialog = "2.8"
+tauri-plugin-opener = "2.7"
+tokio = { version = "1", features = ["full"] }
+
+[dev-dependencies]
+tempfile = "3"

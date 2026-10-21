@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- ark loads libR and package libraries signed by other developers, such
+       as the R Foundation and CRAN package builds. The hardened runtime
+       refuses those unless library validation is relaxed. Positron uses the
+       same entitlement for the same reason. -->
+  <key>com.apple.security.cs.disable-library-validation</key>
+  <true/>
+  <!-- R reads DYLD settings that some installations rely on to find their
+       own libraries. -->
+  <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+  <true/>
+</dict>
+</plist>

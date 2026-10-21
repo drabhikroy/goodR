@@ -1,0 +1,4053 @@
+/* Layout and components. Every color is a token from src/theme/tokens.json,
+   applied by theme.ts as a custom property, so the contrast audit covers
+   everything shown here. Sizes use rem so the text size setting scales the
+   whole interface, controls included. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  /* Every pointer target is at least 44 pixels, the house minimum, and
+     grows with the text size setting beyond that. */
+  --target: max(44px, 2.6rem);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--backdrop);
+  color: var(--text);
+  font-family: "DM Sans Variable", system-ui, sans-serif;
+  font-optical-sizing: auto;
+  font-size: 1rem;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+code,
+kbd,
+pre,
+textarea,
+.mono {
+  font-family: var(--code-font, "DM Mono", ui-monospace, monospace);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+[data-motion="reduce"] *,
+[data-motion="reduce"] *::before,
+[data-motion="reduce"] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.hint {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.splash {
+  height: 100%;
+  background: var(--window);
+}
+
+.window {
+  height: 100%;
+}
+
+/* Buttons */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: var(--target);
+  padding: 0 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.55rem;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.button:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+.button.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.button.small {
+  min-height: var(--target);
+  padding: 0 0.75rem;
+  font-size: 0.9rem;
+}
+
+/* A button without a frame, for secondary actions that sit beside a
+   primary one. Its hover ground and its words mark it as a button. */
+.button.quiet,
+.button.ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.button:disabled,
+.icon-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--target);
+  min-height: var(--target);
+  border: 1px solid transparent;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.icon-button:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.link-button {
+  min-height: var(--target);
+  border: none;
+  background: none;
+  padding: 0.25rem 0;
+  color: var(--link);
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+kbd {
+  font-size: 0.86rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.3rem;
+  background: var(--sunken);
+  color: var(--text-muted);
+}
+
+kbd.on-accent {
+  background: transparent;
+  color: var(--on-accent);
+}
+
+/* Opening screen */
+
+.opening {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--window);
+}
+
+.opening-bar {
+  height: 3.7rem;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  padding: 0 0.75rem;
+}
+
+.opening-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(2rem, 6vw, 6rem);
+  align-items: center;
+  width: min(70rem, 100%);
+  margin: 0 auto;
+  padding: 0 2.5rem 1.5rem;
+}
+
+.opening-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hero-icon {
+  width: 5.6rem;
+  height: 5.6rem;
+  border-radius: 1.25rem;
+  box-shadow: 0 10px 28px rgba(21, 32, 42, 0.22);
+}
+
+.opening-hero h1 {
+  margin: 1.6rem 0 0;
+  font-size: clamp(2.8rem, 4.8vw, 4rem);
+  line-height: 0.98;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+
+.tagline {
+  margin: 0.9rem 0 0;
+  font-size: 1.55rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--brand);
+}
+
+.lede {
+  margin: 1rem 0 0;
+  max-width: 28rem;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.start-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 2rem;
+  width: min(28rem, 100%);
+}
+
+.start-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.start {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-height: 3.6rem;
+  padding: 0 1.1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.8rem;
+  background: var(--surface);
+  font-size: 1.04rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+}
+
+.start span {
+  flex: 1;
+}
+
+.start:hover {
+  background: var(--hover);
+}
+
+.start.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+.start.primary:hover {
+  background: var(--accent-hover);
+}
+
+.start.small {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 4.4rem;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.95rem;
+}
+
+.start.small svg {
+  color: var(--accent);
+}
+
+.r-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.6rem;
+  margin-top: 1.4rem;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+}
+
+/* The dot that says how R is doing, here and in the title bar. Its state
+   is always said in words beside it too, and a stopped R turns the dot
+   into a diamond, so shape carries the meaning as well. */
+.r-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  flex: none;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.tone-ok .r-dot {
+  background: var(--ok);
+}
+
+.tone-busy .r-dot {
+  background: var(--signal);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.tone-danger .r-dot {
+  background: var(--danger);
+  border-radius: 1px;
+  transform: rotate(45deg);
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.opening-recents {
+  align-self: center;
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.recent-block {
+  padding: 1.1rem 1rem 0.8rem;
+  border-radius: 1rem;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--border), 0 8px 24px rgba(21, 32, 42, 0.06);
+}
+
+.recent-block h2 {
+  margin: 0 0 0.4rem 0.6rem;
+  font-size: 1.02rem;
+  font-weight: 600;
+}
+
+.recent-group h3 {
+  margin: 0.7rem 0 0.2rem 0.6rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.opening-recents ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.recent-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 0.6rem;
+}
+
+.recent-row:hover {
+  background: var(--hover);
+}
+
+.recent {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.3rem;
+  padding: 0.35rem 0.6rem;
+  border: none;
+  border-radius: 0.6rem;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.recent svg {
+  flex: none;
+  color: var(--accent);
+}
+
+/* A project's first letter on a tile, the same mark the sidebar shows. */
+.recent-mark,
+.project-mark {
+  width: 2.2rem;
+  height: 2.2rem;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.6rem;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+
+.recent-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.recent-text strong {
+  font-weight: 600;
+}
+
+.recent-text .muted {
+  font-size: 0.86rem;
+}
+
+.recent-when {
+  flex: none;
+  font-size: 0.86rem;
+}
+
+/* The remove button shows when its row is pointed at or focused, so the
+   list reads as names first. Keyboard users reach it by Tab. */
+.recent-forget {
+  opacity: 0;
+}
+
+.recent-row:hover .recent-forget,
+.recent-forget:focus-visible {
+  opacity: 1;
+}
+
+.drop-hint {
+  margin: 0 0.6rem;
+  font-size: 0.86rem;
+}
+
+.opening-footer {
+  flex: none;
+  display: flex;
+  justify-content: center;
+  gap: 1.6rem;
+  padding: 0.9rem;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+/* Workspace */
+
+.workspace {
+  height: 100%;
+  display: flex;
+}
+
+.workspace-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The workbench. The script, the console, and the two panes on the right
+   are separate panels resting on a tinted backdrop, with a narrow gap
+   between them. The gaps replace the dividing lines of the fourth design:
+   space groups and separates without adding marks to read (Palmer 1992),
+   and each gap is also the handle that resizes the panels beside it. The
+   script is the one raised panel, since it is where the work is. */
+.workspace-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  padding: 0 0.6rem 0.6rem;
+}
+
+.center {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The editor and the data viewer take turns in the same place. The
+   editor stays mounted underneath, so scripts keep their state. */
+.center-swap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.center-swap.is-data > .editor-pane {
+  visibility: hidden;
+}
+
+/* The project sidebar */
+
+.sidebar {
+  width: 16rem;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  /* The project list is navigation, so it sits on the backdrop with the
+     toolbar rather than in a panel of its own. */
+}
+
+.sidebar-top {
+  height: 1.4rem;
+  flex: none;
+}
+
+.sidebar.has-traffic-lights .sidebar-top {
+  height: 3.2rem;
+}
+
+.project-head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.4rem 1rem 1rem;
+}
+
+.project-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.project-text strong {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-text .muted {
+  font-size: 0.86rem;
+}
+
+.sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 0.5rem;
+}
+
+.sidebar section + section {
+  margin-top: 1rem;
+}
+
+.sidebar-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 0 0.6rem;
+}
+
+.sidebar-heading h2 {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.sidebar-add {
+  font-size: 0.88rem;
+}
+
+.sidebar-folder {
+  margin: 0.5rem 0 0 0.6rem;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+.sidebar-note {
+  margin: 0 0.6rem 0.4rem;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+.sidebar ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: var(--target);
+  padding: 0 0.6rem;
+  border: none;
+  border-radius: 0.55rem;
+  background: transparent;
+  text-align: left;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.sidebar-row svg {
+  flex: none;
+  color: var(--accent);
+}
+
+.sidebar-row:hover {
+  background: var(--hover);
+}
+
+.sidebar-row.is-active {
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+
+.sidebar-foot {
+  flex: none;
+  padding: 0.5rem;
+}
+
+/* The title bar holds the open tabs on the left and the three controls
+   used all the time on the right: R, where results go, and Run. */
+/* The toolbar has no surface of its own. It sits on the backdrop above
+   the panels, so the open scripts read as tabs on the script panel. */
+.title-bar {
+  height: 3.6rem;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0.6rem 0 0.6rem;
+}
+
+/* Room for the macOS window buttons, which sit over the title bar. */
+.title-bar.has-traffic-lights,
+.opening-bar.has-traffic-lights {
+  padding-left: 5.4rem;
+}
+
+.tab-strip {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 100%;
+}
+
+.tabs {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 0.6rem;
+  color: var(--text-muted);
+}
+
+.tab:hover {
+  background: var(--hover);
+}
+
+.tab.is-active {
+  background: var(--code-bg);
+  color: var(--text);
+  box-shadow: 0 0 0 1px var(--border), 0 1px 3px rgba(21, 32, 42, 0.08);
+}
+
+.tab-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--target);
+  padding: 0 0.15rem 0 0.9rem;
+  border: none;
+  border-radius: 0.6rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab-button svg {
+  color: var(--accent);
+}
+
+.tab.is-active .tab-name {
+  font-weight: 600;
+}
+
+.tab-folder {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+.tab-dirty {
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--warn);
+}
+
+.tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: var(--target);
+  margin-right: 0.15rem;
+  border: none;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+}
+
+.tab:hover .tab-close,
+.tab.is-active .tab-close {
+  opacity: 1;
+}
+
+.tab-close:hover {
+  color: var(--text);
+}
+
+.title-bar-end {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.title-bar-spacer {
+  flex: 1;
+  align-self: stretch;
+}
+
+.r-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--target);
+  padding: 0 0.75rem;
+  border: none;
+  border-radius: 0.55rem;
+  background: transparent;
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.r-status:hover {
+  background: var(--hover);
+}
+
+.badge {
+  padding: 0.05rem 0.4rem;
+  border-radius: 0.3rem;
+  background: var(--signal-soft);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--signal);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.run-button {
+  min-width: 6.5rem;
+}
+
+.run-button.is-stop svg {
+  color: var(--danger);
+}
+
+/* Menus that open from a button */
+
+.popover-anchor {
+  position: relative;
+}
+
+.popover {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 40;
+  min-width: 17rem;
+  padding: 0.35rem;
+  border-radius: 0.8rem;
+  background: var(--surface);
+  box-shadow: var(--shadow), 0 0 0 1px var(--border);
+}
+
+.popover button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: var(--target);
+  padding: 0.3rem 0.7rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.popover button:hover,
+.popover button:focus-visible {
+  background: var(--accent-soft);
+}
+
+.popover button > span:nth-child(2) {
+  flex: 1;
+}
+
+.popover kbd {
+  margin-left: auto;
+}
+
+.popover-label {
+  margin: 0.3rem 0.7rem 0.2rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.popover-note {
+  margin: 0.4rem 0.7rem 0.5rem;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+.popover-note code {
+  color: var(--text);
+}
+
+.popover hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0.3rem 0.4rem;
+}
+
+.menu-check {
+  width: 1rem;
+  flex: none;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.menu-hint {
+  display: block;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+.menu-hint-inline {
+  margin-left: auto;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+/* The section the cursor is in, beside the tabs. */
+.section-bar {
+  position: relative;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.section-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: var(--target);
+  max-width: 100%;
+  padding: 0 0.6rem;
+  border: none;
+  border-radius: 0.6rem;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.section-button:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.section-step {
+  display: inline-flex;
+  margin-right: 0.15rem;
+  color: var(--text-faint);
+}
+
+.section-current {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.section-menu {
+  left: 0;
+  right: auto;
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.section-menu .is-here {
+  font-weight: 600;
+}
+
+/* The document. Code sits on a sheet centered on the desk, at a width
+   that keeps lines readable however wide the window is. */
+
+.editor-pane {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  background: var(--code-bg);
+  box-shadow: 0 0 0 1px var(--panel-edge), 0 6px 22px rgba(21, 32, 42, 0.07);
+  overflow: hidden;
+}
+
+[data-mode="dark"] .editor-pane {
+  box-shadow: 0 0 0 1px var(--panel-edge), 0 10px 28px rgba(0, 0, 0, 0.38);
+}
+
+/* The data viewer takes the script's place, so it takes its shape too. */
+.center-swap > .data-viewer {
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px var(--panel-edge);
+}
+
+.banner {
+  flex: none;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding: 0.35rem 0.75rem 0.35rem 1rem;
+  font-size: 0.95rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.banner.tone-warn {
+  background: var(--warn-soft);
+}
+
+.banner.tone-danger {
+  background: var(--danger-soft);
+}
+
+.banner-text {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.banner details pre {
+  max-height: 10rem;
+  overflow: auto;
+  font-size: 0.86rem;
+}
+
+.editor-area {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.editor-area.layout-stacked {
+  flex-direction: column;
+}
+
+.editor-host-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.editor-host {
+  position: absolute;
+  inset: 0;
+}
+
+.editor-host .cm-editor {
+  height: 100%;
+  background: var(--code-bg);
+  color: var(--text);
+  font-size: var(--code-size, 15px);
+}
+
+/* The code spans the whole panel, as in RStudio, so wide data and long
+   pipelines use the room the window gives them. */
+.editor-host .cm-scroller {
+  background: var(--code-bg);
+  font-family: var(--code-font, "DM Mono", ui-monospace, monospace);
+  font-variant-ligatures: var(--code-ligatures, none);
+  line-height: var(--code-line, 1.65);
+  padding: 0;
+}
+
+.editor-host .cm-gutters {
+  background: var(--code-bg);
+  border-right: 1px solid var(--border);
+  color: var(--text-faint);
+}
+
+.editor-host .cm-content {
+  flex: 1;
+  padding: 0.9rem 1.25rem 40vh 0.5rem;
+}
+
+.editor-host .cm-line {
+  padding: 0 1rem;
+}
+
+.editor-host .cm-editor.cm-focused {
+  outline: none;
+}
+
+/* The editor shows keyboard focus as a bar along its top edge. */
+.editor-host:focus-within {
+  box-shadow: inset 0 3px 0 var(--focus);
+}
+
+.editor-host .cm-lineNumbers .cm-gutterElement {
+  padding: 0 0.5rem 0 1rem;
+}
+
+.editor-host .cm-activeLine {
+  background: var(--active-line);
+}
+
+.editor-host .cm-activeLineGutter {
+  background: transparent;
+  color: var(--text);
+}
+
+/* Selected text, in the script and the console alike. The browser paints
+   it above every line background, so the active line and the card bands
+   never hide it. The color is audited for text contrast like any other. */
+.editor-host .cm-content,
+.console-editor .cm-content {
+  caret-color: var(--text);
+}
+
+.editor-host .cm-content ::selection,
+.editor-host .cm-line::selection,
+.console-editor .cm-content ::selection,
+.console-editor .cm-line::selection {
+  background: var(--selection);
+  color: var(--text);
+}
+
+.editor-host .cm-panels {
+  background: var(--sunken);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.editor-host .cm-panel.cm-search input,
+.editor-host .cm-panel.cm-search button {
+  min-height: 2rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.35rem;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.editor-host .cm-matchingBracket {
+  background: var(--accent-soft);
+  outline: 1px solid var(--border-strong);
+}
+
+.editor-host .cm-tooltip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+/* Completion lists, in the script and the console alike, use the app's
+   colors, so they follow the appearance and the color vision palette. */
+.cm-tooltip.cm-tooltip-autocomplete {
+  border: 1px solid var(--border-strong);
+  border-radius: 0.55rem;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.cm-tooltip.cm-tooltip-autocomplete > ul {
+  max-height: 16rem;
+  font-family: var(--code-font, "DM Mono", ui-monospace, monospace);
+  font-size: 0.88rem;
+}
+
+.cm-tooltip.cm-tooltip-autocomplete > ul > li {
+  padding: 0.3rem 0.7rem 0.3rem 0.4rem;
+  line-height: 1.5;
+}
+
+.cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.cm-tooltip-autocomplete .cm-completionMatchedText {
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.cm-tooltip-autocomplete .cm-completionDetail {
+  margin-left: 0.6rem;
+  font-family: "DM Sans Variable", system-ui, sans-serif;
+  font-style: normal;
+  font-size: 0.86rem;
+  opacity: 0.85;
+}
+
+.cm-ran-gutter {
+  width: 1.1rem;
+}
+
+.cm-ran-marker {
+  display: inline-block;
+  width: 0.62rem;
+  height: 0.62rem;
+  margin-top: 0.55rem;
+  border-radius: 50%;
+  background: var(--ok);
+  position: relative;
+}
+
+.cm-ran-marker::after {
+  content: "";
+  position: absolute;
+  left: 0.2rem;
+  top: 0.08rem;
+  width: 0.14rem;
+  height: 0.3rem;
+  border: solid var(--code-bg);
+  border-width: 0 0.1rem 0.1rem 0;
+  transform: rotate(45deg);
+}
+
+.editor-empty {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: var(--text-muted);
+  background: var(--desk);
+}
+
+/* Results. A statement that printed something has its code lines tinted
+   lightly, and its result sits in a recessed well right below them. One
+   rule runs down the left edge of both, so the code and its result read as
+   a single unit, and the change of surface keeps input and output apart.
+   There are no outlines, shadows, or title bars: spacing and one rule do
+   the grouping (Palmer 1992), which keeps the page calm. The rule carries
+   the state: a running bar, a failed bar, or a stopped bar, each paired
+   with words and an icon so color is never the only cue. */
+
+.editor-host .cm-line.cm-cell {
+  background: var(--cell-in);
+  box-shadow: inset 3px 0 0 var(--cell-rule);
+}
+
+.editor-host .cm-line.cm-cell.cm-cell-first {
+  border-top-right-radius: 0.5rem;
+}
+
+.editor-host .cm-line.cm-cell.cm-cell-running {
+  box-shadow: inset 4px 0 0 var(--signal);
+}
+
+.editor-host .cm-line.cm-cell.cm-cell-error {
+  box-shadow: inset 4px 0 0 var(--danger);
+}
+
+/* The statement R is working on, and the lines behind the result being
+   pointed at, whether or not they have a result yet. */
+.editor-host .cm-line-running:not(.cm-cell) {
+  background: var(--signal-soft);
+  box-shadow: inset 4px 0 0 var(--signal);
+}
+
+/* The part of a line R could not run. A wavy underline and a heavier weight
+   mark it, so it stands out without relying on color alone. */
+.editor-host .cm-problem {
+  text-decoration: underline wavy var(--danger);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.18em;
+  font-weight: 700;
+}
+
+.editor-host .cm-line.cm-line-linked {
+  background: var(--accent-soft);
+}
+
+.cm-output-block {
+  /* The editor keeps code on one line each. Results are prose and printed
+     output, which set their own wrapping, so the editor's rule stops here. */
+  white-space: normal;
+  padding: 0 0 1rem;
+  font-family: "DM Sans Variable", system-ui, sans-serif;
+  cursor: default;
+}
+
+.cm-output-block:empty {
+  display: none;
+}
+
+/* A result never runs past the visible code area, so its text wraps in
+   view even when a long line makes the editor scroll sideways. */
+.output-card {
+  position: relative;
+  max-width: calc(var(--result-width, 100%) - 1.5rem);
+}
+
+.cell-out {
+  position: relative;
+  padding: 0.65rem 1rem 0.75rem;
+  border-radius: 0 0 0.5rem 0.5rem;
+  background: var(--cell-out);
+  box-shadow: inset 3px 0 0 var(--cell-rule);
+}
+
+.cell-out.is-collapsed {
+  padding-bottom: 0.65rem;
+}
+
+/* A failed line keeps the ordinary result surface. The bar, the icon, and
+   the headline say it failed. A whole block in a warning tint reads as an
+   alarm, which is more than a typo deserves and harder to read through. */
+.status-error .cell-out {
+  box-shadow: inset 4px 0 0 var(--danger);
+}
+
+.status-running .cell-out {
+  box-shadow: inset 4px 0 0 var(--signal);
+}
+
+.status-stopped .cell-out {
+  box-shadow: inset 4px 0 0 var(--warn);
+}
+
+.output-card.is-quiet .cell-out {
+  background: transparent;
+  box-shadow: inset 2px 0 0 var(--cell-border);
+}
+
+/* A result in the results column stands alone, so it carries a short copy
+   of its code and a link back to the line. */
+.output-card.is-standalone {
+  margin-bottom: 1rem;
+}
+
+.output-card.is-standalone .cell-in {
+  padding: 0.35rem 1rem 0.5rem;
+  border-radius: 0.5rem 0.5rem 0 0;
+  background: var(--cell-in);
+  box-shadow: inset 3px 0 0 var(--cell-rule);
+}
+
+.cell-line {
+  min-height: var(--target);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--link);
+  font-size: 0.88rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.cell-code {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  color: var(--text);
+}
+
+/* Said only when there is something to say: running, failed, stopped,
+   waiting, hidden, or slow. */
+.output-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.6rem;
+  margin-bottom: 0.45rem;
+  padding-right: 9.5rem;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+.cell-out.is-collapsed .output-head {
+  margin-bottom: 0;
+}
+
+.output-state {
+  font-weight: 600;
+}
+
+.status-error .output-state {
+  color: var(--danger);
+}
+
+.output-meta {
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+/* Run again, Copy, and Hide float at the top right of the result. They are
+   hidden until the pointer is over the result or focus is inside it, and
+   keyboard users reach them with Tab as usual. */
+.result-actions {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.4rem;
+  display: flex;
+  gap: 0.15rem;
+  padding: 0.15rem;
+  border-radius: 0.5rem;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--border);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.output-card:hover .result-actions,
+.output-card:focus-within .result-actions {
+  opacity: 1;
+}
+
+[data-motion="reduce"] .result-actions {
+  transition: none;
+}
+
+.result-action {
+  display: inline-grid;
+  place-items: center;
+  width: var(--target);
+  height: var(--target);
+  border: none;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.result-action:hover {
+  background: var(--hover);
+}
+
+.output-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.output-text {
+  margin: 0;
+  font-size: calc(var(--code-size, 15px) * 0.95);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  color: var(--text);
+}
+
+.stream-stderr {
+  color: var(--text-muted);
+}
+
+.output-plot {
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: zoom-in;
+  align-self: flex-start;
+  max-width: 100%;
+}
+
+/* The frame belongs to the picture, so it fits whatever size R drew. */
+.output-plot img {
+  display: block;
+  max-width: min(100%, 38rem);
+  border-radius: 0.5rem;
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.output-error p {
+  margin: 0.15rem 0 0.6rem;
+}
+
+.output-error .error-title {
+  margin-top: 0;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Where the problem is: the line of code, with the failing part marked and
+   pointed at by a row of carets, so the mark reads without color. */
+.error-where {
+  margin: 0.2rem 0 0.7rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--cell-border);
+  border-left: 4px solid var(--danger);
+  border-radius: 0.4rem;
+  background: var(--surface);
+}
+
+.error-where figcaption {
+  margin-bottom: 0.25rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.error-where pre {
+  margin: 0;
+  font-family: var(--code-font, "DM Mono", ui-monospace, monospace);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  color: var(--text);
+}
+
+/* The carets on the row below point at the marked part, so the part
+   itself is set in bold rather than underlined a second time. */
+.error-where mark {
+  background: transparent;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.error-where .error-carets {
+  color: var(--danger);
+  user-select: none;
+}
+
+.output-error .error-hint {
+  margin-top: 0.1rem;
+}
+
+.output-error .error-hint strong {
+  font-weight: 700;
+}
+
+.error-original {
+  margin-top: 0.6rem;
+  padding: 0.6rem;
+  border-radius: 0.4rem;
+  background: var(--surface);
+}
+
+.output-paused {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.output-column {
+  overflow-y: auto;
+  padding: 1.2rem;
+  background: var(--desk);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.layout-side .output-column {
+  width: 44%;
+  max-width: 42rem;
+  border-left: 1px solid var(--border);
+}
+
+.layout-stacked .output-column {
+  height: 40%;
+  border-top: 1px solid var(--border);
+}
+
+/* Results keep their natural height and the column scrolls, rather than
+   squeezing every result to fit. */
+.output-column > * {
+  flex-shrink: 0;
+}
+
+.output-column-empty {
+  margin: 0.5rem 0;
+}
+
+/* Console: a drawer under the document. */
+
+.console {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  background: var(--console-bg);
+  box-shadow: 0 0 0 1px var(--panel-edge);
+  overflow: hidden;
+}
+
+/* Folded, the console is its typing box alone, set a gap below the script. */
+.console:not(.is-open) {
+  margin-top: 0.6rem;
+}
+
+.console.is-open {
+  min-height: 140px;
+}
+
+/* Splitters. Each is a slim line to the eye, with a wider band to grab
+   and a grip in the middle that shows it moves. */
+.splitter {
+  position: relative;
+  flex: none;
+  touch-action: none;
+  z-index: 2;
+}
+
+.splitter.is-row {
+  height: 0.6rem;
+  cursor: row-resize;
+}
+
+.splitter.is-column {
+  width: 0.6rem;
+  cursor: col-resize;
+}
+
+/* At rest the grip is faint, so three of them do not compete with the
+   work. The resize pointer and the accent on hover say it moves. */
+.splitter .grip {
+  position: absolute;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.splitter.is-row .grip {
+  left: 50%;
+  top: 0.15rem;
+  width: 2.6rem;
+  height: 0.3rem;
+  margin-left: -1.3rem;
+}
+
+.splitter.is-column .grip {
+  top: 50%;
+  left: 0.15rem;
+  width: 0.3rem;
+  height: 2.6rem;
+  margin-top: -1.3rem;
+}
+
+.splitter:hover .grip,
+.splitter:focus-visible .grip {
+  background: var(--accent);
+}
+
+.splitter:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+/* While dragging, nothing in the window can be selected, and the pointer
+   keeps its resize shape even off the edge. */
+body.is-resizing-rows,
+body.is-resizing-rows * {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: row-resize !important;
+}
+
+body.is-resizing-columns,
+body.is-resizing-columns * {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: col-resize !important;
+}
+
+/* The edge above the typing box sits close to it, inside the drawer. */
+.splitter.input-edge {
+  height: 0.6rem;
+  margin: 0 0.6rem;
+}
+
+.console-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0 0.6rem 0 0.4rem;
+}
+
+.console-folder {
+  flex: 1;
+  font-size: 0.88rem;
+}
+
+.console-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: var(--target);
+  padding: 0 0.6rem;
+  border: none;
+  border-radius: 0.45rem;
+  background: transparent;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.console-toggle:hover {
+  background: var(--hover);
+}
+
+.console-log {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.2rem 1rem 0.4rem;
+  font-family: var(--code-font, "DM Mono", ui-monospace, monospace);
+  font-variant-ligatures: var(--code-ligatures, none);
+  font-size: calc(var(--code-size, 15px) * 0.95);
+  line-height: 1.55;
+}
+
+.console-entry pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font: inherit;
+}
+
+.console-entry.is-stderr pre,
+.console-entry.kind-plot pre {
+  color: var(--text-muted);
+}
+
+.console-entry.kind-error pre {
+  color: var(--text);
+}
+
+.console-entry.kind-error .console-error-title {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.console-entry.kind-error .console-error-body:empty {
+  display: none;
+}
+
+.console-entry.kind-info pre {
+  color: var(--text-muted);
+  font-family: "DM Sans Variable", system-ui, sans-serif;
+}
+
+.prompt {
+  display: inline-block;
+  width: 1.2rem;
+  color: var(--link);
+}
+
+.console-input-row {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  min-height: 56px;
+  margin: 0 0.6rem 0.6rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.6rem;
+  background: var(--code-bg);
+}
+
+.console-input-row:focus-within {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 1px var(--focus);
+}
+
+.console-input-row .console-toggle {
+  flex: none;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.console-input {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 0.2rem;
+  padding: 0.2rem 0.4rem 0.2rem 0.8rem;
+  font-family: var(--code-font, "DM Mono", ui-monospace, monospace);
+}
+
+.console-input .prompt {
+  padding-top: 0.6rem;
+  width: auto;
+  min-width: 1.2rem;
+  white-space: pre;
+}
+
+.console-input.is-asking {
+  background: var(--signal-soft);
+  border-radius: 0.6rem;
+}
+
+.console-input .prompt {
+  align-self: flex-start;
+}
+
+/* The typing box's editor fills the height the person gives it and
+   scrolls inside it once the code is longer. */
+.console-editor {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+
+.console-editor[hidden] {
+  display: none;
+}
+
+.console-editor .cm-editor {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  color: var(--text);
+}
+
+.console-editor .cm-editor.cm-focused {
+  outline: none;
+}
+
+.console-editor .cm-scroller {
+  font-family: var(--code-font, "DM Mono", ui-monospace, monospace);
+  font-size: calc(var(--code-size, 15px) * 0.95);
+  font-variant-ligatures: var(--code-ligatures, none);
+  line-height: 1.55;
+  overflow: auto;
+}
+
+.console-editor .cm-content {
+  min-height: var(--target);
+  padding: 0.55rem 0.4rem 0.4rem 0.2rem;
+  caret-color: var(--text);
+}
+
+.console-editor .cm-placeholder {
+  color: var(--text-muted);
+  font-family: "DM Sans Variable", system-ui, sans-serif;
+}
+
+.console-secret {
+  flex: 1;
+  min-height: var(--target);
+  padding: 0.55rem 0.2rem 0.4rem;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+/* The right column: two tabbed panes, as in RStudio. */
+
+.inspector {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin-left: 0.6rem;
+}
+
+/* The column's left edge, to drag its width. It overlaps the border so
+   the grab area sits across the line. */
+.splitter.column-edge {
+  position: absolute;
+  left: -0.6rem;
+  top: 0;
+  bottom: 0;
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--panel);
+  box-shadow: 0 0 0 1px var(--panel-edge);
+}
+
+.pane-bottom {
+  flex: 1;
+}
+
+/* Each panel's tabs are a segmented control: a recessed track with the
+   chosen tab raised out of it, so which one is showing reads at a glance. */
+.pane-tabs {
+  flex: none;
+  display: flex;
+  gap: 0.15rem;
+  margin: 0.5rem 0.5rem 0.25rem;
+  padding: 0.2rem;
+  border-radius: 10px;
+  background: var(--sunken);
+  box-shadow: inset 0 0 0 1px var(--panel-edge);
+}
+
+.pane-tab {
+  flex: 1;
+  min-height: var(--target);
+  padding: 0 0.7rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.93rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pane-tab:hover {
+  color: var(--text);
+}
+
+/* The ring is the strong border color, so the chosen tab stands out by its
+   edge as well as its fill. */
+.pane-tab.is-active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 0 0 1px var(--border-strong), 0 1px 3px rgba(21, 32, 42, 0.1);
+}
+
+.pane-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.pane-body > section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0.75rem 0.75rem;
+}
+
+.pane-toolbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.pane-search {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.6rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.55rem;
+  background: var(--surface);
+  color: var(--text-muted);
+}
+
+.pane-search:focus-within {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 1px var(--focus);
+}
+
+.pane-search input {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--target);
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.pane-note {
+  margin: 0 0 0.4rem;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+.pane-empty {
+  margin: 0.4rem 0.2rem;
+  font-size: 0.9rem;
+}
+
+/* History */
+
+.history-list,
+.package-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.history-row {
+  padding: 0.45rem 0.2rem 0.2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.history-code {
+  margin: 0 0 0.1rem;
+  max-height: 4.8em;
+  overflow: hidden;
+  font-family: var(--code-font, "DM Mono", ui-monospace, monospace);
+  font-size: 0.86rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  color: var(--text);
+}
+
+.history-actions {
+  display: flex;
+  gap: 0.2rem;
+}
+
+/* Help: R's own pages, rebuilt from an allowlist and styled like the app,
+   so they follow the text size and appearance settings. */
+
+.help-doc {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.2rem 0.4rem 1.5rem;
+  font-size: 0.93rem;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.help-doc[hidden] {
+  display: none;
+}
+
+.help-doc h2 {
+  margin: 0.5rem 0 0.4rem;
+  font-size: 1.2rem;
+}
+
+.help-doc h3 {
+  margin: 1.1rem 0 0.3rem;
+  font-size: 1rem;
+}
+
+.help-doc pre {
+  margin: 0.4rem 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.45rem;
+  background: var(--sunken);
+  font-family: var(--code-font, "DM Mono", ui-monospace, monospace);
+  font-size: 0.86rem;
+  white-space: pre-wrap;
+}
+
+.help-doc code {
+  font-family: var(--code-font, "DM Mono", ui-monospace, monospace);
+  font-size: 0.92em;
+}
+
+.help-doc a {
+  color: var(--link);
+}
+
+.help-doc table {
+  border-collapse: collapse;
+}
+
+.help-doc td {
+  padding: 0.2rem 0.75rem 0.2rem 0;
+  vertical-align: top;
+}
+
+/* The first table of an R help page names the topic and its package. */
+.help-doc > table:first-child td,
+.help-doc > div > table:first-child td {
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.help-choices ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+}
+
+/* Packages */
+
+.package-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.package-attach {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--target);
+  height: var(--target);
+  cursor: pointer;
+}
+
+.package-attach input {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.package-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: var(--target);
+  padding: 0.3rem 0.2rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+
+.package-name code {
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.package-name .truncate {
+  max-width: 100%;
+}
+
+.package-version {
+  flex: none;
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+  padding-right: 0.3rem;
+}
+
+/* Plots */
+
+.plot-panel {
+  min-height: 0;
+}
+
+.plot-panel .plot-box {
+  flex: 1;
+  height: auto;
+  min-height: 8rem;
+}
+
+.plot-box.is-empty {
+  height: auto;
+  justify-content: flex-start;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+}
+
+.plot-box {
+  height: 14rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.6rem;
+  background: var(--surface);
+  overflow: hidden;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.plot-box .muted {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.plot-box img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.plot-open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.plot-open img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.plot-large {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.8rem;
+  max-width: 92vw;
+  padding: 1rem;
+  background: var(--surface);
+  border-radius: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.plot-large img {
+  max-width: 100%;
+  max-height: 76vh;
+}
+
+.plot-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-top: 0.4rem;
+  font-size: 0.86rem;
+}
+
+.push-end {
+  margin-left: auto;
+}
+
+.objects {
+  min-height: 0;
+}
+
+/* Objects are plain rows, not boxed cards. A list of ten boxes reads as
+   ten things to look at. A list of rows reads as one list, which is what
+   it is (Palmer 1992; Rosenholtz, Li, and Nakano 2007, on clutter). */
+.objects ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.object-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: var(--target);
+  padding: 0.3rem 0.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.object-row:hover {
+  background: var(--hover);
+}
+
+.object-icon {
+  width: 1.4rem;
+  height: 1.4rem;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.object-row.kind-model .object-icon,
+.object-row.kind-function .object-icon {
+  color: var(--keyword);
+}
+
+.object-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 0.86rem;
+}
+
+.object-text code {
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+/* View shows on the row being pointed at or focused, where it applies. */
+.object-action {
+  flex: none;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--link);
+  opacity: 0;
+}
+
+.object-row:hover .object-action,
+.object-row:focus-visible .object-action {
+  opacity: 1;
+}
+
+.columns {
+  padding: 0.1rem 0 0.5rem 3rem !important;
+  font-size: 0.88rem;
+}
+
+/* The data viewer */
+
+.data-viewer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  background: var(--code-bg);
+}
+
+.data-empty {
+  margin: auto;
+  max-width: 30rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.data-head {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 1rem 1.4rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.data-head h1 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.data-sorted {
+  margin-left: auto;
+  font-size: 0.88rem;
+}
+
+.data-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.data-table-wrap {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+}
+
+.data-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  min-width: 100%;
+}
+
+.data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 0;
+  background: var(--raised);
+  border-bottom: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+  font-weight: 400;
+}
+
+.data-table thead th.is-selected {
+  background: var(--accent-soft);
+}
+
+.data-col {
+  width: 100%;
+  min-width: 9.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.6rem 0.8rem 0.7rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.data-col-name {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.data-col-name code {
+  font-weight: 600;
+}
+
+.type-badge {
+  padding: 0 0.35rem;
+  border-radius: 0.3rem;
+  background: var(--sunken);
+  box-shadow: 0 0 0 1px var(--border);
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+/* A small distribution sketch: a histogram for numbers, the most common
+   values for categories. It is decoration for sighted readers, and the
+   same facts are in the summary text beneath it. */
+.sketch {
+  height: 1.9rem;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.sketch span {
+  flex: 1;
+  border-radius: 1px 1px 0 0;
+  background: var(--accent);
+  opacity: 0.55;
+}
+
+.data-col-summary {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+.data-col-missing {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--warn);
+}
+
+.data-col .muted {
+  font-size: 0.86rem;
+}
+
+.data-table td,
+.data-table tbody th {
+  height: 2.3rem;
+  padding: 0 0.8rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.data-table td.is-number {
+  text-align: right;
+}
+
+.data-table td.is-selected {
+  background: var(--accent-soft);
+}
+
+.data-table tbody tr:hover td {
+  background: var(--hover);
+}
+
+.data-rownum {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 3.4rem;
+  text-align: right;
+  font-weight: 400;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  background: var(--raised);
+}
+
+.data-table thead .data-rownum {
+  z-index: 3;
+}
+
+.na {
+  padding: 0 0.35rem;
+  border-radius: 0.3rem;
+  background: var(--sunken);
+  box-shadow: 0 0 0 1px var(--border);
+  color: var(--text-muted);
+  font-family: var(--code-font, "DM Mono", ui-monospace, monospace);
+  font-size: 0.86rem;
+}
+
+.column-details {
+  width: 19rem;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 1.1rem;
+  overflow-y: auto;
+  background: var(--window);
+  border-left: 1px solid var(--border);
+}
+
+.column-details h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.column-details > .muted {
+  margin: -0.5rem 0 0;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.stat-grid div {
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.6rem;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.stat-grid dt {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+.stat-grid dd {
+  margin: 0.1rem 0 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-grid dd.small {
+  font-size: 0.92rem;
+}
+
+.top-values h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.9rem;
+}
+
+.top-values ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.top-values li {
+  display: grid;
+  grid-template-columns: 6rem 1fr 3rem;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+}
+
+.top-values .bar {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--sunken);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.top-values .bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.top-values .count {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.column-actions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.column-actions .button-row .button[aria-pressed="true"] {
+  background: var(--accent-soft);
+}
+
+.data-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.8rem 0 1.4rem;
+  border-top: 1px solid var(--border);
+  background: var(--window);
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.data-foot span {
+  margin-right: auto;
+}
+
+/* Dropping files on the window */
+
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--overlay);
+  pointer-events: none;
+}
+
+.drop-overlay p {
+  margin: 0;
+  padding: 1.2rem 1.8rem;
+  border-radius: 1rem;
+  background: var(--surface);
+  box-shadow: var(--shadow), inset 0 0 0 2px var(--accent);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.drop-overlay.is-refused p {
+  box-shadow: var(--shadow), inset 0 0 0 2px var(--danger);
+}
+
+/* Settings panes and the New Project dialog */
+
+.settings-layout {
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.settings-nav {
+  width: 12rem;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.4rem 0.6rem 1rem 1rem;
+}
+
+.settings-nav button {
+  min-height: var(--target);
+  padding: 0 0.8rem;
+  border: none;
+  border-radius: 0.55rem;
+  background: transparent;
+  text-align: left;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.settings-nav button:hover {
+  background: var(--hover);
+}
+
+.settings-nav button.is-on {
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+
+.settings-layout .dialog-body {
+  flex: 1;
+  min-height: 24rem;
+}
+
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.template {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-height: 8.2rem;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.template.is-on {
+  border: 2px solid var(--accent);
+  padding: calc(0.8rem - 1px);
+  background: var(--accent-soft);
+}
+
+.template-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.template-icon {
+  width: 2.4rem;
+  height: 2.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.6rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.template.is-on .template-icon {
+  background: var(--surface);
+}
+
+.template input {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.path-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Export plot. The preview frame takes the file's shape, so changing the
+   size shows its effect before anything is written. */
+
+.export-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.export-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: var(--desk);
+}
+
+.export-frame {
+  width: 100%;
+  max-height: 18rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.3rem;
+  background: #ffffff; /* standards: the plot's own white page */
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12), 0 6px 18px rgb(0 0 0 / 0.1);
+  overflow: hidden;
+  transition: aspect-ratio 160ms ease;
+}
+
+.export-frame img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.export-preview .hint {
+  margin: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.export-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.preset-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.preset,
+.segmented label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  min-height: var(--target);
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.preset > span,
+.segmented label > span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.preset.is-on,
+.segmented label.is-on {
+  border: 2px solid var(--accent);
+  padding: calc(0.6rem - 1px) calc(0.7rem - 1px);
+  background: var(--accent-soft);
+}
+
+.preset input,
+.segmented input {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0.15rem 0 0;
+  accent-color: var(--accent);
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.field-row.three {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 0.8fr) minmax(0, 1.4fr);
+  gap: 0.75rem;
+}
+
+.field select {
+  min-height: var(--target);
+  padding: 0 0.6rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.55rem;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 400;
+}
+
+.field select:disabled {
+  opacity: 0.55;
+}
+
+.export-source {
+  margin: 0;
+}
+
+.form-note {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-left: 4px solid var(--warn);
+  border-radius: 0.4rem;
+  background: var(--warn-soft);
+}
+
+/* Import data. Options on the left, the preview on the right, and the
+   code that will run below both, so the person sees exactly what happens. */
+
+.dialog.wide.import-dialog {
+  width: min(64rem, 100%);
+}
+
+.import-data {
+  gap: 1rem;
+}
+
+.import-grid {
+  display: grid;
+  grid-template-columns: minmax(16rem, 0.85fr) minmax(0, 1.4fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.import-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.import-options .hint {
+  margin: 0;
+}
+
+.segmented.four {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.segmented.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.segmented.four label,
+.segmented.two label {
+  align-items: center;
+}
+
+.field.narrow {
+  flex: 0 0 7.5rem;
+}
+
+.import-preview {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.import-preview h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.import-preview .form-note p {
+  margin: 0 0 0.6rem;
+}
+
+.preview-wrap {
+  max-height: 20rem;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--code-bg);
+}
+
+.preview-table {
+  border-collapse: collapse;
+  font-family: var(--code-font, "DM Mono", ui-monospace, monospace);
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+.preview-table th {
+  position: sticky;
+  top: 0;
+  padding: 0.45rem 0.7rem;
+  background: var(--raised);
+  border-bottom: 1px solid var(--border-strong);
+  text-align: left;
+  font-weight: 600;
+}
+
+.preview-table td {
+  padding: 0.3rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+.preview-table td.is-na {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.import-code {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.import-code-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+.import-code pre {
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.55rem;
+  background: var(--sunken);
+  border: 1px solid var(--border);
+  font-family: var(--code-font, "DM Mono", ui-monospace, monospace);
+  font-size: 0.88rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 860px) {
+  .import-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .export-frame {
+    transition: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .export-grid,
+  .preset-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-error {
+  margin: 0;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+/* Dialogs */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 8vh 1rem 1rem;
+  background: var(--overlay);
+}
+
+.dialog {
+  width: min(36rem, 100%);
+  max-height: 84vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: 1rem;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.dialog.wide {
+  width: min(52rem, 100%);
+}
+
+.dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1rem 0.4rem 1.6rem;
+}
+
+.dialog-head h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.dialog-body {
+  padding: 0.4rem 1.6rem 1.2rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.dialog-body > p {
+  margin: 0;
+}
+
+.dialog-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 1rem 1.6rem 1.3rem;
+  border-top: 1px solid var(--border);
+}
+
+.dialog-foot .hint {
+  margin-right: auto;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+legend {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.choices {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.choices.row {
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+.choices.palettes,
+.choices.templates {
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: max(var(--target), 3rem);
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.65rem;
+  cursor: pointer;
+}
+
+.choice.is-on {
+  border: 2px solid var(--accent);
+  padding: calc(0.55rem - 1px) calc(0.9rem - 1px);
+  background: var(--accent-soft);
+}
+
+.choice input {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+.choice strong {
+  display: block;
+}
+
+.swatches {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.swatches span {
+  width: 0.9rem;
+  height: 1.6rem;
+  border-radius: 0.25rem;
+}
+
+.r-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.tag {
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.range-row input {
+  flex: 1;
+  min-height: var(--target);
+  accent-color: var(--accent);
+}
+
+.small-a {
+  font-size: 0.88rem;
+}
+
+.large-a {
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: var(--target);
+  cursor: pointer;
+}
+
+.check input {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+.check.is-disabled {
+  cursor: default;
+  color: var(--text-muted);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 500;
+  flex: 1;
+}
+
+.field input {
+  min-height: var(--target);
+  padding: 0 0.8rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.55rem;
+  background: var(--surface);
+  font-weight: 400;
+}
+
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.field-inline {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.path-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-height: 2.6rem;
+  padding: 0 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: var(--raised);
+  font-size: 0.88rem;
+  font-weight: 400;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.form-error {
+  color: var(--danger);
+  margin: 0;
+}
+
+.about {
+  align-items: flex-start;
+}
+
+.about p {
+  margin: 0;
+}
+
+/* Command palette */
+
+.palette-search {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0 1rem;
+  padding: 0 0.8rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.6rem;
+}
+
+.palette-search input {
+  flex: 1;
+  min-height: max(var(--target), 3rem);
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 1.1rem;
+}
+
+.palette-search:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.palette ul {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0 0.6rem;
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.palette li {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-height: var(--target);
+  padding: 0 0.8rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.palette li span:first-child {
+  flex: 1;
+}
+
+.palette li .hint {
+  display: inline;
+}
+
+.palette li.is-selected {
+  background: var(--accent-soft);
+}
+
+.palette-empty {
+  cursor: default !important;
+}
+
+.palette-foot {
+  padding: 0.6rem 1.6rem 1rem;
+}
+
+/* Notices */
+
+.notice {
+  position: fixed;
+  left: 50%;
+  bottom: 3rem;
+  transform: translateX(-50%);
+  z-index: 60;
+  max-width: min(40rem, 90vw);
+  padding: 0.75rem 1.1rem;
+  border-radius: 0.7rem;
+  background: var(--text);
+  color: var(--surface);
+  box-shadow: var(--shadow);
+  font-size: 0.95rem;
+}
+
+.notice.tone-error {
+  background: var(--danger-soft);
+  color: var(--text);
+  border: 1px solid var(--danger);
+}
+
+/* Chips: small rounded buttons for one press requests. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: var(--target);
+  padding: 0 0.65rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chip:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.chip:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* The assistant pane. */
+.assistant-intro {
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 1rem 1rem 1.2rem !important;
+  color: var(--text);
+}
+
+.assistant-intro svg {
+  color: var(--accent);
+}
+
+.assistant-intro h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.assistant-intro ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.assistant-intro p {
+  margin: 0;
+  font-size: 0.86rem;
+}
+
+.assistant {
+  gap: 0.5rem;
+}
+
+.assistant .pane-toolbar {
+  margin-bottom: 0;
+}
+
+.assistant-model select {
+  min-height: var(--target);
+  max-width: 12rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+}
+
+.assistant-model-name {
+  font-family: var(--code-font, "DM Mono", ui-monospace, monospace);
+  font-size: 0.86rem;
+}
+
+.assistant-quick {
+  flex: none;
+  display: flex;
+  gap: 0.3rem;
+  overflow-x: auto;
+}
+
+.assistant-log {
+  flex: 1;
+  min-height: 4rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.25rem 0.1rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.turn-question {
+  align-self: flex-end;
+  max-width: 90%;
+  margin: 0;
+  padding: 0.4rem 0.7rem;
+  border-radius: 0.7rem 0.7rem 0.2rem 0.7rem;
+  background: var(--accent-soft);
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+.turn-answer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.turn-answer p,
+.turn-answer ul,
+.turn-answer ol {
+  margin: 0;
+}
+
+.turn-answer ul,
+.turn-answer ol {
+  padding-left: 1.2rem;
+}
+
+.turn-answer code {
+  font-family: var(--code-font, "DM Mono", ui-monospace, monospace);
+  font-size: 0.86em;
+}
+
+.turn-error {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.suggestion {
+  margin: 0;
+  border-radius: 0.5rem;
+  background: var(--cell-in);
+  box-shadow: inset 3px 0 0 var(--cell-rule);
+  overflow: hidden;
+}
+
+.suggestion pre {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  overflow-x: auto;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.suggestion-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.5rem 0.5rem 0.8rem;
+  font-size: 0.86rem;
+}
+
+.suggestion-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-left: auto;
+}
+
+.check-ok,
+.check-bad,
+.setup-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.check-bad {
+  color: var(--danger);
+}
+
+.assistant-ask {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+
+.assistant-ask textarea {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--target);
+  max-height: 10rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.6rem;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+.assistant-ask textarea:focus {
+  outline: none;
+  border-color: var(--focus);
+  box-shadow: 0 0 0 1px var(--focus);
+}
+
+/* The setup steps. */
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin: 0.4rem 1.6rem 0.2rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.step-number {
+  display: inline-grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 50%;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.steps li.is-current {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.steps li.is-current .step-number {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.steps li.is-done .step-number {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.choice.tall {
+  align-items: flex-start;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.choice.tall input {
+  margin-top: 0.2rem;
+}
+
+.choice.tall .muted {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.88rem;
+}
+
+.choice.is-unavailable {
+  cursor: default;
+  border-style: dashed;
+}
+
+.setup-progress {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.35rem 0.6rem;
+}
+
+.setup-progress-text {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.88rem;
+}
+
+.meter {
+  grid-column: 1;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--sunken);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  overflow: hidden;
+}
+
+.meter span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 200ms ease;
+}
+
+.meter.is-waiting span {
+  opacity: 0.5;
+}
+
+[data-motion="reduce"] .meter span {
+  transition: none;
+}
+
+.setup-progress .button {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.specs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.specs div {
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.6rem;
+  background: var(--sunken);
+}
+
+.specs dt {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+.specs dd {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.model-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.model-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.7rem;
+}
+
+.model-card.is-in-use {
+  border: 2px solid var(--accent);
+  padding: calc(0.8rem - 1px) calc(0.9rem - 1px);
+}
+
+.model-card.compact {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.model-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.6rem;
+}
+
+.fit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.fit-good {
+  color: var(--text);
+}
+
+.fit-tooLarge,
+.fit-noRoom {
+  color: var(--danger);
+}
+
+.pros-cons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.4rem 1.2rem;
+  font-size: 0.88rem;
+}
+
+.pros-cons ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.pros-cons-label {
+  margin: 0 0 0.15rem;
+  font-weight: 700;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+.model-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.setup-subhead {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+}
+
+.output-plot.is-thumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.output-plot.is-thumb img {
+  max-width: 9rem;
+  max-height: 6.5rem;
+  object-fit: contain;
+}
+
+.output-plot-note {
+  font-size: 0.86rem;
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Plain results, for people who prefer a traditional look. The code keeps
+   no tint and the result no well: output is printed under its line, the
+   way a console prints it. A failed or running statement still gets its
+   bar in the margin, since that is the state, not decoration. */
+[data-results="plain"] .editor-host .cm-line.cm-cell {
+  background: transparent;
+  box-shadow: none;
+}
+
+[data-results="plain"] .editor-host .cm-line.cm-cell.cm-cell-running {
+  box-shadow: inset 4px 0 0 var(--signal);
+}
+
+[data-results="plain"] .editor-host .cm-line.cm-cell.cm-cell-error {
+  box-shadow: inset 4px 0 0 var(--danger);
+}
+
+[data-results="plain"] .cell-out {
+  padding: 0.1rem 1rem 0.5rem;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+[data-results="plain"] .status-error .cell-out {
+  box-shadow: inset 4px 0 0 var(--danger);
+}
+
+[data-results="plain"] .status-running .cell-out {
+  box-shadow: inset 4px 0 0 var(--signal);
+}
+
+[data-results="plain"] .cm-output-block {
+  padding-bottom: 0.5rem;
+}
+
+/* Brackets colored by depth, when that is turned on in Settings. */
+.editor-host .cm-bracket-0 {
+  color: var(--keyword);
+}
+
+.editor-host .cm-bracket-1 {
+  color: var(--function);
+}
+
+.editor-host .cm-bracket-2 {
+  color: var(--string);
+}
+
+.editor-host .cm-bracket-3 {
+  color: var(--number);
+}
+
+.editor-host [class^="cm-bracket-"] {
+  font-weight: 700;
+}
+
+/* Settings: the code sample shows the chosen typeface, size and spacing on
+   the same ground as the script, so the preview matches the editor. */
+.code-sample {
+  margin: 0 0 1.1rem;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--panel-edge);
+  border-radius: 12px;
+  background: var(--code-bg);
+  color: var(--text);
+  font-family: var(--code-font, "DM Mono", ui-monospace, monospace);
+  font-size: var(--code-size);
+  line-height: var(--code-line);
+  font-variant-ligatures: var(--code-ligatures);
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.choices.fonts {
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+/* Each typeface names itself in its own letters. */
+.font-choice {
+  font-size: 1.02rem;
+}
+
+.checks {
+  display: grid;
+  gap: 0.25rem;
+}
+
+/* A check with a hint lines its box up with the first line of text. */
+.check:has(.hint) {
+  align-items: flex-start;
+  padding: 0.35rem 0;
+}
+
+.check:has(.hint) input {
+  margin-top: 0.2rem;
+}
+
+/* Render, with an arrow beside it for the other formats. The two halves
+   read as one control, so they share a border and a radius. */
+.split-button {
+  display: flex;
+}
+
+.split-button > .button:first-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.split-button > .split-arrow {
+  min-width: 0;
+  padding: 0 0.55rem;
+  margin-left: -1px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/* The Report pane: a preview that takes the room left under its bar. */
+.report-pane {
+  gap: 0.4rem;
+}
+
+.report-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.report-progress p {
+  margin: 0.3rem 0;
+}
+
+.report-progress progress {
+  width: 100%;
+  height: 0.5rem;
+  accent-color: var(--signal);
+}
+
+.report-done {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.report-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+}
+
+.report-formats {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.chip.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+
+.report-actions {
+  display: flex;
+  gap: 0.3rem;
+  margin-left: auto;
+}
+
+/* The report keeps its own white page in both appearances, as it will
+   look to its readers. */
+.report-frame {
+  flex: 1;
+  min-height: 14rem;
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px var(--panel-edge);
+  background: #ffffff;
+}
+
+.report-file {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.report-file p {
+  margin: 0;
+}
+
+.report-problem .error-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.4rem;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.report-log {
+  flex: none;
+}
+
+.report-log pre {
+  max-height: 14rem;
+  margin-top: 0.4rem;
+  overflow: auto;
+}
+
+/* A long explanation scrolls inside the pane, so its buttons are never
+   cut off below the panel's edge. */
+.report-problem {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* The file and its render time give way first, so the buttons stay on the
+   same line in a narrow pane. */
+.report-when {
+  flex: 1 1 6rem;
+  min-width: 0;
+}
+
+.report-actions {
+  flex: none;
+}

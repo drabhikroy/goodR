@@ -1,0 +1,18 @@
+[package]
+name = "render"
+version.workspace = true
+rust-version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Renders Quarto and R Markdown reports with the person's own R, and explains what went wrong when a render fails."
+publish = false
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+tokio = { version = "1", features = ["full"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+tempfile = "3"

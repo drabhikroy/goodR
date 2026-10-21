@@ -1,0 +1,12 @@
+[workspace]
+resolver = "2"
+members = ["crates/rsession", "crates/assistant", "crates/render", "src-tauri"]
+
+[workspace.package]
+version = "0.2.0"
+edition = "2021"
+# Tauri 2.12 needs Rust 1.90, so an older toolchain stops here with a
+# message naming the version instead of failing deep in a dependency.
+rust-version = "1.90"
+license-file = "LICENSE.md"
+authors = ["Abhik Roy"]

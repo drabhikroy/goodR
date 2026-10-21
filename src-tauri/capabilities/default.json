@@ -1,0 +1,32 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "What the main window may ask of the system. Open and Save dialogs run in the app's own code, which grants access only to the files chosen there. Links open only to this app's GitHub pages, CRAN, Ollama's download page, and Quarto's getting started page.",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "core:window:allow-set-title",
+    "core:window:allow-start-dragging",
+    "dialog:allow-ask",
+    "dialog:allow-message",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "https://github.com/drabhikroy/goodR/*"
+        },
+        {
+          "url": "https://cran.r-project.org/*"
+        },
+        {
+          "url": "https://ollama.com/download"
+        },
+        {
+          "url": "https://quarto.org/docs/get-started/*"
+        }
+      ]
+    }
+  ]
+}
