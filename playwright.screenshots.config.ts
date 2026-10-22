@@ -1,6 +1,6 @@
 import { defineConfig } from "@playwright/test";
 
-// Makes the README's screenshots from the browser build, once in light and
+// Makes the screenshots in the README and the docs from the browser build, once in light and
 // once in dark, with `npm run screenshots`. Each is saved to docs/images
 // with the appearance at the end of its name.
 export default defineConfig({

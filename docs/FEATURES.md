@@ -470,3 +470,54 @@ version and the newest one available. It looks once a day by itself, or only
 when asked. The app downloads its own update, checks its signature, and
 installs it, then restarts when you say. For R and Ollama, it opens their
 download pages.
+
+## Keyboard shortcuts and sessions
+
+R starts when the app opens. The opening screen lets you start a new project, open a project, or start or open a script, and it lists the projects and scripts you used recently. You can also drop scripts on the window, or use Open With in Finder. The app shows up there for R, R Markdown, and Quarto files, but it does not make itself the default app for them.
+
+These are the main keyboard shortcuts:
+
+| To | Press |
+| --- | --- |
+| Start a new project | ⇧⌘N |
+| Open a project | ⇧⌘O |
+| Open a script | ⌘O |
+| Start a new script | ⌘N |
+| Save, or Save As | ⌘S, ⇧⌘S |
+| Run the line or selection | ⌘↩ |
+| Run the chunk, or a script's section | ⌥⌘C |
+| Run the whole file | ⇧⌘↩ |
+| Start a new Quarto or R Markdown document | ⌥⌘N |
+| Insert a chunk | ⌥⌘I |
+| Render the report | ⇧⌘K |
+| Run a Shiny app | Run app in the title bar, or Run, Run Shiny App |
+| Stop | ⌘. |
+| Restart R | ⇧⌘0 |
+| Export the plot on show | ⇧⌘E |
+| Explain the code at the cursor with the assistant | ⌥⌘E |
+| Show the assistant | ⌃9 |
+| Insert a pipe, an assignment, or a section | ⇧⌘M, ⌥−, ⇧⌘R |
+| R help for the name at the cursor | F1 |
+| Show R help, history, or packages over the canvas | ⌃3, ⌃4, ⌃7 |
+| Move to the canvas, or to the objects in R | ⌃6, ⌃8 |
+| Search for any command, or look a function up in R help | ⌘K |
+| Help for this app | ⇧⌘/ |
+| Show results in the canvas, or under each line | ⌥⌘1, ⌥⌘2 |
+| Update results as you type, on or off | ⌥⌘L |
+| Show or hide the project sidebar | ⌃⌘S |
+| Show or hide the canvas | ⌥⌘0 |
+| Show past commands | ⇧⌘Y |
+| Show the start screen, without closing anything | ⇧⌘H |
+| Move to the editor or the R prompt | ⌃1, ⌃2 |
+
+On Windows and Linux, Ctrl replaces ⌘ and Alt replaces ⌥, and the app shows them that way. The sidebar shortcut there is Ctrl B.
+
+A project's R works in the project's folder. Opening a project leaves your other work open, each in its own R. Closing a project ends its R, and closing a script that is not part of a project ends that script's R. A new untitled script uses the R of whatever tab is in front, or, if nothing is open, an R kept for untitled work.
+
+Restart R, in the Run menu, restarts only the R of the script in front. Choosing a different R version, from Settings under R and packages or from the Run menu, restarts every session with that version. The menu at the top left switches between open projects and scripts.
+
+To make the canvas wider or narrower, drag its left edge, or focus it and press the left and right arrow keys.
+
+Settings is split into Appearance, Layout, Code text, Editor, Results, Reports, Accessibility, R and packages, Updates, and Menus. Changes apply right away, so there is nothing to save.
+
+When you type three characters of a name, or press Tab, R suggests completions. Tab or Return picks the highlighted one.

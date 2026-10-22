@@ -1,5 +1,7 @@
 # Contributing to R: What Is It Good For?
 
+Thank you for helping. This page covers the practical side of making a change. For how the app works inside, how to build it, and how releases are made, see [Developing goodR](docs/DEVELOPING.md).
+
 ## Before you start
 
 You need Node.js 22, Rust 1.90 or later, and R 4.2 or later. Then install
