@@ -1,8 +1,8 @@
 //! Finding R installations.
 //!
 //! The CRAN installer, Homebrew, rig, and system packages all put R in
-//! different places. We look in each, read the version, and let the user
-//! pick when there is more than one.
+//! different places. Each place is checked, the version read, and the user
+//! picks when there is more than one.
 
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -19,7 +19,7 @@ pub struct RInstall {
     pub source: String,
 }
 
-/// Every R we can find, newest first, with duplicates removed.
+/// Every R that can be found, newest first, with duplicates removed.
 pub fn find_installations() -> Vec<RInstall> {
     let mut by_home: BTreeMap<PathBuf, RInstall> = BTreeMap::new();
     for (home, source) in candidate_homes() {
@@ -101,7 +101,7 @@ fn r_home_from_path() -> Option<PathBuf> {
     (!line.is_empty()).then(|| PathBuf::from(line))
 }
 
-/// Reads the version from the installed header when we can find it, which
+/// Reads the version from the installed header when it can be found, which
 /// is instant, and only starts R itself as a fallback.
 fn read_version(home: &Path) -> Option<String> {
     let headers = [home.join("include/Rversion.h"), PathBuf::from("/usr/share/R/include/Rversion.h")];

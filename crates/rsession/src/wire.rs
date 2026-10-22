@@ -2,8 +2,8 @@
 //! and back again.
 //!
 //! Every message carries an HMAC signature over its four JSON parts. The kernel
-//! rejects anything unsigned or signed with the wrong key, and we reject the
-//! same from the kernel, so a stray process on the machine cannot inject output
+//! rejects anything unsigned or signed with the wrong key, and this side rejects
+//! the same from the kernel, so a stray process on the machine cannot inject output
 //! into the editor.
 
 use anyhow::{anyhow, Result};
@@ -15,7 +15,7 @@ use sha2::Sha256;
 /// Separates routing identities from the signed body of a message.
 pub const DELIMITER: &[u8] = b"<IDS|MSG>";
 
-/// The protocol version we speak. ark accepts 5.3 and later.
+/// The protocol version spoken here. ark accepts 5.3 and later.
 const PROTOCOL_VERSION: &str = "5.3";
 
 #[derive(Clone, Debug)]

@@ -878,7 +878,7 @@ invisible(NULL)
 "#;
 
 /// Quotes a string as an R literal, so names typed by the user cannot
-/// break out of the call we build around them. A NUL cannot appear in an R
+/// break out of the call built around them. A NUL cannot appear in an R
 /// string at all, so it is dropped rather than left to fail the whole call.
 pub fn r_string(value: &str) -> String {
     let escaped = value.replace('\\', "\\\\").replace('"', "\\\"").replace('\n', "\\n").replace('\r', "\\r").replace('\0', "");

@@ -261,7 +261,7 @@ async fn readline_prompts_reach_the_interface_and_take_an_answer() {
 #[tokio::test]
 async fn a_crash_is_reported_and_does_not_hang_callers() {
     let (session, mut rx, _dir) = start().await;
-    // quit() ends the R process the same way a crash would from our side.
+    // quit() ends the R process the same way a crash would, as seen from the app.
     let _ = session.execute("quit(save = 'no', status = 3)").await.unwrap();
     let exited = loop {
         let event = tokio::time::timeout(Duration::from_secs(30), rx.recv()).await.unwrap().unwrap();

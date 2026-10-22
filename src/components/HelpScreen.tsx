@@ -305,7 +305,7 @@ const TOPICS: Topic[] = [
           into more rows, so more are in view at once. When there are lots of results, the filters at its top narrow them to plots, printed results, or problems. The button with three dots saves them all as a
           report, clears them, or hides the strip.
         </p>
-        <p>Pin a result to keep it on the stage while you look at the next one, which is handy for comparing two plots. Full size shows a plot over the whole window, and Export saves it as a file.</p>
+        <p>Pin a result to keep it on the stage while you look at the next one, for example to compare two plots. Full size shows a plot over the whole window, and Export saves it as a file.</p>
         <p>
           Edit labels, under a plot from your script, changes its title and axis labels, and the color of a base R plot. The change is made in the code that drew it, so it stays when the script runs again.
         </p>
@@ -355,7 +355,7 @@ const TOPICS: Topic[] = [
       <>
         <p>
           Every project gets an R of its own. A script in a project folder, one with an <code>.Rproj</code> file, runs in that project&#8217;s R, starting in the project folder. A script on its own gets its own R
-          too, starting in the script&#8217;s folder. So nothing ever runs in the wrong place by accident.
+          too, starting in the script&#8217;s folder. That way, code does not run in the wrong folder by accident.
         </p>
         <p>
           The name beside Home, at the top left, is the project or script on show. Its menu lists everything open, with a number when there is more than one, and switches between them, bringing each
@@ -439,7 +439,7 @@ const TOPICS: Topic[] = [
           Under it, the test&#8217;s assumptions are checked for you: whether the data are shaped as the test expects, whether groups spread equally, whether a few cases pull a model on their own. A
           line says how many hold. When one does not, it opens by itself and says what to do, such as using a rank based test instead.
         </p>
-        <p>Everything comes from R&#8217;s own result. Nothing is guessed, and nothing leaves R.</p>
+        <p>The write-up and the checks are worked out from R&#8217;s own result, not guessed, and nothing is sent outside R.</p>
       </>
     ),
   },
@@ -477,7 +477,7 @@ const TOPICS: Topic[] = [
           in the browser, so anyone can open it without installing R.
         </p>
         <p>
-          As you type, the app is checked for the mistakes Shiny never tells you about: an id spelled differently in the UI and the server, a reactive written as <code>data</code> instead of{" "}
+          As you type, the app is checked for mistakes that Shiny does not warn you about: an id spelled differently in the UI and the server, a reactive written as <code>data</code> instead of{" "}
           <code>data()</code>, an input read outside a render function, a render function that does not match its output, and an id used twice. Each one is underlined and listed above the script, with Go to line,
           and a one click fix when the fix is clear.
         </p>
@@ -657,7 +657,7 @@ const TOPICS: Topic[] = [
           the View menu. Go back to the standard layout, on the same page or in the View menu, shows every part again at the size it started at, in one press.
         </p>
         <p>
-          Updates lists everything that can be updated in one place: this app, R, your packages, Ollama, and the assistant&#8217;s models, each with its version, the newest one, and a button to update it.
+          Updates lists what can be updated (this app, R, your packages, Ollama, and the assistant&#8217;s models). Each has its version, the newest one, and a button to update it.
           It looks once a day by itself and says when there is something new, or only when you ask. This app updates itself and restarts into the new version when you are ready. R and Ollama open their
           download pages, since they install with their own installers.
         </p>
@@ -672,7 +672,7 @@ const TOPICS: Topic[] = [
     id: "about",
     group: "Reference",
     label: "About",
-    summary: "Version, license, and how to tell us about a problem.",
+    summary: "Version, license, and how to report a problem.",
     words: "license version credits bug report privacy",
     body: () => <AboutTopic />,
   },

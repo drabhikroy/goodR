@@ -9,7 +9,7 @@
 
 # Light travels 299,792.458 kilometers every second, and the Sun is
 # about 149.6 million kilometers away. How many minutes does
-# sunlight take to reach us?
+# sunlight take to reach Earth?
 149.6e6 / 299792.458 / 60
 
 # R works on whole vectors at once. These are the planets' average

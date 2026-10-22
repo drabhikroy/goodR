@@ -23,7 +23,7 @@ fit <- lm(log10(period_days / 365.25) ~ log10(distance_au) + log10(star_mass_sun
 summary(fit)
 confint(fit)
 
-# The model has never seen our solar system, yet it predicts a year
+# The model has never seen the Solar System, yet it predicts a year
 # of 0.99 for Earth and 11.6 for Jupiter, whose real year is 11.9.
 10^predict(fit, data.frame(distance_au = c(1, 5.2), star_mass_sun = 1))
 

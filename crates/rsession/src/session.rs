@@ -1,7 +1,7 @@
-//! One running R session: the ark process plus the sockets we talk to it on.
+//! One running R session: the ark process plus the sockets used to talk to it.
 //!
 //! ark runs as its own process, so if R crashes the app stays open and can
-//! offer a restart. Every request we send gets an id, and ark tags each piece
+//! offer a restart. Every request sent gets an id, and ark tags each piece
 //! of output with the id of the request that produced it. That lets output
 //! land under the exact line that made it, and lets the app run its own small
 //! helper queries without them ever appearing in the console.
@@ -21,7 +21,7 @@ use tokio::sync::{mpsc, oneshot, Mutex};
 use zeromq::util::PeerIdentity;
 use zeromq::{DealerSocket, Socket, SocketOptions, SocketRecv, SocketSend, SubSocket, ZmqMessage};
 
-/// How long R gets to start before we report a problem. A first start can
+/// How long R gets to start before a problem is reported. A first start can
 /// be slow while the operating system checks a freshly installed binary.
 const START_TIMEOUT: Duration = Duration::from_secs(60);
 
@@ -61,7 +61,7 @@ pub enum Event {
     },
     Error { run: String, message: String, traceback: Vec<String> },
     /// `stopped` is true when the run ended because the user pressed Stop.
-    /// ark reports an interrupted run as successful, so we track it ourselves.
+    /// ark reports an interrupted run as successful, so it is tracked here.
     Done { run: String, ok: bool, stopped: bool },
     /// R called readline(), menu(), or similar and is waiting for an answer.
     InputRequest { run: String, prompt: String, password: bool },
@@ -393,7 +393,7 @@ fn spawn_iopub_reader(mut socket: SubSocket, shared: Arc<Shared>) {
 fn handle_iopub(shared: &Arc<Shared>, msg: Message) {
     let Some(run_id) = msg.parent_id().map(str::to_string) else { return };
     let mut runs = shared.runs.lock().unwrap();
-    // Output for requests we did not make, such as kernel_info, is ignored.
+    // Output for requests this side did not make, such as kernel_info, is ignored.
     let Some(run) = runs.get_mut(&run_id) else { return };
     let content = &msg.content;
     match msg.msg_type() {

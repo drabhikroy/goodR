@@ -641,14 +641,14 @@ export function createMockBackend(): Backend {
     // page has something to show.
     latestVersions: async () => {
       await delay(80);
-      return { app: "0.3.0", appInPlace: true, appPage: "https://github.com/drabhikroy/goodR/releases/latest", r: "4.5.2", ollama: "0.41.0" };
+      return { app: "1.1.0", appInPlace: true, appPage: "https://github.com/drabhikroy/goodR/releases/latest", r: "4.5.2", ollama: "0.41.0" };
     },
     installAppUpdate: async () => {
       for (const done of [2_000_000, 6_000_000, 12_000_000]) {
         await delay(60);
         for (const listener of updateListeners) listener({ done, total: 12_000_000 });
       }
-      return "0.3.0";
+      return "1.1.0";
     },
     onUpdateProgress: async (listener) => {
       updateListeners.add(listener);

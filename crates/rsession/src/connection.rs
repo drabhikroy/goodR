@@ -1,6 +1,6 @@
 //! The connection file tells ark which ports to listen on and which key to
-//! sign with. We pick the ports and the key, write the file, and hand ark its
-//! path.
+//! sign with. This code picks the ports and the key, writes the file, and
+//! hands ark its path.
 
 use anyhow::Result;
 use rand::RngCore;

@@ -7,7 +7,7 @@ canvas beside it where everything R makes lands.
 
 ## What changed and why
 
-### A calmer window
+### Less on each result
 
 The fourth design was judged too busy in use, and the complaint is a
 familiar one. Word processors and qualitative analysis packages are often
@@ -38,7 +38,7 @@ grouping by a shared region holds even when the region is marked with very
 little ink (Palmer 1992), which is why one rule and a change of surface are
 enough to keep a result with its code.
 
-### Scripts and projects, never whole folders
+### Opening scripts and projects, not folders
 
 The first version opened a folder and listed everything in it. That gave
 the app access to files it had no business reading. The app now opens
@@ -63,7 +63,7 @@ The opening screen leads with New project, the largest target on it,
 because a project is the setup that serves a newcomer best, while opening a
 project, starting a script, and opening one sit just below it.
 
-### An R for each project, chosen by where the file lives
+### Which R a script runs in
 
 RStudio runs one R per window, and a script opened while a project is
 running joins that project's session whatever folder it came from. People
@@ -121,7 +121,7 @@ bar and the command palette.
 | Status pill, working folder in the console header, status bar | One R button that opens the working folder, Restart R, and Choose R version |
 | Console always showing everything run | A console drawer that records only what was typed there, resizable by drag or arrow keys |
 
-### Labels over bare icons
+### Labels instead of bare icons
 
 The three output layout icons were the least clear controls in the first
 version. Labels are learned faster and remembered better than icons alone
@@ -188,7 +188,7 @@ The console used to repeat every editor result, so each one appeared twice.
 It now records only what was typed into it, plus messages from the app such
 as a change of working folder.
 
-### Cards are a choice, not a requirement
+### Plain results as an option
 
 The tinted code and result wells suit many people, and they are the
 default, but they are a new look for R, and some people will prefer the
@@ -210,7 +210,7 @@ copy now takes everything selected, in order: each statement, then its
 result as plain text, as it would read in a console. Settings can limit
 copies to the code, for people who paste into other scripts.
 
-### Errors in plain words, at the exact spot
+### Error messages and where they point
 
 R's messages are written for people who already know R. They use words
 such as closure, atomic vector, and binary operator, and they rarely say
@@ -282,14 +282,14 @@ Explain, Add Comments, and Make Clearer, alongside a box for any other
 question. Answers stream in as they are written, and Stop ends one at any
 point.
 
-### Live results, kept safe
+### Results as you type
 
 Live programming shortens the gap between editing and seeing the effect
 (Tanimoto 2013). Results that update as you type remain an option rather
 than the default, and anything that writes files, installs packages, or
 changes the session never runs that way.
 
-### Familiar where it helps, different where RStudio's layout hurts
+### What carries over from RStudio, and the right side
 
 Most people who come to this app will have used RStudio, often for years.
 A layout close to the one people expect is judged more favorably at first
@@ -374,7 +374,7 @@ commands, which puts it beside the record it comes from and takes a view
 out of the panel. A button at the end of the title bar shows or hides the
 whole panel, since the rail had been the way back to it.
 
-### Two surfaces: the script and the canvas
+### The script and the canvas
 
 The side panel above was the seventh design's last version, and it was
 still judged to look like RStudio, rightly. Tabs for views, a drawer for
@@ -439,7 +439,7 @@ reads as part of it (Palmer 1992). Render and Run app appear on that bar
 only for files they apply to. The document and its bar are one raised
 panel, the only one with a shadow, since it is where the work is.
 
-Where this app departs from RStudio, it does so on purpose. Results sit
+This app departs from RStudio on purpose in two ways. Results sit
 with their code rather than only in the console, and the project sidebar
 lists scripts and data rather than every file in the folder.
 
@@ -498,7 +498,7 @@ storage, so a reload loses nothing. The packages the interface needs are
 also prepared before it first loads, which removes the reload a fresh
 install used to cause.
 
-### Starting from nothing
+### The opening screen
 
 The opening screen offers one main way in, a new project, with three
 smaller ones beside it, next to the projects and scripts opened before.
@@ -511,7 +511,7 @@ person wanted to begin. When a project then opens, an R that has not run
 anything yet moves into the project folder instead of restarting, so the
 person never sees R start twice.
 
-### The script and the stage, linked both ways
+### Moving between the script and the stage
 
 Results are only useful next to the code that made them when the link
 can be followed in either direction without a search. Pressing an output
@@ -672,7 +672,7 @@ state is restored afterward, so exporting never changes the workspace or
 later results. When the code uses random numbers without setting a seed,
 the dialog says plainly that the exported plot will show a new sample.
 
-### Run as a split button, set per file
+### The Run button
 
 Run used to be one button for one action, Run line. Running a chunk or a
 whole file meant knowing a shortcut or opening a menu. Run is now a split
@@ -807,8 +807,7 @@ with shinylive, which runs R inside the browser through WebAssembly, so
 whoever opens it needs only a browser. The alternatives were weighed: a
 folder with the app and a script that installs its packages still needs R
 on the other computer, and bundling R itself into a program for each
-system is large and fragile. The web page asks nothing of the person who
-opens it, which is the point.
+system is large and fragile. The web page asks nothing of the person who opens it.
 
 Sharing is where privacy mistakes happen, so the dialog lists every file
 the page will hold before anything is made, and points out data among
@@ -823,7 +822,7 @@ clicking, which is the one thing about it that surprises people, so the
 dialog says so, and its Preview serves the page the way a host would, in
 the App pane, before it goes anywhere.
 
-### Text people can read
+### Text size and code settings
 
 The fifth design set the interface text at 14 pixels and several labels
 smaller, which was hard to read at a normal viewing distance. The base is
@@ -847,7 +846,7 @@ nothing. These settings are grouped by what a person wants to change, the
 look of code, how the editor behaves, and how results appear, rather than
 by how the program is built.
 
-### Look and feel
+### Colors and contrast
 
 The palette moved from warm grays to cool ink and paper taken from the app
 icon, a deep blue gray for the window, a white or near black page for code,
@@ -876,16 +875,16 @@ place that already exists, never in a new panel, toolbar, or window.
 Every extra control competes for attention with the work (Tuch et al.
 2009), and the people this app is for are often new to R.
 
-Where each one lives, and why:
+Here is where each one went, and why.
 
-- **Warnings** are shown the way errors already are: a short headline, a
+- Warnings are shown the way errors already are: a short headline, a
   plain reason, a fix where there is one, and R's own words one press
   away. They use the warning color and a different shape from errors, so
   a warning never reads as a failure. A failed package install is one of
   these warnings, so its explanation, with the exact command for the
   missing system library on this computer, is the same component, not a
   second one.
-- **Undo the last run** puts back the objects the last run changed. One
+- Undo the last run puts back the objects the last run changed. One
   press of Run is one undo, so undoing a Run file undoes the whole file,
   matching how people think of their own actions (Norman 2013). Before
   each run, R keeps a reference to every object, which costs almost no
@@ -895,58 +894,58 @@ Where each one lives, and why:
   as after a run that wrote a file. There is one level and no redo, since
   running the line again is the redo. Editing data or plot labels from
   the canvas makes an ordinary run, so the same Undo covers those too.
-- **Why a run is slow** is answered without asking: R samples where it
+- You do not have to ask why a run is slow. R samples where it
   spends its time during every run, and when a run takes two seconds or
   more, the time already shown on its result opens a short list of where
   the time went. Profiling during the run means the answer is there when
   it is wanted, without running slow code a second time.
-- **Progress** appears only after a run has taken a second, the point at
+- A progress bar appears only after a run has taken a second, the point at
   which people start to wonder whether anything is happening (Card,
   Robertson, and Mackinlay 1991). It is a slim bar across the top of the
   stage with the line and the time so far, and Stop beside it. With motion
   reduced, the bar holds still and only the time counts up.
-- **Unsaved work** is kept as it is typed, so a crash or a forced quit
+- Unsaved work is kept as it is typed, so a crash or a forced quit
   never loses it, and it comes back as unsaved changes the next time,
   with a note saying so. Saving files automatically is a choice in
   Settings, off by default, since writing to someone's files without
   asking changes what Save means. When R itself stops, the banner that
   offers Restart R also offers to restart and run the script again up to
   the last line that ran, so objects come back in one press.
-- **Quick help** shows when the pointer rests on a function: its title,
+- Quick help shows when the pointer rests on a function: its title,
   the package it is from, and how it is called, read from R's own help.
   Resting on an object shows what it is, such as a data frame with its
   size. F1 still opens the whole page. The note stays while the pointer is
   over it and Escape closes it, as WCAG 1.4.13 asks of content on hover.
-- **Snippets** are in the search everyone already uses, under Insert, such
+- Snippets are in the search everyone already uses, under Insert, such
   as Insert: read a CSV file, rather than in a gallery of their own. Each
   goes in at the cursor with its blanks selected in turn by Tab. People
   learning to program reuse working examples more than they write from
   nothing (Brandt et al. 2009), so the empty script says the snippets are
   there.
-- **Focus mode** hides the sidebar, the objects row, the timeline, and the
+- Focus mode hides the sidebar, the objects row, the timeline, and the
   prompt, leaving the script and the result on the stage. A small Leave
   focus button stays on screen, so the way back is always visible, and
   the same shortcut toggles it.
-- **Paper** joins Light and Dark as an appearance: a warm, low glare page
+- Paper joins Light and Dark as an appearance: a warm, low glare page
   for long reading, with every color pairing held to the same contrast
   audit as the others. Matching the system's light or dark setting was
   already the default.
-- **Editing data** happens in the column details beside the data viewer,
+- Editing data happens in the column details beside the data viewer,
   which already sort and plot. Keep only some rows, Rename, and Remove
   this column each write one line of base R into the script and run it,
   so the change is part of the analysis and runs again with it, as data
   tools that write code have shown to work (Kandel et al. 2011).
-- **Editing a plot** uses the bar under each plot on the stage, which
+- Editing a plot uses the bar under each plot on the stage, which
   already has Full size and Export. Edit labels changes the title and the
   axis labels in the line that drew the plot, for base R plots and for
   ggplot2, and runs it again. The change is in the code, so it is never
   lost when the script runs from the top.
-- **The reactive map** is part of the App sheet, which now appears for
+- The reactive map is part of the App sheet, which now appears for
   any Shiny app in front, not only a running one. Inputs, reactives, and
   outputs sit in three columns joined by lines, and choosing any of them
   highlights what it depends on and what depends on it. The same facts
   are listed as text for screen readers.
-- **The live report preview** renders again after each save once a
+- The live report preview renders again after each save once a
   report has been rendered, with a switch on the Report sheet to turn it
   off, and the preview opens at the section the cursor is in.
 
@@ -955,9 +954,9 @@ base R plots, since a ggplot2 color is often mapped from the data and a
 single color would change what the plot shows. Undo restores objects but
 not files or a database, and it says so rather than pretend.
 
-### Editing, results, and reports
+### Later additions
 
-Added later, each placed where people already look: finding text in every file, renaming,
+These came later, each placed where people already look. They cover finding text in every file, renaming,
 tidying code, explaining a line without the assistant, gentle hints about
 common pitfalls, results that last between sessions, turning a session
 into a report, checking a script runs from scratch, plots styled like the
@@ -966,61 +965,61 @@ width for reports. The rule from the first list held: each lives in a
 place that already exists, and the few new surfaces appear only while
 they are in use.
 
-- **Find in all files**, Shift Command F as in RStudio, is a dialog like
-  the search: type, and every line that matches is listed under its file,
+- Find in all files (Shift Command F, as in RStudio) is a dialog like
+  the search. Type, and every line that matches is listed under its file,
   with the match marked. A press opens the file at that line. Searching
   more than one file is the step people take when they cannot remember
   where they wrote something, so it searches every open file and every
   script in the project, open or not, and an open file is searched as it
   stands, unsaved changes included.
-- **Rename**, F2 as in most editors, renames an object everywhere it
+- Rename (F2, as in most editors) renames an object everywhere it
   appears in the script, and only where it is that object: not inside
   text, comments, a column after a dollar sign, or an argument name. It
   lists every place before changing anything, and the change is one edit,
   so Command Z takes all of it back.
-- **Tidy code**, Shift Command A as in RStudio, reformats the selection,
+- Tidy code (Shift Command A, as in RStudio) reformats the selection,
   or the file, with the styler package, the tidyverse style many courses
   teach, as one undoable edit. When styler is missing it offers the
   install, as a missing package does anywhere else.
-- **What does this code do?**, Option Command E, now works without the
+- "What does this code do?" (Option Command E) now works without the
   assistant, from the Edit menu. It reads the line itself: each function
   in the order R finishes it, with the title of its help page, such as
   "read.csv(): Data Input", and then where the result is stored. When the
   assistant is set up, the same note has a button to ask it for more. The
   Assistant menu keeps its own entry, without the shortcut, so the
   shortcut always gives the answer that needs nothing installed.
-- **Gentle hints** point out a few pitfalls that are not errors: T and F
+- Gentle hints point out a few pitfalls that are not errors: T and F
   for TRUE and FALSE, setwd() inside a project, rm(list = ls()) at the
   top of a script, 1:length(x), and x == NA. They use a dotted underline
   in the muted text color, quieter than the warning color of a likely
   mistake, and the note with a Change button shows in the same quick help
   that shows on hover, so nothing new appears on screen. They can be
   turned off in Settings, under Editor.
-- **Results that last**: the latest sixty outputs of saved files are
+- Results now last between sessions. The latest sixty outputs of saved files are
   kept on this computer, in the window's own storage, and come back,
   marked as from last time, when their file opens again, so a plot from
   yesterday is still there to look at. A result goes back beside its line
   only when the line still holds the same code. The timeline's Clear
   removes them, and Settings can turn this off.
-- **Save results as a report** turns the session's results into a draft
+- Save results as a report turns the session's results into a draft
   Quarto document, each script statement that made an output becoming a
   chunk, in order, opened as a new file to edit and render.
-- **Check it runs from scratch**, in the Run menu, runs the script in a
+- Check it runs from scratch, in the Run menu, runs the script in a
   fresh R of its own, with no saved workspace or startup files, one
   statement at a time, without touching the session.
   It names the first line that fails there, which is almost always a line
   that depended on something made at the prompt, or by a line since
   deleted. The result shows above the script, with Go to line.
-- **Plots styled like the app** is a choice under Results: base R and
+- Plots styled like the app is a choice under Results: base R and
   ggplot2 plots get the app's page, text, and grid colors, light or dark
   to match, on top of the palette they already share. It is off by
   default, since a plot saved from the session then carries the app's
   look too. Turning it off removes only the app's own hooks.
-- **Citations**: Insert citation, in a report, finds a work by its DOI
+- Insert citation, in a report, finds a work by its DOI
   or by words from its title, writes it to references.bib beside the
   report, adds the bibliography to the header if it is missing, and puts
   the citation at the cursor.
-- **A guided first project** walks through one real piece of work, from
+- A guided first project walks through one real piece of work, from
   reading data to a written report, on the person's own data. A small
   card at the foot of the sidebar says what to do next and notices when
   it is done, however it was done, rather than asking the person to press
@@ -1028,11 +1027,11 @@ they are in use.
   Each step has one button that shows a way, using the part of the app
   made for it. It starts from Help, the opening screen, and the search,
   and can be left at any step.
-- **Compact spacing** is a choice under Appearance for small screens. It
+- Compact spacing is a choice under Appearance for small screens. It
   tightens padding and gaps only. Every control keeps the app's 44 pixel
   target, well above the 24 that WCAG 2.2 asks for, since a smaller
   target is slower to hit (Fitts 1954).
-- **Reading width** keeps the lines of a report's writing to a
+- Reading width keeps the lines of a report's writing to a
   comfortable length, about 80 characters, on wide screens, where very
   long lines are slower to read.
 

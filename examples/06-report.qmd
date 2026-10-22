@@ -30,7 +30,7 @@ far <- sum(stars$distance_ly > 1000)
 ```
 
 Only `r near` of them are within 100 light years. `r far` are more than
-1,000 light years away, so the light we see from them left before the
+1,000 light years away, so the light reaching Earth from them left before the
 first printed book.
 
 ```{r}
@@ -73,7 +73,7 @@ share <- round(100 * nrow(giants) / nrow(stars))
 
 Most stars in the galaxy are small and dim, yet `r share` percent of the
 stars bright enough to see from a town are giants or supergiants. They
-shine so strongly that we see them from far away, while ordinary stars
+shine so strongly that they can be seen from far away, while ordinary stars
 at the same distance are too faint for the eye.
 
 ## The closest bright stars
