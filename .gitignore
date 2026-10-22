@@ -18,6 +18,6 @@ playwright-report/
 .DS_Store
 Thumbs.db
 
-# Disk images made by scripts/release-mac.sh
-goodR.dmg
-goodR.dmg.sha256
+# Installers made by scripts/release-mac.sh
+goodR-*.pkg
+SHA256SUMS.txt

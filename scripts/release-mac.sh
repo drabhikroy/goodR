@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Builds the signed, notarized Mac disk image on this Mac, for when a
+# Builds the signed, notarized Mac installer on this Mac, for when a
 # release is made by hand.
 #
 # Needs Xcode's command line tools, Node 22, Rust with both Mac targets,
-# R, and the Developer ID Application certificate in the login keychain.
+# R, and two certificates in the login keychain: Developer ID Application,
+# which signs the app, and Developer ID Installer, which signs the package.
 #
 # Notarization uses a profile saved in the keychain once, with the App
 # Store Connect API key:
@@ -11,11 +12,12 @@
 #   xcrun notarytool store-credentials "goodR" \
 #     --key ~/private/AuthKey_XXXXXXXXXX.p8 --key-id XXXXXXXXXX --issuer ISSUER-ID
 #
-# NOTARY_PROFILE names a different profile. APPLE_SIGNING_IDENTITY may name
-# the certificate; without it, the first Developer ID Application
-# certificate in the keychain is used.
+# NOTARY_PROFILE names a different profile. APPLE_SIGNING_IDENTITY and
+# INSTALLER_SIGNING_IDENTITY may name the certificates. Without them, the
+# first of each kind in the keychain is used.
 #
-# The disk image, and its checksum, are left in the project folder.
+# The installer, goodR-VERSION.pkg, and SHA256SUMS.txt are left in the
+# project folder.
 
 set -euo pipefail
 
@@ -24,7 +26,7 @@ cd "$(dirname "$0")/.."
 profile="${NOTARY_PROFILE:-goodR}"
 
 if [ "$(uname)" != "Darwin" ]; then
-  echo "This builds the Mac disk image, so it runs on a Mac only." >&2
+  echo "This builds the Mac installer, so it runs on a Mac only." >&2
   exit 1
 fi
 
@@ -41,7 +43,19 @@ if [ -z "${APPLE_SIGNING_IDENTITY:-}" ]; then
   fi
 fi
 export APPLE_SIGNING_IDENTITY
-echo "Signing as $APPLE_SIGNING_IDENTITY"
+echo "Signing the app as $APPLE_SIGNING_IDENTITY"
+
+if [ -z "${INSTALLER_SIGNING_IDENTITY:-}" ]; then
+  INSTALLER_SIGNING_IDENTITY="$(security find-identity -v | sed -n 's/.*"\(Developer ID Installer: .*\)"/\1/p' | head -n 1)"
+  if [ -z "$INSTALLER_SIGNING_IDENTITY" ]; then
+    echo "No Developer ID Installer certificate is in the keychain." >&2
+    exit 1
+  fi
+fi
+echo "Signing the installer as $INSTALLER_SIGNING_IDENTITY"
+
+version="$(node -p "require('./package.json').version")"
+package="goodR-$version.pkg"
 
 # Tauri notarizes on its own when these are set. Here notarytool does it
 # with the saved profile instead, so they are cleared.
@@ -67,36 +81,37 @@ codesign -d --entitlements - "$app/Contents/MacOS/ark" 2>&1 | grep -q "disable-l
 GOODFOR_ARK="$app/Contents/MacOS/ark" cargo test -p rsession --test integration
 
 # The app is notarized and stapled first, so it opens without a warning
-# even when it is copied off the disk image with no internet connection.
+# even with no internet connection.
 work="$(mktemp -d)"
-trap 'hdiutil detach "$work/mount" > /dev/null 2>&1; rm -rf "$work"' EXIT
+trap 'rm -rf "$work"' EXIT
 ditto -c -k --keepParent "$app" "$work/app.zip"
 xcrun notarytool submit "$work/app.zip" --keychain-profile "$profile" --wait --timeout 20m
 xcrun stapler staple "$app"
 
-# Then the disk image: the app beside a link to Applications, to drag
-# across, signed and notarized in its own right.
-mkdir "$work/stage"
-# Copied without extended attributes: a synced folder can add Finder ones,
-# which strict signature checks refuse. The signature and the stapled
-# ticket are files inside the app, so they come across.
-ditto --norsrc --noextattr "$app" "$work/stage/goodR.app"
-ln -s /Applications "$work/stage/Applications"
-rm -f goodR.dmg
-hdiutil create -volname "goodR" -srcfolder "$work/stage" -format UDZO goodR.dmg
-codesign --sign "$APPLE_SIGNING_IDENTITY" --timestamp goodR.dmg
-xcrun notarytool submit goodR.dmg --keychain-profile "$profile" --wait --timeout 20m
-xcrun stapler staple goodR.dmg
+# The package installs the app into /Applications. Copied without extended
+# attributes, since a synced folder can add Finder ones that strict
+# signature checks refuse. The signature and the stapled ticket are files
+# inside the app, so they come across.
+mkdir -p "$work/root/Applications"
+ditto --norsrc --noextattr "$app" "$work/root/Applications/goodR.app"
+codesign --verify --deep --strict --verbose=2 "$work/root/Applications/goodR.app"
+spctl --assess --type execute --verbose=4 "$work/root/Applications/goodR.app"
 
-xcrun stapler validate goodR.dmg
+# By default an installer updates a copy of the app wherever it finds one,
+# such as the one in this build folder. Turning that off makes it always
+# install into /Applications.
+pkgbuild --analyze --root "$work/root" "$work/components.plist"
+plutil -replace 0.BundleIsRelocatable -bool NO "$work/components.plist"
+pkgbuild --root "$work/root" --component-plist "$work/components.plist" \
+  --identifier app.goodfor.ide.pkg --version "$version" --install-location / "$work/goodR-app.pkg"
+rm -f "$package" SHA256SUMS.txt
+productbuild --package "$work/goodR-app.pkg" --sign "$INSTALLER_SIGNING_IDENTITY" --timestamp "$package"
 
-# The checks run on the app inside the disk image, the copy people get.
-mkdir "$work/mount"
-hdiutil attach -nobrowse -readonly -mountpoint "$work/mount" goodR.dmg > /dev/null
-codesign --verify --deep --strict --verbose=2 "$work/mount/goodR.app"
-spctl --assess --type execute --verbose=4 "$work/mount/goodR.app"
-hdiutil detach "$work/mount" > /dev/null
-spctl --assess --type open --context context:primary-signature --verbose=4 goodR.dmg
-shasum -a 256 goodR.dmg | tee goodR.dmg.sha256
+xcrun notarytool submit "$package" --keychain-profile "$profile" --wait --timeout 20m
+xcrun stapler staple "$package"
+xcrun stapler validate "$package"
+pkgutil --check-signature "$package"
+spctl --assess --type install --verbose=4 "$package"
+shasum -a 256 "$package" | tee SHA256SUMS.txt
 
-echo "goodR.dmg is signed, notarized, and ready to share."
+echo "$package is signed, notarized, and ready to share."

@@ -1,17 +1,19 @@
 # Builds the universal Mac app, signs it with the Developer ID certificate,
-# notarizes the app and the disk image, and attaches the disk image to a
-# draft release. Nothing is published until the draft is reviewed and
+# wraps it in a signed installer package, notarizes both, and attaches the
+# installer to a draft release. Nothing is published until the draft is reviewed and
 # published by hand.
 #
 # Runs only by hand, from the Actions tab or with
 # `gh workflow run release-macos.yml --ref v1.2.3`, so a release made on a
 # Mac with scripts/release-mac.sh never starts it. Run on a version tag, it
-# makes a draft release. Run on a branch, it keeps the disk image as a
+# makes a draft release. Run on a branch, it keeps the installer as a
 # workflow artifact and makes no release.
 #
 # Repository secrets used:
 #   CSC_LINK                      base64 of the exported .p12 certificate
 #   CSC_KEY_PASSWORD              password for that .p12
+#   CSC_INSTALLER_LINK            base64 of the exported Developer ID Installer .p12
+#   CSC_INSTALLER_KEY_PASSWORD    password for that .p12
 #   APPLE_API_KEY_P8              text of the App Store Connect API key, the .p8 file
 #   APPLE_API_KEY_ID              that key's ten character ID
 #   APPLE_API_ISSUER              the issuer ID shown above the keys in App Store Connect
@@ -103,7 +105,7 @@ jobs:
           # when there is no signing key, so that build sends people to the
           # release page instead.
           GOODR_UPDATER_PUBKEY: ${{ env.HAS_UPDATE_KEY == 'true' && vars.GOODR_UPDATER_PUBKEY || '' }}
-        run: npx tauri build --target universal-apple-darwin --bundles app,dmg
+        run: npx tauri build --target universal-apple-darwin --bundles app
 
       # ark loads libR from the R Foundation build, which is signed by a
       # different team. Without this entitlement on ark itself, R fails to
@@ -118,20 +120,44 @@ jobs:
           GOODFOR_ARK: ${{ env.APP }}/Contents/MacOS/ark
         run: cargo test -p rsession --test integration
 
-      # Tauri notarizes the app inside the disk image but not the disk image
-      # itself, so the disk image gets its own ticket here.
-      - name: Notarize and staple the disk image
+      # The installer puts the app in /Applications and is marked so it never
+      # updates a copy found somewhere else instead. Its certificate goes into
+      # a keychain made for this run alone.
+      - name: Build, sign, and notarize the installer
         env:
+          CSC_INSTALLER_LINK: ${{ secrets.CSC_INSTALLER_LINK }}
+          CSC_INSTALLER_KEY_PASSWORD: ${{ secrets.CSC_INSTALLER_KEY_PASSWORD }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
         run: |
-          source="$(ls target/universal-apple-darwin/release/bundle/dmg/*.dmg)"
-          cp "$source" goodR.dmg
-          xcrun notarytool submit goodR.dmg --key "$APPLE_API_KEY_PATH" --key-id "$APPLE_API_KEY" --issuer "$APPLE_API_ISSUER" --wait
-          xcrun stapler staple goodR.dmg
-          xcrun stapler validate goodR.dmg
-          spctl --assess --type execute --verbose=4 "$APP"
-          shasum -a 256 goodR.dmg | tee goodR.dmg.sha256
+          keychain="$RUNNER_TEMP/installer.keychain-db"
+          secret="$(uuidgen)"
+          printf '%s' "$CSC_INSTALLER_LINK" | base64 --decode > "$RUNNER_TEMP/installer.p12"
+          security create-keychain -p "$secret" "$keychain"
+          security set-keychain-settings -lut 3600 "$keychain"
+          security unlock-keychain -p "$secret" "$keychain"
+          security import "$RUNNER_TEMP/installer.p12" -k "$keychain" -P "$CSC_INSTALLER_KEY_PASSWORD" -T /usr/bin/productbuild
+          rm -f "$RUNNER_TEMP/installer.p12"
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          identity="$(security find-identity -v "$keychain" | sed -n 's/.*"\(Developer ID Installer: .*\)"/\1/p' | head -n 1)"
+
+          version="$(jq -r .version package.json)"
+          package="goodR-$version.pkg"
+          mkdir -p "$RUNNER_TEMP/root/Applications"
+          ditto --norsrc --noextattr "$APP" "$RUNNER_TEMP/root/Applications/goodR.app"
+          pkgbuild --analyze --root "$RUNNER_TEMP/root" "$RUNNER_TEMP/components.plist"
+          plutil -replace 0.BundleIsRelocatable -bool NO "$RUNNER_TEMP/components.plist"
+          pkgbuild --root "$RUNNER_TEMP/root" --component-plist "$RUNNER_TEMP/components.plist" \
+            --identifier app.goodfor.ide.pkg --version "$version" --install-location / "$RUNNER_TEMP/goodR-app.pkg"
+          productbuild --package "$RUNNER_TEMP/goodR-app.pkg" --sign "$identity" --keychain "$keychain" --timestamp "$package"
+
+          xcrun notarytool submit "$package" --key "$APPLE_API_KEY_PATH" --key-id "$APPLE_API_KEY" --issuer "$APPLE_API_ISSUER" --wait --timeout 20m
+          xcrun stapler staple "$package"
+          xcrun stapler validate "$package"
+          spctl --assess --type install --verbose=4 "$package"
+          shasum -a 256 "$package" | tee SHA256SUMS.txt
+          echo "PACKAGE=$package" >> "$GITHUB_ENV"
+          security delete-keychain "$keychain"
 
       # The notarized app, packed as Tauri's updater fetches it. The update
       # key is given to this step alone, which only packs and signs, so
@@ -155,13 +181,13 @@ jobs:
           jq -n --arg version "$version" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg url "$url" --rawfile signature goodR.app.tar.gz.sig \
             '{version: $version, pub_date: $date, platforms: {"darwin-aarch64": {signature: $signature, url: $url}, "darwin-x86_64": {signature: $signature, url: $url}}}' > latest.json
 
-      - name: Keep the disk image as a workflow artifact
+      - name: Keep the installer as a workflow artifact
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: goodr-mac
           path: |
-            goodR.dmg
-            goodR.dmg.sha256
+            ${{ env.PACKAGE }}
+            SHA256SUMS.txt
           if-no-files-found: error
 
       - name: Attach to a draft release
@@ -170,7 +196,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           notes="docs/release-notes/${GITHUB_REF_NAME}.md"
-          files="goodR.dmg goodR.dmg.sha256"
+          files="$PACKAGE SHA256SUMS.txt"
           if [ -f latest.json ]; then files="$files goodR.app.tar.gz latest.json"; fi
           if [ -f "$notes" ]; then
             gh release create "$GITHUB_REF_NAME" $files --draft --title "goodR ${GITHUB_REF_NAME#v}" --notes-file "$notes"

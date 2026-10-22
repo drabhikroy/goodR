@@ -208,22 +208,9 @@ certificate and the entitlements in `src-tauri/entitlements.plist`, which
 allow it to load libR and package libraries signed by the R Foundation and
 other developers.
 
-Releases are built on GitHub Actions by
-`.github/workflows/release-macos.yml`, which runs by hand with
-`gh workflow run release-macos.yml --ref v1.2.3`. It signs and
-notarizes the app, confirms ark carries its entitlement, runs the R
-integration tests against the signed ark, notarizes and staples the disk
-image, and attaches it to a draft release. The certificate and Apple
-credentials are repository secrets: `CSC_LINK` and `CSC_KEY_PASSWORD` for
-the certificate, and `APPLE_API_KEY_P8`, `APPLE_API_KEY_ID`, and
-`APPLE_API_ISSUER` for the App Store Connect API key that notarizes it. The
-key is the `.p8` file made under Users and Access, then Integrations, in App
-Store Connect. The certificate signs; the key only notarizes, so both are
-needed.
+People install the app with a signed installer package, `goodR-VERSION.pkg`. It is signed with a Developer ID Installer certificate and notarized by Apple. It puts the app in `/Applications`, and it is marked so it never updates a copy of the app found somewhere else instead.
 
-To make the same signed disk image on a Mac instead, with the certificate in
-the login keychain, save the API key as a notarization profile once, then
-run the script:
+To build a release on a Mac, both certificates (Developer ID Application and Developer ID Installer) need to be in the login keychain. Save the App Store Connect API key as a notarization profile once, then run the script.
 
 ```bash
 xcrun notarytool store-credentials "goodR" \
@@ -231,15 +218,21 @@ xcrun notarytool store-credentials "goodR" \
 scripts/release-mac.sh
 ```
 
-It runs the checks, then builds, signs, notarizes, and staples the app and
-`goodR.dmg`, and writes `goodR.dmg.sha256` beside it.
+The script runs the checks and builds the app. It then signs, notarizes, and staples the app and the installer. The installer and `SHA256SUMS.txt` are left in the project folder.
 
-Release notes live in `docs/release-notes`, one file per version tag. To
-make the draft release from them:
+Release notes live in `docs/release-notes`, one file per version tag. To make a draft release from them, run this command.
 
 ```bash
-gh release create v1.0.0 goodR.dmg goodR.dmg.sha256 --draft --title "goodR 1.0.0" --notes-file docs/release-notes/v1.0.0.md
+gh release create v1.0.0 goodR-1.0.0.pkg SHA256SUMS.txt --draft --title "goodR 1.0.0" --notes-file docs/release-notes/v1.0.0.md
 ```
+
+The same release can be built on GitHub Actions by `.github/workflows/release-macos.yml`. It runs only by hand, with `gh workflow run release-macos.yml --ref v1.2.3`. It needs these repository secrets.
+
+| Secret | Holds |
+| --- | --- |
+| `CSC_LINK` and `CSC_KEY_PASSWORD` | The Developer ID Application certificate as a base64 `.p12`, and its password |
+| `CSC_INSTALLER_LINK` and `CSC_INSTALLER_KEY_PASSWORD` | The Developer ID Installer certificate, the same way |
+| `APPLE_API_KEY_P8`, `APPLE_API_KEY_ID`, and `APPLE_API_ISSUER` | The App Store Connect API key that notarizes, made under Users and Access, then Integrations |
 
 Installed copies update themselves through Tauri's updater, which checks
 each download against a public key built into the app. To turn this on,
@@ -258,12 +251,13 @@ secrets `TAURI_SIGNING_PRIVATE_KEY` and
 the release is published. A build without them still works, and its
 Updates page links to the release page instead.
 
-To confirm an installed copy is signed and notarized:
+To check a finished installer, and then an installed copy, run these commands.
 
 ```bash
+pkgutil --check-signature goodR-1.0.0.pkg
+spctl --assess --type install --verbose=4 goodR-1.0.0.pkg
 codesign --verify --deep --strict --verbose=4 "/Applications/goodR.app"
 spctl --assess --type execute --verbose=4 "/Applications/goodR.app"
 ```
 
-The second command should report `accepted` and `source=Notarized Developer
-ID`.
+Both `spctl` commands should report `accepted` and `source=Notarized Developer ID`.
