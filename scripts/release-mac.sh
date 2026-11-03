@@ -12,6 +12,11 @@
 #   xcrun notarytool store-credentials "goodR" \
 #     --key ~/private/AuthKey_XXXXXXXXXX.p8 --key-id XXXXXXXXXX --issuer ISSUER-ID
 #
+# The app is built under /private/tmp, not in the project folder. A folder
+# that is synced or indexed can put Finder labels on a file just built, and
+# codesign refuses to sign a file that carries one. GOODR_TARGET_DIR names a
+# different build folder, which should be one nothing syncs.
+#
 # NOTARY_PROFILE names a different profile. APPLE_SIGNING_IDENTITY and
 # INSTALLER_SIGNING_IDENTITY may name the certificates. Without them, the
 # first of each kind in the keychain is used.
@@ -61,6 +66,10 @@ package="goodR-$version.pkg"
 # with the saved profile instead, so they are cleared.
 unset APPLE_ID APPLE_PASSWORD APPLE_API_KEY APPLE_API_ISSUER APPLE_API_KEY_PATH
 
+target_dir="${GOODR_TARGET_DIR:-/private/tmp/goodr-target}"
+mkdir -p "$target_dir"
+export CARGO_TARGET_DIR="$target_dir"
+
 rustup target add aarch64-apple-darwin x86_64-apple-darwin
 npm ci
 node scripts/fetch-ark.mjs universal-apple-darwin
@@ -74,7 +83,7 @@ npm test
 npx tauri build --target universal-apple-darwin --bundles app
 
 # A full path, since the R tests below run from inside their own crate.
-app="$PWD/target/universal-apple-darwin/release/bundle/macos/goodR.app"
+app="$target_dir/universal-apple-darwin/release/bundle/macos/goodR.app"
 
 # Without this entitlement on ark, R fails to start in the signed app.
 codesign -d --entitlements - "$app/Contents/MacOS/ark" 2>&1 | grep -q "disable-library-validation"

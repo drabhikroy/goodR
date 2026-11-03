@@ -220,6 +220,8 @@ scripts/release-mac.sh
 
 The script runs the checks and builds the app. It then signs, notarizes, and staples the app and the installer. The installer and `SHA256SUMS.txt` are left in the project folder.
 
+The app is built under `/private/tmp/goodr-target`, outside the project folder, because a synced or indexed folder can put Finder labels on a file that was just built, and `codesign` then stops with "resource fork, Finder information, or similar detritus not allowed". Set `GOODR_TARGET_DIR` to build somewhere else. The first build there compiles everything, which takes a few minutes longer.
+
 Release notes live in `docs/release-notes`, one file per version tag. To make a draft release from them, run this command.
 
 ```bash
