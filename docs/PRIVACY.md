@@ -42,7 +42,7 @@ The assistant is optional. It stays off until you set it up from its button on t
 
 Setting it up takes three steps.
 
-1. Ollama. You can use the Ollama already on your Mac, or install a private copy inside the app. The private copy is Ollama 0.40.3, a 167 MB download. The app checks it against Ollama's published SHA-256 before unpacking it. It lives in `~/Library/Application Support/app.goodfor.ide/assistant`, runs only while the app is open, uses a port of its own, and can be removed, along with its models, from the same screen.
+1. Ollama. You can use the Ollama already on your Mac, or install a private copy inside the app. The private copy is Ollama 0.40.3, a 167 MB download. The app checks it against Ollama's published SHA-256 before unpacking it. It lives in `~/Library/Application Support/app.goodfor.ide/assistant`, runs only while the app is open, stops by itself within a few seconds if the app closes unexpectedly, uses a port of its own, and can be removed, along with its models, from the same screen.
 2. This Mac. If you agree, the app reads your Mac's memory, free disk space, and chip, so it can mark which models will fit. You can skip this step. Nothing is saved or sent.
 3. Models. You choose from a short list of free code models: Qwen2.5 Coder in three sizes, and Qwen3 Coder. Each one says what it does well and less well when helping with R, how much it downloads, and whether it fits your Mac. The app suggests the largest one that fits comfortably. Models you already downloaded with Ollama are found and can be used, and you can add, remove, or switch models at any time.
 

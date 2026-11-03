@@ -11,7 +11,7 @@
  * and last lines of code between the fences, and `to` is less than `from`
  * for an empty chunk. `close` is the closing fence, or the last line of a
  * document whose chunk was never closed. */
-export type Chunk = { label: string; engine: string; fence: number; from: number; to: number; close: number };
+export type Chunk = { label: string; engine: string; fence: number; from: number; to: number; close: number; evaluated: boolean };
 
 /** A run of lines, inclusive, counting from zero. */
 export type Span = { from: number; to: number };
@@ -32,6 +32,12 @@ const LABEL = /^[\s,]+(["']?)([^,=\s"'{}]+)\1\s*(?:,|$)/;
 // An engine given as an option, as in ```{r, engine = "cpp11"}, which knitr
 // runs with that engine rather than R.
 const ENGINE_OPTION = /(?:^|[\s,])engine\s*=\s*["']([A-Za-z0-9_]+)["']/;
+
+// A chunk switched off, as in ```{r, eval=FALSE} or, in Quarto, "#| eval:
+// false". knitr then shows the code and never runs it. Only a plain FALSE
+// counts, since any other value could be an expression only R can read.
+const EVAL_OFF = /(?:^|[\s,])eval\s*=\s*(?:FALSE|F)\s*(?:,|$)/;
+const EVAL_OFF_QUARTO = /^#\|\s*eval:\s*(?:false|FALSE)\s*$/;
 
 /** Every fenced chunk in a document, in order. */
 export function chunksOf(text: string): Chunk[] {
@@ -66,7 +72,9 @@ export function chunksOf(text: string): Chunk[] {
     const option = lines.slice(line + 1, closed ? close : close + 1).map((text) => /^#\|\s*label:\s*(\S+)/.exec(text)?.[1]).find(Boolean);
     const label = LABEL.exec(header[3])?.[2] ?? option ?? "";
     const engine = (ENGINE_OPTION.exec(header[3])?.[1] ?? header[2]).toLowerCase();
-    chunks.push({ label, engine, fence: line, from: line + 1, to: closed ? close - 1 : close, close });
+    const body = lines.slice(line + 1, closed ? close : close + 1);
+    const evaluated = !(EVAL_OFF.test(header[3]) || body.some((text) => EVAL_OFF_QUARTO.test(text.trim())));
+    chunks.push({ label, engine, fence: line, from: line + 1, to: closed ? close - 1 : close, close, evaluated });
     line = close;
   }
   return chunks;
@@ -84,6 +92,12 @@ export function codeOnly(text: string): string {
   // Quarto's "#|" chunk options are comments to R, but blanking them keeps
   // them from being sent along with the first statement.
   return lines.map((line, index) => (keep[index] && !/^#\|/.test(line) ? line : "")).join("\n");
+}
+
+/** Whether a statement, as a run of lines, sits inside a chunk that is
+ * switched off, so running the whole document leaves it out. */
+export function inSwitchedOffChunk(chunks: Chunk[], range: Span): boolean {
+  return chunks.some((chunk) => !chunk.evaluated && range.from >= chunk.from && range.to <= chunk.to);
 }
 
 /** The chunk a line belongs to, counting its fences, or null in prose. */

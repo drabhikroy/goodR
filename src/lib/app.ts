@@ -28,7 +28,7 @@ import { describeProblem, explainError, type Explained } from "./errors";
 import { findTarget, pointAt, TARGETS, type GuideTarget } from "./guide";
 import { referencedPackages } from "./packages";
 import { isSupportedR, OLDEST_R } from "./rversion";
-import { chunkAt, chunksOf, codeOnly, documentFileName, hasSections, isDocument, newDocumentText, sectionAt, type DocumentFormat, type DocumentKind } from "./chunks";
+import { chunkAt, chunksOf, codeOnly, inSwitchedOffChunk, documentFileName, hasSections, isDocument, newDocumentText, sectionAt, type DocumentFormat, type DocumentKind } from "./chunks";
 import { writeLabels, type PlotLabels } from "./plotEdit";
 import { keyLabel } from "./commands";
 import { SNIPPETS } from "./snippets";
@@ -2294,15 +2294,19 @@ export function runLine() {
 
 /** Queues every statement between two lines, each with its own result,
  * as one batch that stops at the first error. */
-function runSpan(path: string, from: number, to: number) {
+function runSpan(path: string, from: number, to: number, skipSwitchedOff = false) {
   const session = sessionOfFile(path);
   if (!requireR(session)) return 0;
   const text = runnableText(path);
   const lines = text.split("\n");
   const batch = crypto.randomUUID();
   const jobs: Job[] = [];
+  // Running a whole document leaves out the chunks it switches off with
+  // eval=FALSE, as rendering does. A chunk run on its own always runs.
+  const chunks = skipSwitchedOff && isDocument(path) ? chunksOf(editor.getText(path)) : [];
   for (const range of statementRanges(text)) {
     if (range.to < from || range.from > to) continue;
+    if (inSwitchedOffChunk(chunks, range)) continue;
     const code = lines.slice(range.from, range.to + 1).join("\n");
     const block = newBlock(path, code, range.from, range.to);
     jobs.push({ code, batch, blockId: block.id, file: path, session });
@@ -2333,7 +2337,7 @@ export function runRanges(path: string, ranges: { from: number; to: number }[]) 
 export function runFile(upToCursor = false) {
   const { active } = getState();
   if (!active || active.startsWith("data:")) return;
-  if (!runSpan(active, 0, upToCursor ? editor.cursor(active).line : Infinity) || upToCursor) return;
+  if (!runSpan(active, 0, upToCursor ? editor.cursor(active).line : Infinity, true) || upToCursor) return;
   // The cursor follows the run to the end, where the next line would go.
   editor.goToLine(active, editor.getText(active).split("\n").length - 1, true, true);
 }

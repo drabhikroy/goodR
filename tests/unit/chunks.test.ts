@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chunkAt, chunksOf, codeOnly, documentFileName, hasSections, headingId, newDocumentText, sectionAt } from "../../src/lib/chunks";
+import { chunkAt, chunksOf, codeOnly, inSwitchedOffChunk, documentFileName, hasSections, headingId, newDocumentText, sectionAt } from "../../src/lib/chunks";
 import { statementRanges } from "../../src/lib/statements";
 
 // Line numbers below count from zero, as the editor does.
@@ -26,13 +26,52 @@ const RMD = [
   "```", // 19
 ].join("\n");
 
+describe("chunks that are switched off", () => {
+  const doc = (header: string, body: string[] = ["x <- 1"]) => ["```" + header, ...body, "```"].join("\n");
+
+  it("reads eval=FALSE in the header and #| eval: false inside", () => {
+    expect(chunksOf(doc("{r, eval=FALSE}"))[0].evaluated).toBe(false);
+    expect(chunksOf(doc("{r setup, eval = FALSE, echo=TRUE}"))[0].evaluated).toBe(false);
+    expect(chunksOf(doc("{r, eval=F}"))[0].evaluated).toBe(false);
+    expect(chunksOf(doc("{r}", ["#| eval: false", "x <- 1"]))[0].evaluated).toBe(false);
+  });
+
+  it("treats every other chunk as run, including values only R can read", () => {
+    expect(chunksOf(doc("{r}"))[0].evaluated).toBe(true);
+    expect(chunksOf(doc("{r, eval=TRUE}"))[0].evaluated).toBe(true);
+    expect(chunksOf(doc("{r, eval=interactive()}"))[0].evaluated).toBe(true);
+    expect(chunksOf(doc("{r, echo=FALSE}"))[0].evaluated).toBe(true);
+    expect(chunksOf(doc("{r, evaluate=FALSE}"))[0].evaluated).toBe(true);
+    expect(chunksOf(doc("{r, fig.cap='eval=FALSE'}"))[0].evaluated).toBe(true);
+    expect(chunksOf(doc("{r}", ["# eval: false", "x <- 1"]))[0].evaluated).toBe(true);
+  });
+});
+
+describe("running a whole document", () => {
+  const text = ["```{r}", "a <- 1", "```", "", "```{r, eval=FALSE}", "b <- 2", "install.packages('x')", "```"].join("\n");
+  const chunks = chunksOf(text);
+  const skipped = statementRanges(codeOnly(text)).filter((range) => inSwitchedOffChunk(chunks, range));
+
+  it("leaves out the statements of a switched off chunk and keeps the rest", () => {
+    expect(skipped).toEqual([
+      { from: 5, to: 5 },
+      { from: 6, to: 6 },
+    ]);
+  });
+
+  it("does not leave out a statement that reaches outside the chunk", () => {
+    expect(inSwitchedOffChunk(chunks, { from: 6, to: 8 })).toBe(false);
+    expect(inSwitchedOffChunk(chunks, { from: 1, to: 1 })).toBe(false);
+  });
+});
+
 describe("chunksOf", () => {
   it("finds each chunk, its engine, its label, and its code lines", () => {
     const chunks = chunksOf(RMD);
     expect(chunks).toEqual([
-      { label: "setup", engine: "r", fence: 7, from: 8, to: 8, close: 9 },
-      { label: "", engine: "python", fence: 11, from: 12, to: 12, close: 13 },
-      { label: "totals", engine: "r", fence: 15, from: 16, to: 18, close: 19 },
+      { label: "setup", engine: "r", fence: 7, from: 8, to: 8, close: 9, evaluated: true },
+      { label: "", engine: "python", fence: 11, from: 12, to: 12, close: 13, evaluated: true },
+      { label: "totals", engine: "r", fence: 15, from: 16, to: 18, close: 19, evaluated: true },
     ]);
     expect(chunkAt(chunks, 17)?.label).toBe("totals");
     expect(chunkAt(chunks, 15)?.label).toBe("totals");
@@ -50,7 +89,7 @@ describe("chunksOf", () => {
   // packages. Each is a header knitr runs that was once missed or misread.
   it("finds a chunk whose options hold a closing brace, as a LaTeX label in a caption does", () => {
     const text = ["```{r disp, echo=FALSE, fig.cap='\\\\label{fig:spam}Sparsity of a matrix.'}", "display(m)", "```"].join("\n");
-    expect(chunksOf(text)).toEqual([{ label: "disp", engine: "r", fence: 0, from: 1, to: 1, close: 2 }]);
+    expect(chunksOf(text)).toEqual([{ label: "disp", engine: "r", fence: 0, from: 1, to: 1, close: 2, evaluated: true }]);
     expect(codeOnly(text).split("\n")[1]).toBe("display(m)");
     const braces = chunksOf('```{r fig.cap="Mean of {x} by group"}\nplot(x)\n```');
     expect(braces).toHaveLength(1);
@@ -89,7 +128,7 @@ describe("chunksOf", () => {
 
   it("keeps a chunk header shown as text inside a longer fence as part of that chunk", () => {
     const text = ["````{r, eval=FALSE}", "```{r}", "1 + 1", "```", "````"].join("\n");
-    expect(chunksOf(text)).toEqual([{ label: "", engine: "r", fence: 0, from: 1, to: 3, close: 4 }]);
+    expect(chunksOf(text)).toEqual([{ label: "", engine: "r", fence: 0, from: 1, to: 3, close: 4, evaluated: false }]);
   });
 });
 

@@ -171,8 +171,10 @@ GitHub releases with the macOS `curl`. Before anything is unpacked, it is
 compared against the SHA-256 that Ollama publishes for it. If they do not
 match, the download is deleted and nothing is installed. The copy is
 unpacked beside its final folder and moved into place only when complete.
-It runs only while the app is open, listens on its own loopback port, and
-keeps its models in the app's data folder. Removing it from the setup
+It runs only while the app is open. If the app crashes or is forced to quit,
+a small watcher that started with it ends the server within a few seconds.
+It listens on its own loopback port, and keeps its models in the app's data
+folder. Removing it from the setup
 screen deletes that folder.
 
 The machine check reads total memory, free disk space, and the chip name

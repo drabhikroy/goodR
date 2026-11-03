@@ -141,3 +141,25 @@ changing before the Windows and Linux releases.
    takes 26 to 28 seconds against a 30 second limit, and it failed 2 times
    in 9 when repeated, always on time. It now has more time, with its
    checks unchanged, and passes.
+
+## After 1.0.1
+
+Three of the open risks were dealt with afterward, and two of those changed
+behavior.
+
+- **The private Ollama copy** now starts under a small watcher that ends it
+  within a few seconds of the app crashing or being forced to quit, and the
+  whole group of processes ends when the app stops it. Tested with a stand-in
+  server on Linux. The real Ollama on a Mac was not run.
+- **Misspelled function names.** The wording was narrowed to match what the
+  app does: objects and columns get a suggested name, functions are
+  explained only.
+- **Run document** now leaves out chunks switched off with `eval=FALSE` or
+  `#| eval: false`, as rendering does. Run chunk on one still runs it.
+
+The risk of a running Shiny app being open to DNS rebinding is unchanged,
+since R's own server decides it.
+
+The release script now builds under `/private/tmp`, because a synced or
+indexed project folder can put Finder labels on the program just built, and
+the signing tool refuses it.

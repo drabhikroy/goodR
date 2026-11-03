@@ -27,7 +27,7 @@ pub struct AssistantState {
     client: Mutex<Option<(String, Client)>>,
     /// An Ollama the app started, private copy or system program, so it
     /// can be stopped when the app quits.
-    child: StdMutex<Option<tokio::process::Child>>,
+    child: StdMutex<Option<runtime::Server>>,
     setup_busy: AtomicBool,
     setup_cancel: StdMutex<Arc<AtomicBool>>,
     answer_cancel: StdMutex<Arc<AtomicBool>>,
@@ -50,8 +50,8 @@ impl AssistantState {
 
     /// Ends any Ollama the app started. Called when the window closes.
     pub fn shutdown(&self) {
-        if let Some(mut child) = self.child.lock().unwrap().take() {
-            let _ = child.start_kill();
+        if let Some(mut server) = self.child.lock().unwrap().take() {
+            server.stop();
         }
     }
 }
@@ -119,19 +119,20 @@ pub async fn assistant_connect(state: State<'_, AssistantState>, route: String) 
             runtime::start(&state.paths).map_err(text_error)?
         } else {
             let path = start.ok_or("Ollama is not installed on this computer. Install it from ollama.com, or choose the private copy.")?;
-            tokio::process::Command::new(path)
-                .arg("serve")
-                .stdin(std::process::Stdio::null())
-                .stdout(std::process::Stdio::null())
-                .stderr(std::process::Stdio::null())
-                .kill_on_drop(true)
-                .spawn()
-                .map_err(|error| format!("Ollama could not be started: {error}"))?
+            runtime::Server::new(
+                tokio::process::Command::new(path)
+                    .arg("serve")
+                    .stdin(std::process::Stdio::null())
+                    .stdout(std::process::Stdio::null())
+                    .stderr(std::process::Stdio::null())
+                    .kill_on_drop(true)
+                    .spawn()
+                    .map_err(|error| format!("Ollama could not be started: {error}"))?,
+            )
         };
         // Switching between the two routes ends the server started before.
-        if let Some(mut old) = state.child.lock().unwrap().replace(child) {
-            let _ = old.start_kill();
-        }
+        // The old server ends as it is replaced.
+        state.child.lock().unwrap().replace(child);
     }
     let version = runtime::wait_ready(&client, 30).await.map_err(text_error)?;
     *state.client.lock().await = Some((route, client));

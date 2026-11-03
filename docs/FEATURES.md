@@ -170,7 +170,9 @@ and two example chunks, so it renders on the first press. Prose is
 highlighted as Markdown and code as R. Each chunk sits on a tinted band with a
 Run chunk button on its header, and Insert chunk adds one. Running a line, a
 chunk, or the whole document sends only the R code, never the header or the
-prose.
+prose. Running the whole document leaves out a chunk switched off with
+`eval=FALSE` (or `#| eval: false` in Quarto), as rendering does. Run chunk on
+that chunk still runs it, since you asked for it.
 
 A Quarto (.qmd) or R Markdown (.Rmd) file gets a Render button. The report
 renders in its own fresh R, so it shows exactly what its code makes from a
@@ -249,8 +251,10 @@ nothing.
 When a statement fails, the result says what happened in a headline, explains
 why in everyday words, and gives one thing to try. It shows the failing line
 with the part that went wrong marked by carets and underlines the same part
-in your script; Go to the Spot selects it. A misspelled name gets a one click
-fix with the name you probably meant. Errors at the prompt get the same
+in your script; Go to the Spot selects it. A misspelled object or column name gets
+a one click fix with the name you probably meant. A misspelled function name
+is explained, but not corrected, since the functions R can see depend on
+the packages loaded. Errors at the prompt get the same
 treatment, and R's own message is one click away.
 
 A warning, such as values that would not turn into numbers or rows a plot

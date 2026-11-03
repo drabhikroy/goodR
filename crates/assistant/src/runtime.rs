@@ -177,13 +177,80 @@ pub fn sha256_of(path: &Path) -> Result<String> {
     Ok(hex::encode(hasher.finalize()))
 }
 
+/// An Ollama server the app started. Stopping it, or dropping it, ends the
+/// server and anything it started.
+pub struct Server {
+    child: tokio::process::Child,
+    /// Whether the process leads a group of its own, which then ends whole.
+    group: bool,
+}
+
+impl Server {
+    /// A server started directly, such as the Ollama the person installed.
+    pub fn new(child: tokio::process::Child) -> Self {
+        Server { child, group: false }
+    }
+
+    pub fn stop(&mut self) {
+        #[cfg(unix)]
+        if self.group {
+            if let Some(pid) = self.child.id() {
+                // SAFETY: killpg only signals the group this app made with
+                // process_group(0), whose id is the child's own id.
+                unsafe {
+                    libc::killpg(pid as libc::pid_t, libc::SIGKILL);
+                }
+            }
+        }
+        let _ = self.child.start_kill();
+    }
+}
+
+impl Drop for Server {
+    fn drop(&mut self) {
+        self.stop();
+    }
+}
+
+/// Runs the server, then watches the app that started it. If that app is
+/// gone, because it crashed or was forced to quit, the server is ended
+/// within a couple of seconds, so a model is never left in memory. The
+/// program and the app's process id arrive as arguments, never inside the
+/// script, so no path can change what it does.
+#[cfg(unix)]
+const WATCH: &str = r#""$0" serve &
+server=$!
+while kill -0 "$1" 2>/dev/null && kill -0 "$server" 2>/dev/null; do
+  sleep 2
+done
+kill "$server" 2>/dev/null
+wait "$server" 2>/dev/null"#;
+
 /// Starts the private copy on its own port, with its models kept in the
-/// app's folder. The process ends when the returned handle is dropped.
-pub fn start(paths: &Paths) -> Result<tokio::process::Child> {
+/// app's folder. It ends when the returned handle is dropped, and by itself
+/// shortly after this app is gone.
+pub fn start(paths: &Paths) -> Result<Server> {
+    start_watching(paths, std::process::id())
+}
+
+fn start_watching(paths: &Paths, parent: u32) -> Result<Server> {
     std::fs::create_dir_all(paths.models())?;
     let log = std::fs::File::create(paths.root.join("ollama.log"))?;
-    let child = tokio::process::Command::new(paths.binary())
-        .arg("serve")
+    #[cfg(unix)]
+    let mut command = {
+        let mut command = tokio::process::Command::new("/bin/sh");
+        command.arg("-c").arg(WATCH).arg(paths.binary()).arg(parent.to_string());
+        command.process_group(0);
+        command
+    };
+    #[cfg(not(unix))]
+    let mut command = {
+        let _ = parent;
+        let mut command = tokio::process::Command::new(paths.binary());
+        command.arg("serve");
+        command
+    };
+    let child = command
         .env("OLLAMA_HOST", crate::ollama::PRIVATE_URL.trim_start_matches("http://"))
         .env("OLLAMA_MODELS", paths.models())
         .current_dir(paths.runtime())
@@ -193,7 +260,7 @@ pub fn start(paths: &Paths) -> Result<tokio::process::Child> {
         .kill_on_drop(true)
         .spawn()
         .context("could not start the private Ollama")?;
-    Ok(child)
+    Ok(Server { child, group: cfg!(unix) })
 }
 
 /// Waits until a server answers, for up to `seconds`.
@@ -232,6 +299,82 @@ mod tests {
         assert!(status.success());
         let sum = sha256_of(&archive).unwrap();
         (archive, sum)
+    }
+
+    /// Whether a process is still running. A process that has ended but
+    /// not been collected yet does not count.
+    #[cfg(unix)]
+    fn running(pid: &str) -> bool {
+        let out = std::process::Command::new("ps").args(["-o", "stat=", "-p", pid]).output().unwrap();
+        let state = String::from_utf8_lossy(&out.stdout);
+        let state = state.trim();
+        !state.is_empty() && !state.starts_with('Z')
+    }
+
+    /// Waits for the stand-in server to write its process id.
+    #[cfg(unix)]
+    async fn server_pid(paths: &Paths) -> String {
+        let file = paths.runtime().join("pid");
+        for _ in 0..80 {
+            if let Ok(text) = std::fs::read_to_string(&file) {
+                if !text.trim().is_empty() {
+                    return text.trim().to_string();
+                }
+            }
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+        panic!("the stand-in server never started");
+    }
+
+    /// A private copy whose program is a stand-in that records its process
+    /// id and then idles.
+    #[cfg(unix)]
+    fn stand_in(dir: &Path) -> Paths {
+        use std::os::unix::fs::PermissionsExt;
+        let paths = Paths::new(dir.join("app"));
+        std::fs::create_dir_all(paths.runtime()).unwrap();
+        std::fs::write(paths.binary(), "#!/bin/sh\necho $$ > \"$(dirname \"$0\")/pid\"\nexec sleep 300\n").unwrap();
+        std::fs::set_permissions(paths.binary(), std::fs::Permissions::from_mode(0o755)).unwrap();
+        paths
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn the_private_server_ends_when_the_app_that_started_it_is_gone() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = stand_in(dir.path());
+        // A stand-in for the app, which then "crashes".
+        let mut app = std::process::Command::new("sleep").arg("300").spawn().unwrap();
+        let _server = start_watching(&paths, app.id()).unwrap();
+        let pid = server_pid(&paths).await;
+        assert!(running(&pid));
+        app.kill().unwrap();
+        app.wait().unwrap();
+        for _ in 0..80 {
+            if !running(&pid) {
+                return;
+            }
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+        panic!("the server was still running long after its app was gone");
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn stopping_the_private_server_ends_everything_it_started() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = stand_in(dir.path());
+        let mut server = start_watching(&paths, std::process::id()).unwrap();
+        let pid = server_pid(&paths).await;
+        assert!(running(&pid));
+        server.stop();
+        for _ in 0..30 {
+            if !running(&pid) {
+                return;
+            }
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+        panic!("the server was still running after it was stopped");
     }
 
     #[tokio::test]
