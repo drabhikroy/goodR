@@ -94,6 +94,43 @@ async fn an_app_runs_reloads_when_saved_and_stops() {
     assert!(std::net::TcpStream::connect(address).is_err(), "the app was still answering after Stop");
 }
 
+/// If the app that started it goes away without stopping it, as when it
+/// crashes or is forced to quit, the app's R notices and ends by itself, so
+/// it never keeps running the app's code and holding its port.
+#[cfg(unix)]
+#[tokio::test]
+async fn an_app_ends_by_itself_when_the_program_that_started_it_is_gone() {
+    let Some(rscript) = rscript() else { return };
+    let dir = tempfile::tempdir().unwrap();
+    let source = dir.path().join("app.R");
+    std::fs::write(&source, APP).unwrap();
+    // A stand-in for the app: a short-lived program whose number the app's
+    // R is told to watch.
+    let mut stand_in = std::process::Command::new("sleep").arg("6").spawn().unwrap();
+    let mut plan = shiny::plan(&source, &rscript, shiny::free_port().unwrap()).unwrap();
+    plan.env.retain(|(name, _)| name != "GOODR_PARENT_PID");
+    plan.env.push(("GOODR_PARENT_PID".into(), stand_in.id().to_string().into()));
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+    // Nothing ever presses Stop on this run.
+    let task = tokio::spawn(async move {
+        follow(&plan, Arc::new(Stopper::default()), move |text| {
+            if let AppLine::Listening(url) = shiny::classify(text) {
+                let _ = tx.send(url);
+            }
+        })
+        .await
+        .unwrap()
+    });
+    let url = tokio::time::timeout(Duration::from_secs(60), rx.recv()).await.unwrap().unwrap();
+    assert!(shiny::wait_until_answering(&url).await);
+    // The stand-in ends and is gone, as a crashed app is once the system
+    // has cleared it away.
+    stand_in.wait().unwrap();
+    let followed = tokio::time::timeout(Duration::from_secs(20), task).await.expect("the app's R kept running after the program that started it was gone").unwrap();
+    assert!(!followed.stopped);
+    assert!(std::net::TcpStream::connect(url.trim_start_matches("http://")).is_err(), "the port was still answering");
+}
+
 #[tokio::test]
 async fn a_single_file_app_runs_from_its_own_name() {
     let Some(rscript) = rscript() else { return };

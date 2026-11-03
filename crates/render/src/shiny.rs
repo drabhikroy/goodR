@@ -23,12 +23,29 @@ pub const NO_SHINY_MARKER: &str = "@@goodr-no-shiny@@";
 /// The R that runs an app. The app and port arrive as command line
 /// arguments rather than inside the code, so no path can change what the
 /// code does.
+///
+/// The app's R runs in a process group of its own, so Stop can end it and
+/// everything it started. That also means it would outlive this app if this
+/// app crashed or were forced to quit, and keep running the app's code and
+/// holding its port. So it checks every two seconds that the program named
+/// in GOODR_PARENT_PID is still there, and quits when it is not. The check
+/// sends signal 0, which only asks whether a process exists. On Windows,
+/// R's pskill ends a process whatever signal it is given, so the check runs
+/// on Unix only.
 const APP_CALL: &str = r#"args <- commandArgs(TRUE)
 if (!requireNamespace("shiny", quietly = TRUE)) {
   cat("@@goodr-no-shiny@@\n")
   quit(status = 3)
 }
 options(shiny.autoreload = TRUE)
+parent <- suppressWarnings(as.integer(Sys.getenv("GOODR_PARENT_PID")))
+if (.Platform$OS.type == "unix" && !is.na(parent) && requireNamespace("later", quietly = TRUE)) {
+  watch <- function() {
+    if (!isTRUE(tools::pskill(parent, 0L))) quit(save = "no", status = 5)
+    later::later(watch, 2)
+  }
+  later::later(watch, 2)
+}
 shiny::runApp(args[1], port = as.integer(args[2]), host = "127.0.0.1", launch.browser = FALSE)"#;
 
 /// What the export's R prints when shinylive is not installed.
@@ -104,7 +121,7 @@ pub fn plan(source: &Path, rscript: &Path, port: u16) -> Result<Plan, AppFailure
     // The app runs in its own folder, so "data.csv" in its code means the
     // file beside it, as it will when the app is shared.
     let app: OsString = if is_app_file_name(source) { ".".into() } else { source.file_name().unwrap_or_default().to_os_string() };
-    let env = vec![("NO_COLOR".to_string(), OsString::from("1"))];
+    let env = vec![("NO_COLOR".to_string(), OsString::from("1")), ("GOODR_PARENT_PID".to_string(), OsString::from(std::process::id().to_string()))];
     let args = vec![OsString::from("-e"), OsString::from(APP_CALL), app, OsString::from(port.to_string())];
     Ok(Plan { program: rscript.to_path_buf(), args, env, dir })
 }
@@ -192,6 +209,15 @@ pub async fn wait_until_answering(url: &str) -> bool {
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
     }
     false
+}
+
+/// Whether an address read by `classify` is the one this app was told to
+/// use. The app's own code can print any line, including one that names a
+/// different loopback port, such as a printer queue or a database another
+/// program runs. Only the port chosen here for this app counts, so such a
+/// line cannot put another local service in the App pane or the browser.
+pub fn is_own_address(url: &str, port: u16) -> bool {
+    url.trim_end_matches('/') == format!("http://127.0.0.1:{port}")
 }
 
 /// Reads one line, already free of color codes.
@@ -318,6 +344,17 @@ mod tests {
         assert_eq!(classify("Warning: Error in renderPlot: object 'bins' not found"), AppLine::Problem("object 'bins' not found".into()));
         assert_eq!(classify("Warning: Error in : boom"), AppLine::Problem("boom".into()));
         assert_eq!(classify("Loading required package: shiny"), AppLine::Text);
+    }
+
+    #[test]
+    fn only_the_port_given_to_the_app_counts_as_its_address() {
+        assert!(is_own_address("http://127.0.0.1:5123", 5123));
+        assert!(is_own_address("http://127.0.0.1:5123/", 5123));
+        // A line the app's code prints about another local service, which
+        // classify accepts as a loopback address, is still not this app.
+        assert!(!is_own_address("http://127.0.0.1:631", 5123));
+        assert!(!is_own_address("http://127.0.0.1:51230", 5123));
+        assert!(!is_own_address("http://127.0.0.1:512", 5123));
     }
 
     #[test]

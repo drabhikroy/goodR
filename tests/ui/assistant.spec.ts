@@ -78,6 +78,37 @@ test("an error can be handed to the assistant, and its fix replaces the failing 
   await expect(page.locator(".output-card.status-error")).toHaveCount(1);
 });
 
+// SECURITY.md promises that Replace never overwrites lines that changed
+// since the question was asked. Here the line is edited while the answer
+// waits, and the edit must survive the press.
+test("Replace leaves lines edited since the question alone and puts the code at the cursor", async ({ page }) => {
+  await openExample(page);
+  const dialog = await setUpAssistant(page);
+  await dialog.locator(".model-card").filter({ hasText: "Qwen2.5 Coder 3B" }).getByRole("button", { name: /^Download/ }).click();
+  await expect(dialog.getByText("In use")).toBeVisible({ timeout: 10_000 });
+  await dialog.getByRole("button", { name: "Done" }).click();
+
+  await newFileWith(page, "data(penguins)\nfit <- lm(body_mass ~ flipper_length_mm, data = penguins)\n");
+  await runLine(page);
+  await runLine(page);
+  await page.locator(".output-card.status-error").getByRole("button", { name: "Ask the assistant" }).click();
+  const answer = page.locator(".turn-answer").last();
+  await expect(answer.getByRole("button", { name: "Replace line 2" })).toBeVisible();
+
+  // The person keeps working on line 2 before deciding.
+  const editor = page.locator(".editor-host .cm-content");
+  await editor.locator(".cm-line").nth(1).click();
+  await page.keyboard.press("End");
+  await page.keyboard.insertText(" # checked by hand");
+  await answer.getByRole("button", { name: "Replace line 2" }).click();
+
+  await expect(page.getByText("Those lines changed since you asked, so the code went in at the cursor instead.")).toBeVisible();
+  // The edited line is still there, word for word, and the suggestion
+  // arrived as well, so nothing was lost either way.
+  await expect(editor).toContainText("fit <- lm(body_mass ~ flipper_length_mm, data = penguins) # checked by hand");
+  await expect(editor).toContainText("fit <- lm(body_mass ~ flipper_len, data = penguins)");
+});
+
 test("questions stream an answer whose code can be inserted, and code R cannot read is labeled", async ({ page }) => {
   await openExample(page);
   const dialog = await setUpAssistant(page);

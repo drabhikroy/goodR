@@ -124,17 +124,18 @@ pub async fn app_start(app: AppHandle, state: State<'_, AppState>, apps: State<'
     // The app before this one, if any, is stopped first. Its own task sends
     // its ending under its own id, which the interface no longer follows.
     apps.replace(&app, Running { id: id.clone(), runner: Runner::Process(stopper.clone()), url: None });
-    tauri::async_runtime::spawn(watch(app.clone(), id, plan, stopper));
+    tauri::async_runtime::spawn(watch(app.clone(), id, plan, stopper, port));
     Ok(())
 }
 
-/// Follows the app's R from start to end, sending each line on.
-async fn watch(app: AppHandle, id: String, plan: render::Plan, stopper: Arc<Stopper>) {
+/// Follows the app's R from start to end, sending each line on. Only an
+/// address on `port`, the one the app was given, can make it ready.
+async fn watch(app: AppHandle, id: String, plan: render::Plan, stopper: Arc<Stopper>, port: u16) {
     let emitter = app.clone();
     let tag = id.clone();
     let followed = follow(&plan, stopper, move |text| {
         let event = match shiny::classify(text) {
-            AppLine::Listening(url) => {
+            AppLine::Listening(url) if shiny::is_own_address(&url, port) => {
                 // Readiness is checked away from the line reader, so lines
                 // keep flowing while the app finishes starting.
                 let (app, id) = (emitter.clone(), tag.clone());
@@ -146,7 +147,8 @@ async fn watch(app: AppHandle, id: String, plan: render::Plan, stopper: Arc<Stop
                 AppEvent::Line { id: tag.clone(), text: text.to_string() }
             }
             AppLine::Problem(message) => AppEvent::Problem { id: tag.clone(), message },
-            AppLine::Text => AppEvent::Line { id: tag.clone(), text: text.to_string() },
+            // An address on some other port is only text the app printed.
+            AppLine::Listening(_) | AppLine::Text => AppEvent::Line { id: tag.clone(), text: text.to_string() },
         };
         let _ = emitter.emit("app-event", event);
     })

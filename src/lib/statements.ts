@@ -28,6 +28,12 @@ const NEEDS_BODY = new Set(["if", "for", "while", "function", "repeat", "else"])
 
 const OPERATORS = ["<<-", "->>", ":::", "|>", "<-", "->", "<=", ">=", "==", "!=", "&&", "||", "::"];
 
+// The other characters R's parser skips as space: a page break, which some
+// editors put between parts of a file, and the wide spaces Unicode defines.
+// R rejects the no-break spaces (U+00A0, U+2007, U+202F) and zero width
+// characters, so those stay code and R names the problem on their line.
+const R_SPACE = /[\f\u1680\u2000-\u2006\u2008-\u200a\u205f\u3000]/;
+
 export function tokenize(text: string): Token[] {
   const tokens: Token[] = [];
   let line = 0;
@@ -39,7 +45,7 @@ export function tokenize(text: string): Token[] {
       i += 1;
       continue;
     }
-    if (ch === " " || ch === "\t" || ch === "\r" || ch === ";") {
+    if (ch === " " || ch === "\t" || ch === "\r" || ch === ";" || R_SPACE.test(ch)) {
       i += 1;
       continue;
     }

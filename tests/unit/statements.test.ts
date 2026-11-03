@@ -31,6 +31,10 @@ describe("statementRanges", () => {
     expect(ranges("if (a) {\n  1\n}\nelse {\n  2\n}\nb")).toEqual([[0, 5], [6, 6]]);
   });
 
+  it("carries an else at the end of a line on to its body, as R's parser does", () => {
+    expect(ranges("if (a) b else\n  c\nd")).toEqual([[0, 1], [2, 2]]);
+  });
+
   it("ignores brackets and operators inside strings and comments", () => {
     expect(ranges('x <- "(+"\ny <- 1 # trailing (\nz')).toEqual([[0, 0], [1, 1], [2, 2]]);
   });
@@ -42,6 +46,24 @@ describe("statementRanges", () => {
 
   it("runs an unfinished statement to the end of the file", () => {
     expect(ranges("broken(\nx <- 1")).toEqual([[0, 1]]);
+  });
+
+  // Found by comparing these ranges with R's own parser over 2,946 R files
+  // installed with R packages, where two files used page breaks.
+  it("skips the spaces R skips: a page break and the wide spaces Unicode defines", () => {
+    expect(ranges("a <- 1\n\f\nb <- 2")).toEqual([[0, 0], [2, 2]]);
+    expect(ranges("x <- c(1,\n\f 2)\ny")).toEqual([[0, 1], [2, 2]]);
+    for (const space of ["\u1680", "\u2000", "\u2003", "\u2006", "\u2008", "\u200a", "\u205f", "\u3000"]) {
+      expect(ranges(`a <- 1\n${space}\nb <- 2`)).toEqual([[0, 0], [2, 2]]);
+    }
+  });
+
+  it("still treats characters R rejects as code, so the error R gives lands on its line", () => {
+    // R refuses a no-break space, a figure space, and a zero width space,
+    // so the line is sent and R says what is wrong with it.
+    for (const odd of ["\u00a0", "\u2007", "\u200b", "\u202f"]) {
+      expect(ranges(`a <- 1\n${odd}\nb <- 2`)).toEqual([[0, 0], [1, 1], [2, 2]]);
+    }
   });
 });
 

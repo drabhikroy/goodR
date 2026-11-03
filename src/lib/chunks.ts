@@ -22,8 +22,16 @@ export function isDocument(path: string | null | undefined): boolean {
 }
 
 // An executable chunk's header: three or more backticks, then the engine
-// in braces, as in ```{r} or ```{r plot-it, echo=FALSE}.
-const HEADER = /^\s*(`{3,})\s*\{\s*([A-Za-z]+)(?:[\s,]+([^,}=\s]+)(?=[,}\s]))?[^}]*\}\s*$/;
+// and any options in braces, as in ```{r} or ```{r plot-it, echo=FALSE}.
+// The options run to the last brace on the line, as knitr reads them, so a
+// brace inside an option, as in fig.cap='\label{fig:a}', is part of it.
+const HEADER = /^\s*(`{3,})\s*\{\s*([A-Za-z0-9_]+)(.*)\}\s*$/;
+// The label, when the first thing after the engine is a name rather than an
+// option such as echo=FALSE. knitr also accepts it in quotes, and drops them.
+const LABEL = /^[\s,]+(["']?)([^,=\s"'{}]+)\1\s*(?:,|$)/;
+// An engine given as an option, as in ```{r, engine = "cpp11"}, which knitr
+// runs with that engine rather than R.
+const ENGINE_OPTION = /(?:^|[\s,])engine\s*=\s*["']([A-Za-z0-9_]+)["']/;
 
 /** Every fenced chunk in a document, in order. */
 export function chunksOf(text: string): Chunk[] {
@@ -33,20 +41,32 @@ export function chunksOf(text: string): Chunk[] {
     const header = HEADER.exec(lines[line]);
     if (!header) continue;
     const ticks = header[1].length;
-    // A fence closes with at least as many backticks as opened it.
+    // A fence closes with at least as many backticks as opened it. knitr
+    // also ends a chunk at the next chunk header, as older documents rely
+    // on, unless that header has fewer backticks and so is text inside it.
     let close = lines.length - 1;
+    let closed = false;
     for (let next = line + 1; next < lines.length; next += 1) {
       const fence = /^\s*(`{3,})\s*$/.exec(lines[next]);
       if (fence && fence[1].length >= ticks) {
         close = next;
+        closed = true;
+        break;
+      }
+      const opens = HEADER.exec(lines[next]);
+      if (opens && opens[1].length >= ticks) {
+        close = next - 1;
         break;
       }
     }
-    const closed = close < lines.length && /^\s*`{3,}\s*$/.test(lines[close]) && close > line;
+    // A document that ends on a shorter fence still ends the chunk there,
+    // so that fence is not taken for code.
+    if (!closed && close === lines.length - 1 && close > line && /^\s*`{3,}\s*$/.test(lines[close])) closed = true;
     // Quarto puts a chunk's label inside it, as "#| label: name".
-    const option = lines.slice(line + 1, close).map((text) => /^#\|\s*label:\s*(\S+)/.exec(text)?.[1]).find(Boolean);
-    const label = header[3] && !header[3].includes("=") ? header[3] : option ?? "";
-    chunks.push({ label, engine: header[2].toLowerCase(), fence: line, from: line + 1, to: closed ? close - 1 : close, close });
+    const option = lines.slice(line + 1, closed ? close : close + 1).map((text) => /^#\|\s*label:\s*(\S+)/.exec(text)?.[1]).find(Boolean);
+    const label = LABEL.exec(header[3])?.[2] ?? option ?? "";
+    const engine = (ENGINE_OPTION.exec(header[3])?.[1] ?? header[2]).toLowerCase();
+    chunks.push({ label, engine, fence: line, from: line + 1, to: closed ? close - 1 : close, close });
     line = close;
   }
   return chunks;

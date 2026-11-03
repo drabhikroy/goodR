@@ -4,4 +4,5 @@
 //! than skip when R or ark is missing, because a silently skipped test
 //! would report a passing build that was never checked.
 
+mod quoting;
 mod session;

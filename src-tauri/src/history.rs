@@ -133,6 +133,10 @@ mod tests {
         keep_at(&store, &file, "x <- 4\n", 5_000_000).unwrap();
         assert_eq!(list(&store, &file).len(), 3);
         assert!(read(&store, &file, "../settings").is_err());
+        // An id that steps out of the file's folder is refused even when
+        // there is a file to find there.
+        fs::write(store.join("elsewhere.txt"), "not a version").unwrap();
+        assert!(read(&store, &file, "../elsewhere").is_err());
         // Steady saves every 30 seconds for an hour keep one version per
         // five minutes, not one in all.
         for step in 0..120u64 {

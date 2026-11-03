@@ -44,7 +44,7 @@ pub async fn serve(root: &Path) -> std::io::Result<StaticServer> {
         while let Ok((stream, _)) = listener.accept().await {
             let root = root.clone();
             tokio::spawn(async move {
-                let _ = answer(stream, &root).await;
+                let _ = answer(stream, &root, port).await;
             });
         }
     });
@@ -55,8 +55,25 @@ pub async fn serve(root: &Path) -> std::io::Result<StaticServer> {
 // asking for a file, and are refused rather than read further.
 const MAX_REQUEST: usize = 16 * 1024;
 
+/// Whether a request was meant for this server. A web page elsewhere can
+/// make its own name lead to 127.0.0.1, a trick called DNS rebinding, and
+/// then read what this port serves as if it were its own. The browser still
+/// sends that page's name as the Host, so only requests that name the
+/// loopback address and this port are answered. A request with no Host at
+/// all is not from a browser, and is answered.
+fn meant_for_us(request: &str, port: u16) -> bool {
+    let host = request.lines().skip(1).find_map(|line| {
+        let (name, value) = line.split_once(':')?;
+        name.trim().eq_ignore_ascii_case("host").then(|| value.trim().to_ascii_lowercase())
+    });
+    match host {
+        None => true,
+        Some(host) => host == format!("127.0.0.1:{port}") || host == format!("localhost:{port}"),
+    }
+}
+
 /// Answers one request on a connection.
-async fn answer(mut stream: TcpStream, root: &Path) -> std::io::Result<()> {
+async fn answer(mut stream: TcpStream, root: &Path, port: u16) -> std::io::Result<()> {
     let mut request = Vec::new();
     let mut chunk = [0u8; 2048];
     while !request.windows(4).any(|window| window == b"\r\n\r\n") {
@@ -72,6 +89,9 @@ async fn answer(mut stream: TcpStream, root: &Path) -> std::io::Result<()> {
     let target = parts.next().unwrap_or("/");
     if method != "GET" && method != "HEAD" {
         return respond(&mut stream, "405 Method Not Allowed", "text/plain", b"Only GET and HEAD are answered.", method == "HEAD").await;
+    }
+    if !meant_for_us(&text, port) {
+        return respond(&mut stream, "421 Misdirected Request", "text/plain", b"This preview answers only at its own address.", method == "HEAD").await;
     }
     let Some(path) = resolve(root, target) else {
         return respond(&mut stream, "404 Not Found", "text/plain", b"Not found.", method == "HEAD").await;
@@ -162,12 +182,40 @@ fn content_type(path: &Path) -> &'static str {
 mod tests {
     use super::*;
 
+    /// A request as a browser sends it: the Host names the address and
+    /// port it is talking to.
     async fn get(port: u16, target: &str) -> String {
+        get_as(port, target, Some(&format!("127.0.0.1:{port}"))).await
+    }
+
+    async fn get_as(port: u16, target: &str, host: Option<&str>) -> String {
         let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
-        stream.write_all(format!("GET {target} HTTP/1.1\r\nHost: localhost\r\n\r\n").as_bytes()).await.unwrap();
+        let host = host.map(|host| format!("Host: {host}\r\n")).unwrap_or_default();
+        stream.write_all(format!("GET {target} HTTP/1.1\r\n{host}\r\n").as_bytes()).await.unwrap();
         let mut response = Vec::new();
         stream.read_to_end(&mut response).await.unwrap();
         String::from_utf8_lossy(&response).to_string()
+    }
+
+    #[tokio::test]
+    async fn a_page_that_rebinds_its_own_name_to_this_port_is_refused() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("index.html"), "<title>App</title>").unwrap();
+        let server = serve(dir.path()).await.unwrap();
+        let port = server.port;
+        // The names a browser on this computer uses for the preview.
+        for host in [format!("127.0.0.1:{port}"), format!("localhost:{port}"), format!("LOCALHOST:{port}")] {
+            assert!(get_as(port, "/", Some(&host)).await.starts_with("HTTP/1.1 200"), "{host} was refused");
+        }
+        // A page elsewhere whose name now leads here, or the right name on
+        // the wrong port, gets nothing.
+        for host in [format!("attacker.example:{port}"), "attacker.example".to_string(), "127.0.0.1".to_string(), format!("127.0.0.1:{}", port.wrapping_add(1))] {
+            let response = get_as(port, "/", Some(&host)).await;
+            assert!(response.starts_with("HTTP/1.1 421"), "{host} was answered: {response}");
+            assert!(!response.contains("<title>App</title>"));
+        }
+        // A client that sends no Host at all is not a browser page.
+        assert!(get_as(port, "/", None).await.starts_with("HTTP/1.1 200"));
     }
 
     #[tokio::test]
@@ -190,6 +238,20 @@ mod tests {
             let response = get(server.port, target).await;
             assert!(response.starts_with("HTTP/1.1 404"), "{target} was answered: {response}");
             assert!(!response.contains("private"));
+        }
+
+        // A parent step is refused even when it would land back inside,
+        // rather than cleaned up, so no request depends on the clean-up.
+        assert!(get(server.port, "/shinylive/../index.html").await.starts_with("HTTP/1.1 404"));
+        // A link inside the folder that points outside it is not followed.
+        #[cfg(unix)]
+        {
+            std::os::unix::fs::symlink(dir.path().join("secret.txt"), site.join("planted.txt")).unwrap();
+            std::os::unix::fs::symlink(dir.path(), site.join("up")).unwrap();
+            for target in ["/planted.txt", "/up/secret.txt"] {
+                let response = get(server.port, target).await;
+                assert!(response.starts_with("HTTP/1.1 404") && !response.contains("private"), "{target} was answered: {response}");
+            }
         }
 
         server.stop();

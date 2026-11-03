@@ -18,7 +18,8 @@ The window may ask the system for a short, fixed list of things:
 confirmation and message boxes, setting its title, and opening a link in
 the browser. Open and Save dialogs are not on that list. The core shows
 them itself. Links open only to this app's GitHub pages, to CRAN, to
-Ollama's download page, and to Quarto's getting started page.
+Ollama's download page, to Quarto's getting started page, and to the pages
+for asking a new question on Posit Community and Stack Overflow.
 
 The interface cannot touch the file system directly. It asks the Rust
 core, which reads and writes only files you chose. You choose a file in
@@ -73,6 +74,18 @@ Policy allows frames from that protocol and nowhere else.
 Opening a rendered file in its own app, or showing it in Finder, works only
 for files that a render in this session made.
 
+## LaTeX for PDFs
+
+When a document needs LaTeX and there is none, one press installs TinyTeX
+into `~/Library/Application Support/app.goodfor.ide/TinyTeX`. The app does
+not download TinyTeX itself. It runs `tinytex::install_tinytex()` in a new
+Rscript, installing the tinytex package from CRAN first when it is missing,
+and the folder reaches R as a command line argument. The download comes
+over HTTPS from where Posit publishes TinyTeX, and unlike ark and the
+private Ollama it is not checked against a checksum recorded in this
+repository, because TinyTeX is updated continuously rather than released
+as pinned versions. Removing it from Settings deletes that folder.
+
 ## Shiny apps
 
 Running a Shiny app starts it with `shiny::runApp()` in a new Rscript, on a
@@ -83,8 +96,9 @@ arguments, never inside the R code.
 The app listens on the loopback address, 127.0.0.1, on a free port the
 system picks, so it cannot be reached from another computer. The App pane
 shows the app only once that loopback address answers. From what R prints,
-the pane accepts only an address on 127.0.0.1, so a line printed by the
-app's own code cannot point the pane somewhere else.
+the pane accepts only the address on 127.0.0.1 at the port the app was
+given, so a line printed by the app's own code cannot point the pane at
+another site or at another program on the computer.
 
 The app is shown in a sandboxed frame with its own origin, the loopback
 address. Its scripts, forms, and connection back to its R work, but it
@@ -97,7 +111,9 @@ one.
 
 One app runs at a time. It is stopped, along with every process it started,
 when you stop it from the pane, when another app runs, and when the window
-closes.
+closes. If this app crashes or is forced to quit, the app's R notices
+within a few seconds that this app is gone and ends by itself, so it does
+not keep running the app's code or holding its port.
 
 ## Sharing an app as a web page
 

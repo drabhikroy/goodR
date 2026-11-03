@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { referencedPackages } from "../../src/lib/packages";
-import { cleanMessage, closestName, describeProblem, explainError, userFrames } from "../../src/lib/errors";
+import { cleanMessage, closestName, describeProblem, distance, explainError, userFrames } from "../../src/lib/errors";
 import type { RObject } from "../../src/lib/types";
 import { keyLabel } from "../../src/lib/commands";
 import { isSupportedR } from "../../src/lib/rversion";
@@ -46,6 +46,16 @@ describe("explainError", () => {
   it("catches common typos and does not suggest unrelated names", () => {
     expect(closestName("pengiuns", ["penguins", "fit"])).toBe("penguins");
     expect(closestName("zzz", ["penguins", "fit"])).toBeUndefined();
+    // Two edits away is still a likely typo for a name this long, and
+    // three is not.
+    expect(closestName("bodymas", ["body_mass", "species"])).toBe("body_mass");
+    expect(closestName("bdymas", ["body_mass", "species"])).toBeUndefined();
+  });
+
+  it("counts two swapped neighbors as one edit, the most common typo", () => {
+    expect(distance("lenght", "length")).toBe(1);
+    expect(distance("teh", "the")).toBe(1);
+    expect(distance("abc", "cba")).toBe(2);
   });
 
   it("offers to install a missing package", () => {

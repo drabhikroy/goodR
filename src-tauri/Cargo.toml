@@ -30,3 +30,6 @@ tauri-plugin-updater = { version = "2", default-features = false, features = ["n
 
 [dev-dependencies]
 tempfile = "3"
+# Matches link addresses the way the opener plugin does, for the test that
+# keeps the interface's links and the allowlist in step.
+glob = "0.3"

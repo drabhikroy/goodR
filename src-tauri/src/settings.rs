@@ -224,14 +224,27 @@ pub fn settings_path() -> PathBuf {
 pub fn load(path: &Path) -> Settings {
     // A damaged file falls back to defaults rather than blocking the app
     // from opening. The damaged copy is kept so nothing is silently lost.
-    let Ok(text) = std::fs::read_to_string(path) else { return Settings::default() };
-    match serde_json::from_str(&text) {
-        Ok(settings) => settings,
-        Err(_) => {
-            let _ = std::fs::rename(path, path.with_extension("damaged.json"));
+    // Bytes that are not text count as damage too, so they are kept rather
+    // than overwritten by the next save.
+    let Ok(bytes) = std::fs::read(path) else { return Settings::default() };
+    match std::str::from_utf8(&bytes).ok().and_then(|text| serde_json::from_str(text).ok()) {
+        Some(settings) => settings,
+        None => {
+            let _ = std::fs::rename(path, set_aside_name(path));
             Settings::default()
         }
     }
+}
+
+/// A name for a damaged settings file that no earlier damaged copy has, so
+/// setting one aside never replaces another: settings.damaged.json, then
+/// settings.damaged-2.json, and so on.
+fn set_aside_name(path: &Path) -> std::path::PathBuf {
+    let first = path.with_extension("damaged.json");
+    if !first.exists() {
+        return first;
+    }
+    (2..).map(|number| path.with_extension(format!("damaged-{number}.json"))).find(|candidate| !candidate.exists()).unwrap_or(first)
 }
 
 pub fn save(path: &Path, settings: &Settings) -> anyhow::Result<()> {
@@ -267,6 +280,20 @@ mod tests {
         std::fs::write(&path, "{ not json").unwrap();
         assert_eq!(load(&path), Settings::default());
         assert!(dir.path().join("settings.damaged.json").exists());
+    }
+
+    #[test]
+    fn a_second_damaged_file_never_replaces_the_first_and_unreadable_bytes_count_as_damage() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        std::fs::write(&path, "{ first").unwrap();
+        load(&path);
+        // Bytes that are not text at all, as a damaged disk can leave.
+        std::fs::write(&path, [0xff, 0xfe, 0x00, 0x7b]).unwrap();
+        assert_eq!(load(&path), Settings::default());
+        assert_eq!(std::fs::read_to_string(dir.path().join("settings.damaged.json")).unwrap(), "{ first");
+        assert_eq!(std::fs::read(dir.path().join("settings.damaged-2.json")).unwrap(), vec![0xff, 0xfe, 0x00, 0x7b]);
+        assert!(!path.exists());
     }
 
     #[test]

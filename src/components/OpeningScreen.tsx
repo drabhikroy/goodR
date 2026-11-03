@@ -141,7 +141,7 @@ export function OpeningScreen() {
             <div className="examples-actions">
               <button type="button" className="examples-action" aria-labelledby="way-examples" aria-describedby="way-examples-hint" onClick={openExamples}>
                 <span id="way-examples" className="examples-action-title">Open the examples</span>
-                <span id="way-examples-hint" className="examples-action-hint">Seven scripts and documents to try things on</span>
+                <span id="way-examples-hint" className="examples-action-hint">Eight scripts and documents and four Shiny apps to try things on</span>
               </button>
               <button type="button" className="examples-action" aria-labelledby="way-tour" aria-describedby="way-tour-hint" onClick={startTour}>
                 <span id="way-tour" className="examples-action-title">Take the tour</span>

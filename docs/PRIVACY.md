@@ -18,6 +18,10 @@ The list of files the app may open is kept in the app's own core, not in the int
 
 Settings, the lists of recent scripts and projects, and what to reopen at launch are kept in one file, `~/Library/Application Support/app.goodfor.ide/settings.json`. If that file gets damaged, the app sets it aside under a new name instead of deleting it.
 
+Each time you save a script, a copy of it is kept so you can compare with it or take it back later, at most one every five minutes and the last hundred for each script. The copies are in `~/Library/Application Support/app.goodfor.ide/history`, readable only by your user account, and they stay there even if you delete the script itself. Reset the app, with Earlier versions of files ticked, deletes them all.
+
+The results on the canvas, including printed output and plots, are kept in the app's own storage so they come back next time, at most the latest sixty, and only for saved scripts. Turning off Keep results for next time in Settings, clearing the canvas, or Reset the app with Results kept from last time ticked forgets them.
+
 As you type, unsaved changes are copied to the app's own storage on your computer so a crash cannot lose them. Each copy is deleted once its file is saved or closed. For Undo, R keeps references to your objects as they were before the last run, in memory only, until the next run. Timing a run writes R's samples to a temporary file, which R deletes when it quits.
 
 The data viewer asks R for one page of rows at a time and keeps nothing once you close the tab. Exporting a plot reruns the code that made it in a scratch environment, so nothing it assigns ends up in your workspace, and it puts the random number state back afterward.

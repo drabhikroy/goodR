@@ -44,6 +44,53 @@ describe("chunksOf", () => {
     const open = chunksOf("```{r}\n1 + 1\n2 + 2");
     expect(open[0]).toMatchObject({ from: 1, to: 2, close: 2 });
   });
+
+  // The cases below come from comparing these chunks with knitr's own
+  // reading of 651 R Markdown and Quarto documents installed with R
+  // packages. Each is a header knitr runs that was once missed or misread.
+  it("finds a chunk whose options hold a closing brace, as a LaTeX label in a caption does", () => {
+    const text = ["```{r disp, echo=FALSE, fig.cap='\\\\label{fig:spam}Sparsity of a matrix.'}", "display(m)", "```"].join("\n");
+    expect(chunksOf(text)).toEqual([{ label: "disp", engine: "r", fence: 0, from: 1, to: 1, close: 2 }]);
+    expect(codeOnly(text).split("\n")[1]).toBe("display(m)");
+    const braces = chunksOf('```{r fig.cap="Mean of {x} by group"}\nplot(x)\n```');
+    expect(braces).toHaveLength(1);
+    expect(braces[0].label).toBe("");
+  });
+
+  it("reads a label in quotes the way knitr does, without the quotes", () => {
+    // knitr:::parse_params gives my-label for both, and no label for echo=FALSE.
+    expect(chunksOf('```{r "my-label", echo=FALSE}\n1\n```')[0].label).toBe("my-label");
+    expect(chunksOf("```{r 'q'}\n1\n```")[0].label).toBe("q");
+    expect(chunksOf("```{r my-label}\n1\n```")[0].label).toBe("my-label");
+    expect(chunksOf("```{r echo=FALSE}\n1\n```")[0].label).toBe("");
+  });
+
+  it("follows an engine named in the options, so C++ written in an r chunk is not run as R", () => {
+    const text = '```{r attribs, engine = "cpp11"}\nusing namespace cpp11;\n```\n\n```{r}\nx <- 1\n```';
+    expect(chunksOf(text).map((chunk) => chunk.engine)).toEqual(["cpp11", "r"]);
+    expect(codeOnly(text).split("\n")).toEqual(["", "", "", "", "", "x <- 1", ""]);
+  });
+
+  it("ends a chunk at the next chunk header when its closing fence was left out, as knitr does", () => {
+    const text = ["```{r first}", "fit <- lm(dist ~ speed, data = cars)", "```{r second, results='asis'}", "coef(fit)", "```"].join("\n");
+    const chunks = chunksOf(text);
+    expect(chunks.map((chunk) => [chunk.label, chunk.from, chunk.to])).toEqual([
+      ["first", 1, 1],
+      ["second", 3, 3],
+    ]);
+    // The header line itself is never sent to R.
+    expect(codeOnly(text).split("\n")[2]).toBe("");
+  });
+
+  it("blanks Quarto's #| option lines, so they are never sent along with the first statement", () => {
+    const code = codeOnly("```{r}\n#| label: totals\n#| echo: false\nmean(x)\n```").split("\n");
+    expect(code).toEqual(["", "", "", "mean(x)", ""]);
+  });
+
+  it("keeps a chunk header shown as text inside a longer fence as part of that chunk", () => {
+    const text = ["````{r, eval=FALSE}", "```{r}", "1 + 1", "```", "````"].join("\n");
+    expect(chunksOf(text)).toEqual([{ label: "", engine: "r", fence: 0, from: 1, to: 3, close: 4 }]);
+  });
 });
 
 describe("codeOnly", () => {

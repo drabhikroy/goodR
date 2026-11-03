@@ -13,6 +13,10 @@ async function audit(page: Page) {
 
 for (const appearance of ["Light", "Dark", "Paper"]) {
   test(`opening screen and workspace pass in ${appearance.toLowerCase()} appearance`, async ({ page }) => {
+    // Two full audits of large pages take 26 to 28 seconds on a two core
+    // machine, too close to the usual 30 second limit, so this test gets
+    // more time. What it checks is unchanged.
+    test.slow();
     await page.goto("/");
     await audit(page);
     await page.getByRole("button", { name: "Use this R" }).click();
