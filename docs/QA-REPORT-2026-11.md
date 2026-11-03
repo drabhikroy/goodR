@@ -12,7 +12,7 @@ the statement splitter that decides what Run Line sends now agrees with R's
 own parser on 2,944 of 2,946 real R files (89,438 statements), and the two
 others differ only for reasons the editor already handles.
 
-The review found twelve problems and fixed all twelve. Four mattered most:
+The review found thirteen problems and fixed all thirteen. Four mattered most:
 
 - The Open Posit Community and Open Stack Overflow buttons in Ask for help
   online never worked, because the window's link allowlist left both sites
@@ -37,7 +37,7 @@ risks reviewed.
 - Source: `532ec03` (goodR 1.0.0), then the branch with fixes
 - Linux 6.18, Ubuntu 24.04 container, two cores. Not tested on macOS,
   which is the primary platform; see Limitations
-- R 4.3.3, ark 0.1.252 (checksum verified by the project's own script),
+- R 4.3.3, ark 0.1.252 (checksum verified by the project's own script), knitr 1.45 and, for report failures, 1.52,
   Quarto 1.6.42, knitr, shiny, rmarkdown
 - Node 22, Rust 1.97, Vitest 5, Playwright 1.56 with Chromium
 - The real desktop app, built from source, driven on a virtual display
@@ -74,6 +74,7 @@ risks reviewed.
 | 10 | Low | A second damaged settings file overwrote the first set aside copy, and bytes that were not text were not set aside at all | Each damaged copy gets a name of its own | New unit test |
 | 11 | Trivial | The opening screen said "Seven scripts and documents"; there are eight, plus four apps | Corrected | Read from the shipped list |
 | 12 | Low | The CI token was not limited to reading | `permissions: contents: read` | Review |
+| 13 | Medium | With knitr 1.46 and later, a failing report showed R's message but not the line that failed, because knitr changed how it names the failing chunk and now prints the message first | Both of knitr's formats are read, and the newer range, which starts at the chunk header, is counted from the line after it | Found by the render tests on a Mac with knitr 1.52; reproduced and fixed against knitr 1.52 and 1.45 |
 
 Also added: a test that Replace never overwrites lines changed since the
 question, a promise SECURITY.md made with no test behind it, and tests for

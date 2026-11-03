@@ -106,10 +106,15 @@ fn progress(line: &str) -> Option<Line> {
 /// Works out why a render that exited with an error failed, from every
 /// line it printed.
 pub fn diagnose(lines: &[String]) -> Failure {
-    // knitr names the chunk that failed in one line, then R's message.
-    if let Some(index) = lines.iter().rposition(|line| line.trim_start().starts_with("Quitting from lines")) {
+    // knitr names the chunk that failed in one line. Up to knitr 1.45, R's
+    // message follows that line. Later versions print the message first, so
+    // when nothing follows, the last error printed before it is the one.
+    if let Some(index) = lines.iter().rposition(|line| line.trim_start().starts_with("Quitting from")) {
         if let Some((from, to, label)) = quitting(lines[index].trim()) {
-            let message = error_message(&lines[index + 1..]).unwrap_or_default();
+            let before = &lines[..index];
+            let message = error_message(&lines[index + 1..])
+                .or_else(|| before.iter().rposition(|line| line.trim_start().starts_with("Error")).and_then(|start| error_message(&before[start..])))
+                .unwrap_or_default();
             return Failure::Chunk { from, to, label, message };
         }
     }
@@ -124,17 +129,32 @@ pub fn diagnose(lines: &[String]) -> Failure {
     Failure::Other { message: error_message(lines).unwrap_or_else(|| last_lines(lines)) }
 }
 
-/// Reads "Quitting from lines 19-21 [label] (file.qmd)". Older knitr
-/// leaves out the label, and some versions write "lines 19-21 (file)".
+/// Reads the line where knitr names the chunk that failed, in either of the
+/// shapes knitr has used: "Quitting from lines 19-21 [label] (file.qmd)"
+/// up to knitr 1.45, and "Quitting from file.qmd:19-21 [label]" after. The
+/// label can be absent in both, and older knitr writes "lines 19-21 (file)".
 fn quitting(line: &str) -> Option<(u32, u32, String)> {
-    let rest = line.strip_prefix("Quitting from lines")?.trim_start();
-    let (range, rest) = rest.split_once(char::is_whitespace).unwrap_or((rest, ""));
+    let rest = line.strip_prefix("Quitting from")?.trim();
+    if let Some(old) = rest.strip_prefix("lines ") {
+        let old = old.trim_start();
+        let (range, rest) = old.split_once(char::is_whitespace).unwrap_or((old, ""));
+        let (from, to) = range.split_once('-').unwrap_or((range, range));
+        let label = rest.trim_start().strip_prefix('[').and_then(|inner| inner.split_once(']')).map(|(label, _)| label.to_string()).unwrap_or_default();
+        return Some((from.parse().ok()?, to.parse().ok()?, label));
+    }
+    // The file name can hold spaces and colons, so the label is taken from
+    // the end and the lines from after the last colon.
+    let (place, label) = match rest.strip_suffix(']').and_then(|head| head.rsplit_once(" [")) {
+        Some((place, label)) => (place, label.to_string()),
+        None => (rest, String::new()),
+    };
+    let (_, range) = place.rsplit_once(':')?;
     let (from, to) = range.split_once('-').unwrap_or((range, range));
-    let from: u32 = from.parse().ok()?;
-    let to: u32 = to.parse().ok()?;
-    let rest = rest.trim_start();
-    let label = rest.strip_prefix('[').and_then(|inner| inner.split_once(']')).map(|(label, _)| label.to_string()).unwrap_or_default();
-    Some((from, to, label))
+    let (from, to): (u32, u32) = (from.trim().parse().ok()?, to.trim().parse().ok()?);
+    // In this shape the range starts at the chunk's header line, where the
+    // older shape started at the line after it. Both end at the closing
+    // fence. The header is skipped, so both mean the same lines.
+    Some(((from + 1).min(to), to, label))
 }
 
 /// R's error message, without the "Error in" header, the backtrace, or
@@ -210,6 +230,23 @@ mod tests {
         // Older knitr, with the message on the header line.
         let old = lines("Quitting from lines 4-6 (a.Rmd)\nError in mean(x) : object 'x' not found\nCalls: <Anonymous> ...");
         assert_eq!(diagnose(&old), Failure::Chunk { from: 4, to: 6, label: String::new(), message: "object 'x' not found".into() });
+    }
+
+    #[test]
+    fn newer_knitr_names_the_file_first_and_prints_the_message_before() {
+        // As Quarto prints it with knitr 1.52, word for word.
+        let quarto = lines("processing file: broken.qmd\n1/5         \n2/5 [setup] \n3/5         \n4/5 [totals]\nError:\n! object 'nosuchthing' not found\n\nQuitting from broken.qmd:10-13 [totals]\nExecution halted\nWARN: Error encountered when rendering files");
+        // knitr 1.52 counts lines 10 to 13 from the chunk's header; knitr 1.45
+        // said 11 to 13 for the same chunk, counting from its first line of
+        // code. Both come out as 11 to 13.
+        assert_eq!(diagnose(&quarto), Failure::Chunk { from: 11, to: 13, label: "totals".into(), message: "object 'nosuchthing' not found".into() });
+        // As rmarkdown prints it with knitr 1.52, with a backtrace.
+        let rmd = lines("processing file: broken.Rmd\n4/4 [needs]\nError in `library()`:\n! there is no package called 'notapackageatall'\nBacktrace:\n 1. base::library(notapackageatall)\nQuitting from broken.Rmd:10-12 [needs]\nExecution halted");
+        assert_eq!(diagnose(&rmd), Failure::Chunk { from: 11, to: 12, label: "needs".into(), message: "there is no package called 'notapackageatall'".into() });
+        // A file name can hold spaces and colons, and a label can be absent.
+        assert_eq!(quitting("Quitting from my report: draft 2.qmd:7-9"), Some((8, 9, String::new())));
+        assert_eq!(quitting("Quitting from a.Rmd:3-3 [fig one]"), Some((3, 3, "fig one".into())));
+        assert_eq!(quitting("Quitting from somewhere else entirely"), None);
     }
 
     #[test]
