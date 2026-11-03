@@ -80,7 +80,7 @@ Some features need a little more. The app tells you when something is missing.
 
 ## Install
 
-1. Download `goodR-1.0.1.pkg` from the [latest release](https://github.com/drabhikroy/goodR/releases/latest).
+1. Download `goodR-1.0.2.pkg` from the [latest release](https://github.com/drabhikroy/goodR/releases/latest).
 2. Open it and follow the steps. macOS asks for an administrator password because the installer puts the app in your Applications folder.
 3. Open goodR from the Applications folder. It finds R and starts it. If there is more than one version of R it asks which one to use.
 

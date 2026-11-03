@@ -225,7 +225,7 @@ The app is built under `/private/tmp/goodr-target`, outside the project folder, 
 Release notes live in `docs/release-notes`, one file per version tag. To make a draft release from them, run this command.
 
 ```bash
-gh release create v1.0.1 goodR-1.0.1.pkg SHA256SUMS.txt --draft --title "goodR 1.0.1" --notes-file docs/release-notes/v1.0.1.md
+gh release create v1.0.2 goodR-1.0.2.pkg SHA256SUMS.txt --draft --title "goodR 1.0.2" --notes-file docs/release-notes/v1.0.2.md
 ```
 
 The same release can be built on GitHub Actions by `.github/workflows/release-macos.yml`. It runs only by hand, with `gh workflow run release-macos.yml --ref v1.2.3`. It needs these repository secrets.
@@ -256,8 +256,8 @@ Updates page links to the release page instead.
 To check a finished installer, and then an installed copy, run these commands.
 
 ```bash
-pkgutil --check-signature goodR-1.0.1.pkg
-spctl --assess --type install --verbose=4 goodR-1.0.1.pkg
+pkgutil --check-signature goodR-1.0.2.pkg
+spctl --assess --type install --verbose=4 goodR-1.0.2.pkg
 codesign --verify --deep --strict --verbose=4 "/Applications/goodR.app"
 spctl --assess --type execute --verbose=4 "/Applications/goodR.app"
 ```
