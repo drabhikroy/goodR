@@ -20,6 +20,11 @@ use std::path::Path;
 /// changes with the language R runs in.
 pub const NO_SHINY_MARKER: &str = "@@goodr-no-shiny@@";
 
+/// What the launcher prints before a syntax error in the app's files. Recent
+/// shiny releases report only "Error sourcing" and leave out where, so the
+/// launcher reads the files first and says where itself.
+const PARSE_MARKER: &str = "@@goodr-parse@@";
+
 /// The R that runs an app. The app and port arrive as command line
 /// arguments rather than inside the code, so no path can change what the
 /// code does.
@@ -38,6 +43,17 @@ if (!requireNamespace("shiny", quietly = TRUE)) {
   quit(status = 3)
 }
 options(shiny.autoreload = TRUE)
+target <- args[1]
+files <- if (dir.exists(target)) file.path(target, c("global.R", "ui.R", "server.R", "app.R")) else target
+for (file in files[file.exists(files)]) {
+  tryCatch(
+    parse(file = normalizePath(file), keep.source = FALSE),
+    error = function(problem) {
+      cat("@@goodr-parse@@\n", conditionMessage(problem), "\n", sep = "")
+      quit(save = "no", status = 1)
+    }
+  )
+}
 parent <- suppressWarnings(as.integer(Sys.getenv("GOODR_PARENT_PID")))
 if (.Platform$OS.type == "unix" && !is.na(parent) && requireNamespace("later", quietly = TRUE)) {
   watch <- function() {
@@ -248,7 +264,14 @@ pub fn diagnose(lines: &[String]) -> AppFailure {
     if lines.iter().any(|line| line.trim() == NO_SHINY_MARKER) {
         return AppFailure::NoShiny;
     }
-    // A parse error names the file, line, and column on the line after
+    // The launcher's own reading of the app's files, which names the spot
+    // whatever the shiny release.
+    if let Some(index) = lines.iter().position(|line| line.trim() == PARSE_MARKER) {
+        if let Some(failure) = lines.get(index + 1).and_then(|line| parse_spot(line.trim())) {
+            return failure;
+        }
+    }
+    // Older shiny releases print the error on the line after
     // "Error in parse(", so the spot can be marked in the editor.
     if let Some(index) = lines.iter().position(|line| line.trim_start().starts_with("Error in parse(")) {
         if let Some(failure) = lines.get(index + 1).and_then(|line| parse_spot(line.trim())) {
@@ -370,6 +393,11 @@ mod tests {
         let parse = lines("Loading required package: shiny\nError in parse(file, keep.source = FALSE, srcfile = src, encoding = enc) : \n  /work/app/app.R:4:0: unexpected end of input\n2: ui <- fluidPage(\n3: shinyApp(ui, server)\n  ^\nError in sourceUTF8(fullpath, envir = new.env(parent = sharedEnv)) : \nExecution halted");
         assert_eq!(diagnose(&parse), AppFailure::Parse { file: "/work/app/app.R".into(), line: 4, column: 0, message: "unexpected end of input".into() });
         assert_eq!(parse_spot("C:\\work\\app.R:3:7: unexpected symbol"), Some(AppFailure::Parse { file: "C:\\work\\app.R".into(), line: 3, column: 7, message: "unexpected symbol".into() }));
+        // As the launcher reports it, with a shiny that prints only "Error sourcing".
+        let marked = lines("@@goodr-parse@@\n/work/app/app.R:4:0: unexpected end of input\n2: ui <- fluidPage(\n   ^");
+        assert_eq!(diagnose(&marked), AppFailure::Parse { file: "/work/app/app.R".into(), line: 4, column: 0, message: "unexpected end of input".into() });
+        let recent = lines("Error: Error sourcing /work/app/app.R\nExecution halted");
+        assert_eq!(diagnose(&recent), AppFailure::Ended { message: "Error sourcing /work/app/app.R".into() });
         assert_eq!(diagnose(&lines("something odd\nExecution halted")), AppFailure::Ended { message: "something odd".into() });
     }
 }
