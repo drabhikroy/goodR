@@ -36,9 +36,17 @@ fn fetch(url: &str) -> String {
     let mut stream = std::net::TcpStream::connect(address).unwrap();
     stream.set_read_timeout(Some(Duration::from_secs(10))).unwrap();
     write!(stream, "GET / HTTP/1.0\r\nHost: {address}\r\n\r\n").unwrap();
-    let mut page = String::new();
-    let _ = stream.read_to_string(&mut page);
-    page
+    let mut page = Vec::new();
+    let _ = stream.read_to_end(&mut page);
+    String::from_utf8_lossy(&page).to_string()
+}
+
+/// The same, for a server running inside this test. The test runs on a
+/// single-threaded runtime, so waiting for the answer on it would stop that
+/// server from ever giving one; the read happens on its own thread instead.
+async fn fetch_here(url: &str) -> String {
+    let url = url.to_string();
+    tokio::task::spawn_blocking(move || fetch(&url)).await.unwrap()
 }
 
 const APP: &str = "library(shiny)\nui <- fluidPage(titlePanel(\"Old Faithful\"))\nserver <- function(input, output) {}\nshinyApp(ui, server)\n";
@@ -201,6 +209,7 @@ async fn an_app_exports_as_a_web_page_that_the_preview_serves() {
     let bundled = std::fs::read_to_string(dest.join("app.json")).unwrap();
     assert!(bundled.contains("Old Faithful"));
     let server = render::serve::serve(&dest).await.unwrap();
-    assert!(fetch(server.url().trim_end_matches('/')).contains("200 OK"));
+    let page = fetch_here(server.url().trim_end_matches('/')).await;
+    assert!(page.contains("200 OK"), "the preview answered: {}", &page[..page.len().min(300)]);
     server.stop();
 }
