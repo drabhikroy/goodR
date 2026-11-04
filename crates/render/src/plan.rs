@@ -109,6 +109,16 @@ pub fn plan(source: &Path, target: Target, tools: &Tools) -> Result<Plan, Failur
             args.push("--to".into());
             args.push(to.into());
         }
+        // Typst draws R's plots as SVG unless told otherwise, and R draws SVG
+        // through cairo. On a Mac where R's cairo cannot load, because it
+        // wants XQuartz's libraries, the first chunk then fails with "no
+        // open graphics device". PNG needs no cairo, and is what HTML and
+        // Word reports use. A document that names its own figure format
+        // keeps it.
+        if to == Some("typst") && !names_figure_format(source) {
+            args.push("-M".into());
+            args.push("fig-format:png".into());
+        }
         return Ok(Plan { program: quarto, args, env, dir });
     }
     let format = match target {
@@ -119,6 +129,12 @@ pub fn plan(source: &Path, target: Target, tools: &Tools) -> Result<Plan, Failur
     };
     let args = vec![OsString::from("-e"), OsString::from(RMARKDOWN_CALL), file, OsString::from(format)];
     Ok(Plan { program: tools.rscript.clone(), args, env, dir })
+}
+
+/// Whether a document sets its own figure format, in its header or in a
+/// chunk.
+fn names_figure_format(file: &Path) -> bool {
+    std::fs::read_to_string(file).map(|text| text.contains("fig-format") || text.contains("fig_format")).unwrap_or(false)
 }
 
 #[cfg(test)]
@@ -147,11 +163,27 @@ mod tests {
     }
 
     #[test]
+    fn typst_pdfs_ask_for_png_figures_unless_the_document_chooses() {
+        let dir = tempfile::tempdir().unwrap();
+        let tools = tools(dir.path(), true);
+        let own = dir.path().join("own.qmd");
+        std::fs::write(&own, "---\nformat: typst\nfig-format: svg\n---\n").unwrap();
+        let chosen = plan(&own, Target::Pdf, &tools).unwrap();
+        assert!(!chosen.args.iter().any(|arg| arg == "-M"));
+        let plain = dir.path().join("plain.qmd");
+        std::fs::write(&plain, "---\nformat: typst\n---\n").unwrap();
+        assert!(plan(&plain, Target::Pdf, &tools).unwrap().args.iter().any(|arg| arg == "fig-format:png"));
+        // Only the Typst route changes: HTML and Word already draw PNG.
+        assert!(!plan(&plain, Target::Html, &tools).unwrap().args.iter().any(|arg| arg == "-M"));
+        assert!(!plan(&plain, Target::Word, &tools).unwrap().args.iter().any(|arg| arg == "-M"));
+    }
+
+    #[test]
     fn pdf_uses_typst_so_no_latex_is_needed() {
         let dir = tempfile::tempdir().unwrap();
         let tools = tools(dir.path(), true);
         let quarto = plan(&dir.path().join("report.qmd"), Target::Pdf, &tools).unwrap();
-        assert_eq!(quarto.args[2..], [OsString::from("--to"), OsString::from("typst")]);
+        assert_eq!(quarto.args[2..], [OsString::from("--to"), OsString::from("typst"), OsString::from("-M"), OsString::from("fig-format:png")]);
         // R Markdown goes through Quarto for PDF too, when Quarto is here.
         let rmd = plan(&dir.path().join("notes.Rmd"), Target::Pdf, &tools).unwrap();
         assert!(rmd.program.ends_with("quarto"));
