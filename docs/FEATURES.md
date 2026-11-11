@@ -152,8 +152,8 @@ app reconnects to the R already running, so your objects and unsaved edits
 are kept.
 
 Every project has its own R, and so does every script that belongs to no
-project. Open a script from anywhere (Finder, the Open dialog, or the recent
-list) and the app looks for a `.Rproj` in the folders above it. If it finds
+project. Open a script from anywhere (Finder, File Explorer, or another file
+manager, the Open dialog, or the recent list) and the app looks for a `.Rproj` in the folders above it. If it finds
 one, the script runs in that project's R, beside the project's other
 scripts. If not, the script gets an R of its own, started in its folder, so
 `"data.csv"` means the file beside it. Several projects can be open at once.
@@ -478,8 +478,8 @@ any command by name.
 ## The optional assistant
 
 The assistant runs on your own computer, and you set it up in three steps.
-Use the Ollama already on your Mac or a private copy kept inside the app, let
-the app check your Mac's memory and disk if you wish, and choose a model from
+Use the Ollama already on your computer or, on a Mac, a private copy kept
+inside the app, let the app check your computer's memory and disk if you wish, and choose a model from
 a short list that says what each one is good and weaker at. Only code models
 are listed, since they write R that runs.
 

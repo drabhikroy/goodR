@@ -941,7 +941,8 @@ test("everything that can be updated is listed on one page, and the app updates 
   await expect(list).toContainText("2 with newer versions");
   await expect(list).toContainText("ggplot2 3.5.0 to 3.5.2");
   await expect(list.getByRole("button", { name: "Get R 4.5.2" })).toBeVisible();
-  await list.getByRole("button", { name: "Update to 1.1.0" }).click();
+  // The stand-in offers the version after this one, whatever this one is.
+  await list.getByRole("button", { name: /^Update to \d+\.\d+\.\d+$/ }).click();
   await expect(list.getByRole("button", { name: "Restart to finish" })).toBeVisible();
   // Updating packages leaves the page open, and it looks again after.
   page.once("dialog", (question) => question.accept());

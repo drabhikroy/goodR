@@ -10,6 +10,13 @@ import type { Backend } from "./backend";
 import type { AnswerEvent, AppEvent, ExportEvent, AssistantTask, DataMeta, DataRow, MachineSpecs, ModelCatalog, ModelFit, ProjectInfo, REvent, RenderEvent, RenderResult, RenderTarget, RObject, SetupEvent, Settings } from "./types";
 import { version as packageVersion } from "../../package.json";
 
+/** A version one minor release above this one, so the Updates page always
+ * has a newer app to offer, whatever version the app itself is at. */
+const NEWER_APP = (() => {
+  const [major, minor] = packageVersion.split(".").map(Number);
+  return `${major}.${minor + 1}.0`;
+})();
+
 // Where the example scripts appear to live.
 const ROOT = "/Users/demo/Documents/penguins";
 
@@ -641,14 +648,14 @@ export function createMockBackend(): Backend {
     // page has something to show.
     latestVersions: async () => {
       await delay(80);
-      return { app: "1.1.0", appInPlace: true, appPage: "https://github.com/drabhikroy/goodR/releases/latest", r: "4.5.2", ollama: "0.41.0" };
+      return { app: NEWER_APP, appInPlace: true, appPage: "https://github.com/drabhikroy/goodR/releases/latest", r: "4.5.2", ollama: "0.41.0" };
     },
     installAppUpdate: async () => {
       for (const done of [2_000_000, 6_000_000, 12_000_000]) {
         await delay(60);
         for (const listener of updateListeners) listener({ done, total: 12_000_000 });
       }
-      return "1.1.0";
+      return NEWER_APP;
     },
     onUpdateProgress: async (listener) => {
       updateListeners.add(listener);

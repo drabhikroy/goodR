@@ -1,14 +1,14 @@
 # R: What Is It Good For?
 
 [![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue)](LICENSE.md)
-[![Platform](https://img.shields.io/badge/platform-macOS-lightgray)](#requirements)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgray)](#requirements)
 ![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-arm64-black?logo=apple&logoColor=white)
 ![Intel](https://img.shields.io/badge/Intel-x86__64-black?logo=apple&logoColor=white)
 [![Release](https://img.shields.io/github/v/release/drabhikroy/goodR)](https://github.com/drabhikroy/goodR/releases)
 
 R: What Is It Good For? is a desktop application for writing and running R, the programming language used for statistics and data analysis. It is an integrated development environment, or IDE: one window for writing code, running it, and reading the result. Results appear next to the code that made them, and a failed line is explained in plain words instead of a bare error message. It suits a first script as well as a daily one, whether you are learning R, teaching it, or using it for research.
 
-The app is available for macOS today. Windows and Linux versions are planned.
+The app runs on macOS. Linux and Windows versions are available as a preview: they are built and tested by machine, and are waiting on reports from people using them on a real desktop.
 
 Everything runs on your computer. No account is needed, and the app collects no data about you or your work.
 
@@ -72,15 +72,16 @@ It never changes your files on its own. Saving, installing, and running happen o
 
 ## Requirements
 
-- macOS 12 Monterey or later
-- An Apple silicon or Intel Mac
-- R 4.2 or later
+- **macOS:** macOS 12 Monterey or later, on an Apple silicon or Intel Mac
+- **Linux (preview):** a 64-bit Intel or AMD computer running Ubuntu 22.04, Debian 12, or a newer release of either, or another current distribution
+- **Windows (preview):** Windows 10 or 11 on a 64-bit Intel or AMD computer
+- **R:** version 4.2 or later, on every system
 
-The app uses the R already on your computer. If you do not have R yet, install it before the app.
+The app uses the R already on your computer. If you do not have R yet, install it before the app. CRAN, the official download site, has R for each system.
 
-1. Open [R for macOS](https://cran.r-project.org/bin/macosx/) on CRAN, the official download site.
-2. Download the installer for your Mac. Choose arm64 for Apple silicon or x86_64 for Intel. To check which Mac you have, choose About This Mac from the Apple menu. A chip name that starts with Apple means Apple silicon.
-3. Open the downloaded file and follow the steps.
+- **macOS.** Open [R for macOS](https://cran.r-project.org/bin/macosx/). Download the installer for your Mac, arm64 for Apple silicon or x86_64 for Intel, then open it and follow the steps. To check which Mac you have, choose About This Mac from the Apple menu. A chip name that starts with Apple means Apple silicon.
+- **Linux.** Follow the steps for your distribution under [R for Linux](https://cran.r-project.org/bin/linux/). Ubuntu 22.04's own `r-base` package is R 4.1, which is too old, so on Ubuntu use CRAN's repository as those steps describe.
+- **Windows.** Open [R for Windows](https://cran.r-project.org/bin/windows/base/), download the installer, and open it. The usual choices are fine.
 
 Some features need a little more. The app tells you when something is missing.
 
@@ -90,53 +91,97 @@ Some features need a little more. The app tells you when something is missing.
 | Render Quarto documents | [Quarto](https://quarto.org/docs/get-started/) |
 | Make PDFs | LaTeX or Quarto. The app can install a small LaTeX for you |
 | Run Shiny apps | The shiny package, which the app offers to install |
-| Use the assistant | Ollama, which the app can install and run for you |
+| Use the assistant | [Ollama](https://ollama.com/download). On a Mac the app can install and run it for you |
 
 ## Install
 
-1. Download `goodR-1.0.3.pkg` from the [latest release](https://github.com/drabhikroy/goodR/releases/latest).
-2. Open it and follow the steps. macOS asks for an administrator password because the installer puts the app in your Applications folder.
-3. Open goodR from the Applications folder. It finds R and starts it. If there is more than one version of R it asks which one to use.
+Every installer is on the [latest release](https://github.com/drabhikroy/goodR/releases/latest) page. When goodR first opens it finds R and starts it. If there is more than one version of R, it asks which one to use. Quit goodR before installing a newer version over an older one.
 
-The installer is signed and notarized by Apple so macOS opens it without a warning. Quit goodR before installing a newer version over an older one.
+### macOS
+
+1. Download `goodR-1.1.0.pkg`.
+2. Open it and follow the steps. macOS asks for an administrator password because the installer puts the app in your Applications folder.
+3. Open goodR from the Applications folder.
+
+The installer is signed and notarized by Apple, so macOS opens it without a warning.
+
+### Linux (preview)
+
+On Ubuntu, Debian, and other systems that use `.deb` packages, download `goodR-1.1.0-amd64.deb` and install it with this command, run in the folder you downloaded it to.
+
+```bash
+sudo apt install ./goodR-1.1.0-amd64.deb
+```
+
+On any other distribution, download `goodR-1.1.0-x86_64.AppImage`, make it runnable, and open it.
+
+```bash
+chmod +x goodR-1.1.0-x86_64.AppImage
+./goodR-1.1.0-x86_64.AppImage
+```
+
+If the AppImage does not open, your system may need FUSE 2, which AppImages use. On Ubuntu 24.04 it installs with `sudo apt install libfuse2t64`, and other distributions name the package `fuse2` or `fuse-libs`.
+
+### Windows (preview)
+
+1. Download `goodR-1.1.0-x64-setup.exe` and open it.
+2. The installer is not yet signed, so Windows shows "Windows protected your PC" the first time. Choose More info, then Run anyway.
+3. Follow the steps. It installs for your account alone, so it needs no administrator password, and it adds goodR to the Start menu.
 
 ### Checking the download
 
-Each release includes `SHA256SUMS.txt`. Put it in the same folder as the installer and run this command. It should report `OK`.
+Each release lists a checksum for every installer: `SHA256SUMS.txt` for the Mac, `SHA256SUMS-linux.txt` for Linux, and `SHA256SUMS-windows.txt` for Windows. Put the file in the same folder as the installer and run the command for your system. On macOS and Linux it should report `OK`, and on Windows it should print `True`.
 
 ```bash
+# macOS
 shasum -a 256 -c SHA256SUMS.txt
+# Linux
+sha256sum -c --ignore-missing SHA256SUMS-linux.txt
+```
+
+```powershell
+# Windows, in PowerShell
+(Get-FileHash goodR-1.1.0-x64-setup.exe).Hash -eq (Get-Content SHA256SUMS-windows.txt).Split(" ")[0]
 ```
 
 ### Removing the app
 
-1. Quit goodR.
-2. Move goodR from the Applications folder to the Trash.
+Quit goodR first. Your scripts and reports stay where you saved them either way.
 
-Your scripts and reports stay where you saved them. To also remove the app's settings and saved versions, delete the folder `~/Library/Application Support/app.goodfor.ide`.
+- **macOS.** Move goodR from the Applications folder to the Trash.
+- **Linux.** For the `.deb`, run `sudo apt remove good-r`. For the AppImage, delete the file.
+- **Windows.** Open Settings, then Apps, then Installed apps, and choose Uninstall beside goodR.
+
+To also remove the app's settings and saved versions, delete its folders, listed under [Your data](#your-data).
 
 ## Using the app
 
 1. Open goodR. Start a new script, open one you already have, or choose **Open the examples**.
-2. Put the cursor on a line of code and press Command Return.
-3. The result appears on the right. Keep going line by line or press Shift Command Return to run the whole file.
+2. Put the cursor on a line of code and press Command Return on a Mac, or Ctrl Enter on Linux and Windows.
+3. The result appears on the right. Keep going line by line, or press Shift Command Return, or Ctrl Shift Enter, to run the whole file.
 
 New to the app? Choose **Take the tour** on the opening screen. It shows each part of the window in a couple of minutes.
 
-Help is under the Help menu or Shift Command /. It has a search box and answers to common questions. Each topic can point to the part of the window it describes. The keyboard shortcuts are listed in the [feature guide](docs/FEATURES.md#keyboard-shortcuts-and-sessions).
+Help is under the Help menu, or Shift Command / on a Mac and Ctrl Shift / elsewhere. It has a search box and answers to common questions. Each topic can point to the part of the window it describes. The keyboard shortcuts are listed in the [feature guide](docs/FEATURES.md#keyboard-shortcuts-and-sessions).
 
 ## Your data
 
 Your code and data stay on your computer. The app sends no usage data and no crash reports. The only connections it makes on its own are update checks. They ask GitHub, CRAN, and Ollama for version numbers and nothing else. You can set them to happen only when you ask.
 
-| What the app keeps | Where | How long it stays |
+The app keeps its own files in a folder named `app.goodfor.ide`, and where that folder is depends on the system.
+
+- **macOS:** `~/Library/Application Support/app.goodfor.ide`
+- **Linux:** `~/.config/app.goodfor.ide` for settings and earlier versions, and `~/.local/share/app.goodfor.ide` for the assistant and LaTeX
+- **Windows:** `%APPDATA%\app.goodfor.ide`
+
+| What the app keeps | Where, inside that folder | How long it stays |
 | --- | --- | --- |
-| Settings and recent files | `~/Library/Application Support/app.goodfor.ide/settings.json` | Until you reset the app or delete the file |
-| Earlier versions of each script | `~/Library/Application Support/app.goodfor.ide/history` | The latest 100 versions of each script |
+| Settings and recent files | `settings.json` | Until you reset the app or delete the file |
+| Earlier versions of each script | `history` | The latest 100 versions of each script |
 | Unsaved changes | The app's private storage | Until the file is saved or closed |
 | Recent results | The app's private storage | The latest 60, until you clear them |
-| The assistant's Ollama and models | `~/Library/Application Support/app.goodfor.ide/assistant` | Until you remove them from the assistant's setup |
-| The app's own LaTeX, if you install it | `~/Library/Application Support/app.goodfor.ide/TinyTeX` | Until you delete the folder |
+| The assistant's own copy of Ollama, on a Mac, and its models | `assistant` | Until you remove them from the assistant's setup |
+| The app's own LaTeX, if you install it | `TinyTeX` | Until you delete the folder |
 
 [Your files and your privacy](docs/PRIVACY.md) explains which files the app may open and what the assistant can see. See [The assistant](#the-assistant) below for what it can see once it is set up.
 
@@ -144,7 +189,7 @@ Your code and data stay on your computer. The app sends no usage data and no cra
 
 An optional assistant explains errors and code, and can draft R from a plain description of what you want. It runs entirely on your computer through [Ollama](https://ollama.com), free software that runs language models locally, so nothing you ask it is sent anywhere.
 
-Setting it up takes three steps. Choose the Ollama already on your Mac, or let the app install and verify a private copy. Optionally let the app check your Mac's memory and free disk space, so it can say which models will fit. Then choose a code model from a short list, each one showing what it is good and less good at. The app suggests the one that fits your Mac best, and you can add, remove, or switch models at any time.
+Setting it up takes three steps. Choose the Ollama already on your computer, or on a Mac let the app install and verify a private copy of its own. Optionally let the app check your computer's memory and free disk space, so it can say which models will fit. Then choose a code model from a short list, each one showing what it is good and less good at. The app suggests the one that fits your Mac best, and you can add, remove, or switch models at any time.
 
 The assistant sees the code you ask about, R's error message, your R version, and the names of your objects and columns. It never sees the values in your data.
 
@@ -160,7 +205,7 @@ The assistant sees the code you ask about, R's error message, your R version, an
 - **Screen readers.** Buttons and controls have names. Results and errors are announced as they happen without moving focus.
 - **More than color.** Each state has its own icon and words as well as its own color.
 - **Color vision.** Five palettes cover standard vision, deuteranopia, protanopia, tritanopia, and monochrome.
-- **Size and motion.** Text scales from 90 to 150 percent. Animation stops when Reduce Motion is on.
+- **Size and motion.** Text scales from 90 to 150 percent. Animation stops when the system is set to reduce motion.
 
 Automated tests cannot catch everything. If something gets in your way, please [open an issue](https://github.com/drabhikroy/goodR/issues). The full list is in [Accessibility](docs/ACCESSIBILITY.md).
 

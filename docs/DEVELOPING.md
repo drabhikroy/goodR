@@ -145,6 +145,17 @@ synced.
 `npm run dev` alone serves the interface in a browser with a stand-in for
 R, which is handy for working on layout.
 
+On Linux, Tauri also needs WebKitGTK and a few other system libraries.
+On Debian and Ubuntu they install with this command.
+
+```bash
+sudo apt install libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+```
+
+On Windows, Rust needs the Microsoft C++ Build Tools, and the app needs
+WebView2, which Windows 11 already has. Run the commands above from Git
+Bash or PowerShell.
+
 ## Tests and standards gates
 
 ```bash
@@ -200,6 +211,19 @@ Build outside iCloud Drive. Folders that iCloud syncs, including
 `~/Documents` and `~/Desktop` when Desktop and Documents syncing is on,
 attach extended attributes that `codesign` refuses.
 
+On Linux, the same command with `--bundles deb,appimage` makes a Debian
+package and an AppImage. On Windows, `--bundles nsis` makes an installer
+that installs for the current user, with no administrator password, and
+fetches WebView2 if Windows lacks it. Each is built on the system it is
+for, after `node scripts/fetch-ark.mjs` has placed that system's ark.
+
+Three things differ on Windows, and the code handles each. ark finds
+R.dll through the PATH, so R's `bin\x64` folder is put first on the PATH
+ark starts with. Every program the app starts is started with no console
+window, since Windows would otherwise flash one open for each run. And
+Stop ends a render's whole process tree with `taskkill /T`, since Windows
+has no process groups.
+
 ## Code signing and verification
 
 The Mac app is signed with a Developer ID Application certificate, uses the
@@ -225,7 +249,7 @@ The app is built under `/private/tmp/goodr-target`, outside the project folder, 
 Release notes live in `docs/release-notes`, one file per version tag. To make a draft release from them, run this command.
 
 ```bash
-gh release create v1.0.3 goodR-1.0.3.pkg SHA256SUMS.txt --draft --title "goodR 1.0.3" --notes-file docs/release-notes/v1.0.3.md
+gh release create v1.1.0 goodR-1.1.0.pkg SHA256SUMS.txt --draft --title "goodR 1.1.0" --notes-file docs/release-notes/v1.1.0.md
 ```
 
 The same release can be built on GitHub Actions by `.github/workflows/release-macos.yml`. It runs only by hand, with `gh workflow run release-macos.yml --ref v1.2.3`. It needs these repository secrets.
@@ -253,11 +277,39 @@ secrets `TAURI_SIGNING_PRIVATE_KEY` and
 the release is published. A build without them still works, and its
 Updates page links to the release page instead.
 
+### Linux and Windows releases
+
+The Linux and Windows installers are built on GitHub Actions by
+`.github/workflows/release-linux-windows.yml`, since neither can be built
+on a Mac. It runs only by hand, on a version tag, so the tag goes up
+first. The workflow builds both, then adds `goodR-VERSION-amd64.deb`,
+`goodR-VERSION-x86_64.AppImage`, `goodR-VERSION-x64-setup.exe`,
+`SHA256SUMS-linux.txt`, and `SHA256SUMS-windows.txt` to the draft release
+for that tag. If the Mac draft is already there it joins it, and if not
+it starts the draft. Each system has its own checksum file, so the Mac's
+`SHA256SUMS.txt` is never replaced.
+
+```bash
+git tag v1.2.3
+git push origin v1.2.3
+scripts/release-mac.sh
+gh release create v1.2.3 goodR-1.2.3.pkg SHA256SUMS.txt --draft --title "goodR 1.2.3" --notes-file docs/release-notes/v1.2.3.md
+gh workflow run release-linux-windows.yml --ref v1.2.3
+```
+
+Both are previews until they have been tried on a real desktop. The
+Windows installer is not code signed, so Windows shows "Windows protected
+your PC" the first time it opens, and More info, then Run anyway, goes
+past it. Neither build carries the update key, so on Linux and Windows
+the Updates page links to the release page.
+
+### Checking the Mac installer
+
 To check a finished installer, and then an installed copy, run these commands.
 
 ```bash
-pkgutil --check-signature goodR-1.0.3.pkg
-spctl --assess --type install --verbose=4 goodR-1.0.3.pkg
+pkgutil --check-signature goodR-1.1.0.pkg
+spctl --assess --type install --verbose=4 goodR-1.1.0.pkg
 codesign --verify --deep --strict --verbose=4 "/Applications/goodR.app"
 spctl --assess --type execute --verbose=4 "/Applications/goodR.app"
 ```
