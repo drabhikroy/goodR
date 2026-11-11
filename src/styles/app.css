@@ -2078,14 +2078,17 @@ body.is-resizing-columns * {
 .canvas-views {
   flex: none;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   flex-wrap: wrap;
-  gap: 0.15rem;
-  padding: 0.2rem 0.5rem;
+  gap: 0;
+  padding: 0 0.5rem;
   border-bottom: 1px solid var(--border);
   background: var(--panel);
 }
 
+/* The views are plain names in one row, the one on show underlined, as the
+   tabs of a page are. A picture beside each name only joins them when the
+   canvas is too narrow for the names. */
 .canvas-view {
   position: relative;
   flex: none;
@@ -2093,13 +2096,18 @@ body.is-resizing-columns * {
   align-items: center;
   gap: 0.35rem;
   min-height: var(--target);
-  padding: 0 0.55rem;
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
+  padding: 0 0.7rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
   background: transparent;
   color: var(--text-muted);
   font-size: 0.88rem;
   cursor: pointer;
+}
+
+.canvas-view svg {
+  display: none;
 }
 
 .canvas-view:hover {
@@ -2108,13 +2116,16 @@ body.is-resizing-columns * {
 }
 
 .canvas-view.is-on {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+  border-bottom-color: var(--accent);
   color: var(--text);
   font-weight: 600;
 }
 
 @container (max-width: 24rem) {
+  .canvas-view svg {
+    display: block;
+  }
+
   .canvas-view:not(.is-on) .canvas-view-name {
     position: absolute;
     width: 1px;
@@ -2204,6 +2215,23 @@ body.is-resizing-columns * {
   font-size: 0.88rem;
   font-weight: 600;
   color: var(--text-muted);
+}
+
+/* What can be done with the output, in the one row with where it came from. */
+.stage-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.stage-tools .result-actions.is-inline {
+  margin-left: 0;
+}
+
+/* The actions are in the header on the stage, so the result's own status
+   line needs no room kept for them. */
+.output-card.is-standalone .output-head {
+  padding-right: 0;
 }
 
 .stage-body {
@@ -2390,26 +2418,18 @@ body.is-resizing-columns * {
   font-size: 0.76rem;
 }
 
-/* A section's name heads the results that came from it, on a line of its
-   own, so a section's results read as a group however the cards wrap. */
+/* A lane's name, on the left of the results that came from that part of
+   the script, so a section's results read as a group however many there are. */
 .timeline-section {
-  flex: 0 0 100%;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.15rem;
-  font-size: 0.74rem;
-  font-weight: 600;
-  color: var(--text-muted);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.timeline-section::after {
-  content: "";
-  flex: 1;
-  border-top: 1px solid var(--border);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+  overflow-wrap: anywhere;
 }
 
 .timeline-none {
@@ -2428,22 +2448,71 @@ body.is-resizing-columns * {
   cursor: pointer;
 }
 
-/* Cards wrap into rows, so a taller strip shows more of them at once, and
-   scroll when there are more than fit. */
+/* Lanes run down the strip, one for each part of the script, and scroll
+   when there are more than fit. */
 .timeline-list {
   flex: 1;
   min-height: 0;
   display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 0.15rem 0.35rem;
+  overflow-y: auto;
+}
+
+.timeline-lane {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  gap: 0.6rem;
+  padding: 0.45rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.timeline-lane:first-child {
+  border-top: none;
+}
+
+/* The lane holding the output on the stage is marked down its left edge. */
+.timeline-lane.has-current .timeline-lane-label {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.timeline-lane-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  padding-left: 0.55rem;
+}
+
+.timeline-lane-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+/* Said in words with a shape, so it never depends on color. */
+.timeline-lane-problem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.timeline-cards {
+  display: flex;
   flex-wrap: wrap;
   align-content: flex-start;
-  gap: 0.45rem;
-  padding: 0.2rem 0.15rem;
-  overflow-y: auto;
+  gap: 0.4rem;
+  min-width: 0;
 }
 
 .timeline-item {
   flex: none;
-  width: 7.2rem;
+  width: 6.4rem;
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -2473,7 +2542,7 @@ body.is-resizing-columns * {
 
 .thumb {
   display: block;
-  height: 3.3rem;
+  height: 2.9rem;
   border-radius: var(--radius-sm);
   overflow: hidden;
 }
@@ -3003,6 +3072,12 @@ body.is-resizing-columns * {
 .object-card.is-action:hover .object-card-face,
 .object-card.is-more:hover .object-card-face {
   color: var(--text);
+}
+
+.object-tools {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
 }
 
 .object-clear {

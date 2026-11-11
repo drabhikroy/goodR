@@ -222,7 +222,7 @@ test("results from the script land in the canvas as a card with a link back to t
   await expect(card).toBeVisible();
   // The quiet assignment shows by its gutter check alone, not as a card.
   await expect(feed(page).locator(".output-card")).toHaveCount(1);
-  await card.getByRole("button", { name: "Go to line 2" }).click();
+  await feed(page).getByRole("button", { name: "Line 2", exact: true }).click();
   await expect(page.locator(".editor-host .cm-activeLine")).toHaveText("1 + 1");
   // Running the line again moves its card to the bottom rather than
   // leaving a second copy.

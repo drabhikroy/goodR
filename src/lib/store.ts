@@ -359,7 +359,7 @@ export const defaultSettings: Settings = {
   sessionProject: "",
   consoleHeight: 230,
   consoleInputHeight: 96,
-  timelineHeight: 184,
+  timelineHeight: 232,
   showSidebar: true,
   showCanvas: true,
   showPrompt: true,

@@ -82,15 +82,8 @@ export function OutputCard({ blockId, showLine = false }: { blockId: string; sho
     >
       {showLine && (
         <div className="cell-in">
-          {/* On the stage there is room, so Run again, Copy, and Hide sit
-              in this row, always in view, rather than floating over the
-              result, where they would cover a plot. */}
-          <div className="cell-in-head">
-            <button type="button" className="cell-line" onClick={() => editor.goToLine(block.file, line)}>
-              Go to {label.toLowerCase()}
-            </button>
-            {done && !quiet && <ResultActions blockId={blockId} block={block} inline />}
-          </div>
+          {/* On the stage, the line's link and Run again, Copy, and Hide are
+              in the stage's own header above, so the code stands alone. */}
           <pre className="cell-code">{block.code.split("\n").slice(0, 4).join("\n") + (block.code.split("\n").length > 4 ? "\n..." : "")}</pre>
         </div>
       )}
@@ -179,7 +172,7 @@ function TimeSpent({ profile, duration }: { profile: RunProfile; duration: numbe
  * is inside it, so they cost nothing to look at the rest of the time and
  * are never more than one move away.
  */
-function ResultActions({ blockId, block, inline = false }: { blockId: string; block: Block; inline?: boolean }) {
+export function ResultActions({ blockId, block, inline = false }: { blockId: string; block: Block; inline?: boolean }) {
   const hasText = block.items.some((item) => item.type !== "plot");
   return (
     <div className={`result-actions ${inline ? "is-inline" : ""}`} role="group" aria-label="Result actions">

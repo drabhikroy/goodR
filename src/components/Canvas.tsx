@@ -3,7 +3,7 @@
 // commands, the assistant, reports, and running apps open as sheets over
 // it from the buttons on its top bar.
 
-import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   activateTab,
   checkPackageUpdates,
@@ -40,12 +40,12 @@ import type { RObject } from "../lib/types";
 import { useViewportSize } from "../lib/viewport";
 import { firstWarningTitle } from "../lib/warnings";
 import { packageProgress } from "../lib/packages";
-import { AppWindowIcon, ArrowIcon, BroomIcon, ChartIcon, CloseIcon, FunctionIcon, HelpIcon, HistoryIcon, ImportIcon, ModelIcon, MoreIcon, PackageIcon, PinIcon, PlusIcon, ReportIcon, SaveIcon, SearchIcon, SparkIcon, StopIcon, TableIcon, UndoIcon, ValueIcon } from "./Icons";
+import { AppWindowIcon, ArrowIcon, BroomIcon, ChartIcon, CloseIcon, FunctionIcon, HelpIcon, HistoryIcon, ImportIcon, ModelIcon, MoreIcon, PackageIcon, PinIcon, PlusIcon, ReportIcon, SaveIcon, SearchIcon, SparkIcon, StopIcon, TableIcon, TriangleIcon, UndoIcon, ValueIcon } from "./Icons";
 import { AssistantPane } from "./AssistantPane";
 import { AppPane } from "./AppPane";
 import { HistoryList } from "./Composer";
 import { DataViewer } from "./DataViewer";
-import { OutputCard, PlotFigure } from "./OutputCard";
+import { OutputCard, PlotFigure, ResultActions } from "./OutputCard";
 import { ReportPane } from "./ReportPane";
 import { Splitter } from "./Splitter";
 import { Popover, usePopover } from "./Popover";
@@ -193,16 +193,18 @@ function ObjectCards() {
             <span className="object-card-face">{all ? "Fewer" : `${objects.length - LIMIT} more`}</span>
           </button>
         )}
-        <button type="button" className="object-card is-action" onClick={() => openDialog("importData")}>
-          <span className="object-card-face">
-            <ImportIcon size={14} /> Import data
-          </span>
-        </button>
-        {objects.length > 0 && (
-          <button type="button" className="icon-button object-clear" aria-label="Clear all objects" title="Clear all objects" onClick={clearWorkspace}>
-            <BroomIcon size={15} />
+        {/* What is done with the objects as a whole sits together at the end
+            of the row as two small buttons, so the row is mostly objects. */}
+        <span className="object-tools">
+          <button type="button" className="icon-button" aria-label="Import data" title="Import data" onClick={() => openDialog("importData")}>
+            <ImportIcon size={15} />
           </button>
-        )}
+          {objects.length > 0 && (
+            <button type="button" className="icon-button object-clear" aria-label="Clear all objects" title="Clear all objects" onClick={clearWorkspace}>
+              <BroomIcon size={15} />
+            </button>
+          )}
+        </span>
       </div>
       {chosen && (
         <div className="object-detail" role="status">
@@ -452,8 +454,13 @@ function StagePane({ group, pinned }: { group: Group; pinned: boolean }) {
   const batch = useStore((state) => (group.type === "block" ? state.blocks[group.blockId]?.batch : group.type === "typed" ? group.input?.batch : undefined));
   // Not while R is still running it, when there is nothing to undo yet.
   const undoable = useStore((state) => Boolean(batch && state.undo[state.activeSession] === batch && state.r.status !== "busy"));
+  // Run again, Copy, and Hide belong to a script's result once it is done.
+  const block = useStore((state) => (group.type === "block" ? state.blocks[group.blockId] : undefined));
+  const actions = group.type === "block" && block && block.status !== "running" && block.status !== "queued" && !isQuiet(block) && block.status !== "skipped";
   return (
     <div className={`stage-pane ${pinned ? "is-pinned" : ""}`} aria-label={pinned ? "Pinned output" : "Output"} role="group">
+      {/* One header for the output: where it came from on the left, and on
+          the right what can be done with it, which was in two rows before. */}
       <header className="stage-head">
         {group.type === "block" ? (
           <button type="button" className="stage-title is-link" title="Go to this line in the script" onClick={() => revealSource(key, true)}>
@@ -466,14 +473,17 @@ function StagePane({ group, pinned }: { group: Group; pinned: boolean }) {
             <OutputLabel group={group} />
           </span>
         )}
-        {undoable && (
-          <button type="button" className="button small quiet push-end" title={`Put back the objects this run changed, ${keyLabel("⌥⌘Z")}`} onClick={undoLastRun}>
-            <UndoIcon size={14} /> Undo run
+        <div className="stage-tools push-end">
+          {actions && block && group.type === "block" && <ResultActions blockId={group.blockId} block={block} inline />}
+          {undoable && (
+            <button type="button" className="button small quiet" title={`Put back the objects this run changed, ${keyLabel("⌥⌘Z")}`} onClick={undoLastRun}>
+              <UndoIcon size={14} /> Undo run
+            </button>
+          )}
+          <button type="button" className="button small quiet" aria-pressed={pin === key} onClick={() => pinOnStage(pin === key ? null : key)}>
+            <PinIcon size={14} /> {pin === key ? "Unpin" : "Pin"}
           </button>
-        )}
-        <button type="button" className={`button small quiet ${undoable ? "" : "push-end"}`} aria-pressed={pin === key} onClick={() => pinOnStage(pin === key ? null : key)}>
-          <PinIcon size={14} /> {pin === key ? "Unpin" : "Pin"}
-        </button>
+        </div>
       </header>
       <div className="stage-body">
         {group.type === "block" && <StageBlock blockId={group.blockId} />}
@@ -625,7 +635,18 @@ function Timeline({ outputs, current, pinned }: { outputs: Group[]; current: str
     setTimeout(() => group.querySelector<HTMLElement>("[aria-checked='true']")?.focus(), 0);
   }
 
-  let lastSection = "";
+  // Results are gathered into lanes, one for each stretch of the script they
+  // came from, so a long run reads as a few named groups, each with its own
+  // count and a flag when something in it failed.
+  const lanes: { section: string; items: Group[] }[] = [];
+  for (const group of shown) {
+    const section = sectionOf(group);
+    const last = lanes[lanes.length - 1];
+    if (last && last.section === section) last.items.push(group);
+    else lanes.push({ section, items: [group] });
+  }
+  const firstStop = shown.some((item) => keyOf(item) === current) ? null : shown[0] && keyOf(shown[0]);
+
   return (
     <div className="timeline" style={{ height: timelineHeight }}>
       <Splitter className="timeline-edge" label="Height of earlier results" axis="row" value={timelineHeight} min={TIMELINE_MIN} max={TIMELINE_MAX} onChange={(value) => updateSettings({ timelineHeight: value })} />
@@ -645,33 +666,46 @@ function Timeline({ outputs, current, pinned }: { outputs: Group[]; current: str
         <TimelineMenu />
       </div>
       <div className="timeline-list" role="listbox" aria-label="Earlier results" ref={list} onKeyDown={onKeyDown}>
-        {shown.map((group, index) => {
-          const key = keyOf(group);
-          const selected = key === current;
-          const section = sectionOf(group);
-          const divider = section !== lastSection;
-          lastSection = section;
+        {lanes.map((lane, laneIndex) => {
+          const problems = lane.items.filter((group) => kindOf(group, blocks) === "problems").length;
           return (
-            <Fragment key={key}>
-              {divider && (
-                <span className="timeline-section" aria-hidden="true" title={section}>
-                  {section}
+            <div key={`${laneIndex}:${lane.section}`} role="group" aria-label={lane.section} className={`timeline-lane ${lane.items.some((group) => keyOf(group) === current) ? "has-current" : ""}`}>
+              <div className="timeline-lane-label" aria-hidden="true">
+                <span className="timeline-section" title={lane.section}>
+                  {lane.section}
                 </span>
-              )}
-              <div
-                role="option"
-                aria-selected={selected}
-                aria-description={section}
-                tabIndex={selected || (index === 0 && !shown.some((item) => keyOf(item) === current)) ? 0 : -1}
-                className={`timeline-item ${selected ? "is-current" : ""} ${key === pinned ? "is-pinned" : ""}`}
-                onClick={() => (showOnStage(key), revealSource(key, false))}
-              >
-                <Thumb group={group} />
-                <span className="timeline-label">
-                  <OutputLabel group={group} />
+                <span className="timeline-lane-meta">
+                  {lane.items.length === 1 ? "1 result" : `${lane.items.length} results`}
+                  {problems > 0 && (
+                    <span className="timeline-lane-problem">
+                      <TriangleIcon size={11} /> {problems === 1 ? "1 problem" : `${problems} problems`}
+                    </span>
+                  )}
                 </span>
               </div>
-            </Fragment>
+              <div className="timeline-cards">
+                {lane.items.map((group) => {
+                  const key = keyOf(group);
+                  const selected = key === current;
+                  return (
+                    <div
+                      key={key}
+                      role="option"
+                      aria-selected={selected}
+                      aria-description={lane.section}
+                      tabIndex={selected || key === firstStop ? 0 : -1}
+                      className={`timeline-item ${selected ? "is-current" : ""} ${key === pinned ? "is-pinned" : ""}`}
+                      onClick={() => (showOnStage(key), revealSource(key, false))}
+                    >
+                      <Thumb group={group} />
+                      <span className="timeline-label">
+                        <OutputLabel group={group} />
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           );
         })}
         {!shown.length && <span className="muted timeline-none">Nothing of this kind yet</span>}

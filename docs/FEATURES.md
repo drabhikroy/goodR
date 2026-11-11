@@ -11,17 +11,21 @@ A plot is scaled to fill it, a data frame is shown by its name as a table you
 can sort, and printed text sits in a block that is easy to read. A new output
 takes the stage as it arrives. Putting the cursor on a line brings back what
 that line made, so the stage follows your reading of the script. The stage
-names the line, and pointing at that name lights the line up.
+has one header: the line it came from on the left, and pointing at that name
+lights the line up, and on the right Run again, Copy, and Hide for the result,
+Undo run when there is a run to undo, and Pin.
 
-Under the stage, a strip holds every output of the session as a small card,
-grouped under the name of the script section it came from. Each card is one
-press or one arrow key away. Drag the strip's top edge to make it taller and
-the cards wrap into more rows. A menu at its top right saves the cards as a
-report, clears them, or hides the strip. Pressing a card puts the script's
-cursor on the line that made it. It works the other way too: clicking a line
-brings its output to the stage, and a bar runs down the line's edge while it
-is there. Once there are more than a handful of outputs, filters narrow the
-strip to plots, printed results, or problems.
+Under the stage, earlier results sit in lanes, one for each part of the script
+they came from. A lane has the section's name, how many results it holds, and
+a count of problems when something in it failed or did not run, written out
+with a mark rather than shown by color alone. The lane holding the output on
+the stage has a bar down its edge. Each card is one press or one arrow key
+away. Drag the strip's top edge to make it taller and more lanes show. A menu
+at its top right saves the cards as a report, clears them, or hides the strip.
+Pressing a card puts the script's cursor on the line that made it. It works the
+other way too: clicking a line brings its output to the stage, and a bar runs
+down the line's edge while it is there. Once there are more than a handful of
+outputs, filters narrow the strip to plots, printed results, or problems.
 
 You can pin an output to keep it on the stage above the current one, which is
 how you compare two plots, or a plot and the table behind it. Full size shows
@@ -36,16 +40,21 @@ timeline beside results from the script. It colors R the way the script
 does, completes names with Tab, continues unfinished statements, walks back
 through what you typed with Up, and answers `readline()` prompts.
 
-The objects in R sit as small cards along the top of the canvas. A data frame
-opens in the data viewer; anything else says what it is. R help, Packages,
-History, the assistant, and a rendered report or running app slide over the
-canvas as sheets from the buttons beside the cards, and close back to it.
-Running code brings the stage back out from under a sheet, so you always see
-the result.
+The objects in R sit as small cards along the top of the canvas, with Import
+data and Clear all objects as two small buttons at the end of the row. A data
+frame opens in the data viewer; anything else says what it is. The canvas has
+one row of tabs above it. R help, Packages, History, the assistant, and a
+rendered report or running app each have a tab, and slide over the canvas
+when chosen, and close back to it. Running code brings the stage back out from
+under a sheet, so you always see the result.
 
-The title bar holds Home, the project or script on show (with a menu to
-switch), the open tabs, and at the right a search for commands and R help. A
-dot beside the project's name shows while R is busy or has stopped. A bar
+The title bar holds Home, a menu of what is open, the open tabs, and at the
+right a search for commands and R help. The menu is a chip with a picture for
+what is on show: a folder and the project's name for a project, a page and
+Single script for a script that runs in its own R, and a pencil and Untitled
+work for the scratch R that unsaved scripts share. The file's own name stays
+on its tab and in the menu's list, so it is never shown twice side by side. A
+dot beside the chip shows while R is busy or has stopped. A bar
 across the top of the document holds what acts on it: where the file is, the
 section the cursor is in, where results go, Render for reports, Run app for
 Shiny apps, and Run. Every edge can be dragged. RStudio's shortcuts work, from
@@ -210,7 +219,10 @@ A Shiny app gets a Run app button, whether it is app.R, ui.R and server.R, or
 any script that ends with `shinyApp()`. The app runs in its own R, so the
 prompt stays free while it is open, and it appears on the canvas beside the
 code. Save any file of the app and it reloads there by itself. Open in
-browser gives the app a full window.
+browser gives the app a full window. The app runs until you press Stop or
+close its script, and closing a project ends it too, so nothing is left
+running with no sign of it on screen. For an app made of ui.R, server.R, and
+global.R, closing any of them ends it.
 
 An app that will not start is explained in the same plain words as any error,
 with the failing line marked in your script. An error inside a running app,

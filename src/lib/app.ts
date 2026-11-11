@@ -148,6 +148,10 @@ export async function init() {
   // person has chosen to show them under each line. Any other saved layout
   // value is read as the canvas.
   if (settings.outputLayout !== "inline" || !settings.layoutChosen) settings.outputLayout = "canvas";
+  // Earlier results are in lanes now, which need more height than the strip
+  // had. Anyone still on the old default, 184, gets the new one; a height
+  // that was dragged to something else is kept.
+  if (loaded.timelineHeight === 184) settings.timelineHeight = defaultSettings.timelineHeight;
   setState((state) => ({ info, settings, installs, loaded: true, ui: { ...state.ui, sidebar: settings.showSidebar, inspector: settings.showCanvas } }));
   applyTheme(settings);
   watchSystemAppearance(() => {
