@@ -6,11 +6,11 @@
 ![Intel](https://img.shields.io/badge/Intel-x86__64-black?logo=apple&logoColor=white)
 [![Release](https://img.shields.io/github/v/release/drabhikroy/goodR)](https://github.com/drabhikroy/goodR/releases)
 
-R: What Is It Good For? is an integrated development environment (IDE) for R. Results appear next to the code that made them and errors are explained in plain words. It suits people who are learning R, teaching it, or using it for research.
+R: What Is It Good For? is a desktop application for writing and running R, the programming language used for statistics and data analysis. It is an integrated development environment, or IDE: one window for writing code, running it, and reading the result. Results appear next to the code that made them, and a failed line is explained in plain words instead of a bare error message. It suits a first script as well as a daily one, whether you are learning R, teaching it, or using it for research.
 
 The app is available for macOS today. Windows and Linux versions are planned.
 
-Everything runs on your computer. No account is needed and the app collects no data about you or your work.
+Everything runs on your computer. No account is needed, and the app collects no data about you or your work.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/opening-dark.png">
@@ -26,20 +26,33 @@ Your script is on the left side of the window and your results are on the right.
   <img alt="The workspace with the penguins project. The script is on the left. On the right, the canvas shows a bar chart made by lines 15 and 16, with buttons to edit its labels, show it full size, or export it. Earlier results run in a strip underneath. A band above the script offers to install gt, a package that line 19 needs." src="docs/images/workspace-light.png">
 </picture>
 
+### Writing and running R
+
 - **Results beside the code.** Run a line, a section, or a whole script. Each plot, table, or printout lands on the canvas. Earlier results stay in a strip underneath so you can go back to them.
-- **Errors in plain words.** A failed line is explained in everyday language and marked in your script. R's own message is one click away. Common problems come with a button that fixes them.
-- **Old code brought up to date.** Fix problems finds functions and arguments that packages have retired and updates them in one step.
+- **Errors explained in plain words.** A failed line is explained in everyday language and marked in your script. R's own message is one click away. Common problems come with a button that fixes them.
+- **Outdated code brought up to date.** Fix problems finds functions and arguments that packages have retired and updates them in one step.
 - **Questions ready to post.** Ask for help online writes up a question for a forum. It includes the code that led to the error, a small sample of the data, and your versions.
 - **A data viewer that writes code.** Each column shows its type, a small chart, and its missing values. When you filter or rename in the viewer, the matching line of R is added to your script.
+- **Statistics explained in words.** Tests and models come with a sentence in APA style and a check of their assumptions.
+
+### Reports and Shiny apps
+
 - **Reports.** R Markdown and Quarto documents render to HTML, Word, and PDF beside the code. The preview can update every time you save.
 - **Shiny apps.** An app runs next to its code. A map shows how its inputs and outputs connect. Likely mistakes are flagged before the app runs. An app can also be shared as a web page.
+
+### Keeping track of your work
+
 - **One R for each project.** Objects from one project never turn up in another.
-- **Ways back.** Undo the last run. Get unsaved work back after a crash. Compare a script with any of its earlier versions.
-- **Statistics written up.** Tests and models come with a sentence in APA style and a check of their assumptions.
-- **Where did this come from?** Trace any object back through the lines that made it.
+- **Mistakes are easy to undo.** Undo the last run. Get unsaved work back after a crash. Compare a script with any of its earlier versions.
+- **Every result traces back to its code.** Trace any object back through the lines that made it.
+
+### Learning and teaching
+
 - **Teaching tools.** Turn a script into exercises that check each answer.
-- **An optional assistant.** It explains errors and code and drafts R from a comment. It runs on your own computer through Ollama.
 - **Learning built in.** A short tour, examples built on real data, and a guided first project that goes from a data file to a report.
+
+### Making it yours
+
 - **Your own look.** Light, dark, and paper themes. Palettes for different kinds of color vision. Sixteen code fonts. Any part of the window can be hidden.
 - **Updates in one place.** One page lists updates for the app, R, your packages, Ollama, and assistant models.
 
@@ -77,6 +90,7 @@ Some features need a little more. The app tells you when something is missing.
 | Render Quarto documents | [Quarto](https://quarto.org/docs/get-started/) |
 | Make PDFs | LaTeX or Quarto. The app can install a small LaTeX for you |
 | Run Shiny apps | The shiny package, which the app offers to install |
+| Use the assistant | Ollama, which the app can install and run for you |
 
 ## Install
 
@@ -124,7 +138,20 @@ Your code and data stay on your computer. The app sends no usage data and no cra
 | The assistant's Ollama and models | `~/Library/Application Support/app.goodfor.ide/assistant` | Until you remove them from the assistant's setup |
 | The app's own LaTeX, if you install it | `~/Library/Application Support/app.goodfor.ide/TinyTeX` | Until you delete the folder |
 
-[Your files and your privacy](docs/PRIVACY.md) explains which files the app may open and what the assistant can see.
+[Your files and your privacy](docs/PRIVACY.md) explains which files the app may open and what the assistant can see. See [The assistant](#the-assistant) below for what it can see once it is set up.
+
+## The assistant
+
+An optional assistant explains errors and code, and can draft R from a plain description of what you want. It runs entirely on your computer through [Ollama](https://ollama.com), free software that runs language models locally, so nothing you ask it is sent anywhere.
+
+Setting it up takes three steps. Choose the Ollama already on your Mac, or let the app install and verify a private copy. Optionally let the app check your Mac's memory and free disk space, so it can say which models will fit. Then choose a code model from a short list, each one showing what it is good and less good at. The app suggests the one that fits your Mac best, and you can add, remove, or switch models at any time.
+
+The assistant sees the code you ask about, R's error message, your R version, and the names of your objects and columns. It never sees the values in your data.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/assistant-dark.png">
+  <img alt="The Assistant view after asking why line 2 did not run. The answer says R looked for a column called flipper_length_mm, but the penguins table names it flipper_len, and offers the corrected line, marked as code R can read, with Replace line 2, Insert at cursor, and Copy." src="docs/images/assistant-light.png">
+</picture>
 
 ## Accessibility
 
@@ -137,13 +164,21 @@ Your code and data stay on your computer. The app sends no usage data and no cra
 
 Automated tests cannot catch everything. If something gets in your way, please [open an issue](https://github.com/drabhikroy/goodR/issues). The full list is in [Accessibility](docs/ACCESSIBILITY.md).
 
+## How it works
+
+R runs through [ark](https://github.com/posit-dev/ark), the R kernel from Posit Software, in the background. Each project gets its own R process, so objects from one project never reach another, and a script that belongs to no project gets a small R of its own, started in its own folder.
+
+Running a line sends it to that R and keeps a link between the line and its result, so clicking a result later returns you to the line that made it. Errors are parsed rather than shown as raw text, so the app can point to the exact spot in your script and explain what the message means.
+
+[The design notes](docs/DESIGN.md) cover the reasoning behind these choices, and the research behind that reasoning, in full.
+
 ## Help and feedback
 
 To report a problem or suggest an idea, [open an issue](https://github.com/drabhikroy/goodR/issues). To report a security problem privately, see the [security policy](SECURITY.md).
 
 ## For developers
 
-[Developing goodR](docs/DEVELOPING.md) covers building from source, the tests, how the app works inside, and how releases are signed. [CONTRIBUTING.md](CONTRIBUTING.md) has the conventions and checks. [docs/DESIGN.md](docs/DESIGN.md) explains the design and the research behind it. Please also read the [code of conduct](CODE_OF_CONDUCT.md).
+[Developing goodR](docs/DEVELOPING.md) covers building from source, the tests, how the app works inside, and how releases are signed. [CONTRIBUTING.md](CONTRIBUTING.md) has the conventions and checks. Please also read the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Credits and background
 
