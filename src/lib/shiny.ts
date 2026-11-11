@@ -154,6 +154,23 @@ export function stopApp() {
   api.appStop().catch(() => {});
 }
 
+/**
+ * Stops the running app when the file closed is one that makes it up, so an
+ * app ends when its script is closed, as well as when Stop is pressed. A
+ * split app is made of ui.R, server.R, and global.R together, so closing
+ * any of them ends it. The preview of a web version has no script behind
+ * it, so it is left running.
+ */
+export function stopAppClosedWith(path: string) {
+  const run = getState().shinyApp;
+  if (!run || run.preview || run.status === "ended") return;
+  const together = SPLIT_FILES.includes(baseName(path)) && SPLIT_FILES.includes(baseName(run.file)) && folderOf(path) === folderOf(run.file);
+  if (path === run.file || together) {
+    stopApp();
+    announce(`${baseName(run.file)} stopped, because its script was closed.`);
+  }
+}
+
 /** Loads the app's page again, as the browser's own Reload would. */
 export function reloadApp() {
   const run = getState().shinyApp;

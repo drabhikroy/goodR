@@ -50,6 +50,25 @@ test("Run app shows only for Shiny apps, and the app runs beside the code", asyn
   await expect(page.getByRole("button", { name: "Run app" })).toHaveCount(0);
 });
 
+test("an app ends when its script is closed, as well as when Stop is pressed", async ({ page }) => {
+  await openApp(page);
+  await page.getByRole("button", { name: "Run app" }).click();
+  await expect(page.getByRole("button", { name: "Stop app" })).toBeVisible();
+  // Closing the script it runs from ends it, without Stop.
+  await page.locator(".editor-host .cm-content").click();
+  await page.keyboard.press("Control+w");
+  await expect(page.getByRole("tab", { name: /app\.R/ })).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => (window as unknown as { goodfor: { getState: () => { shinyApp: { status: string } | null } } }).goodfor.getState().shinyApp?.status)).toBe("ended");
+  // Another script closing leaves a running app alone.
+  await page.getByRole("navigation", { name: "Project" }).getByRole("button", { name: /app\.R/ }).click();
+  await page.getByRole("button", { name: "Run app" }).click();
+  await expect(page.getByRole("button", { name: "Stop app" })).toBeVisible();
+  await page.getByRole("navigation", { name: "Project" }).getByRole("button", { name: /cleaning\.R/ }).click();
+  await page.keyboard.press("Control+w");
+  await page.getByRole("navigation", { name: "Project" }).getByRole("button", { name: /app\.R/ }).click();
+  await expect(page.getByRole("button", { name: "Stop app" })).toBeVisible();
+});
+
 test("a syntax error is explained and marked in the script", async ({ page }) => {
   await openApp(page);
   await replaceScript(page, 'library(shiny)\nui <- fluidPage(\n  titlePanel("Penguins")\nserver <- function(input, output) {}\nshinyApp(ui, server)\n');

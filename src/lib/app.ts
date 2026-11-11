@@ -21,7 +21,7 @@ import { compareResults } from "./resultDiff";
 import { checkExercise, initTeaching, makeExercise, saveExercises } from "./teaching";
 import { explainAtCursor, initEditing, openRename, refreshAllHints, tidyCode, updateHints } from "./editing";
 import { initReports, renderReport, stopRender } from "./report";
-import { checkShinyFile, initApps, openAppInBrowser, openShare, runApp, stopApp } from "./shiny";
+import { checkShinyFile, initApps, openAppInBrowser, openShare, runApp, stopApp, stopAppClosedWith } from "./shiny";
 import { backend, type Backend } from "./backend";
 import * as editor from "./editor";
 import { describeProblem, explainError, type Explained } from "./errors";
@@ -1209,6 +1209,8 @@ export async function closeTab(path: string | null = getState().active) {
   const position = getState().tabs.findIndex((item) => item.path === path);
   const tabs = getState().tabs.filter((item) => item.path !== path);
   if (tab.kind !== "data") editor.closeDocument(path);
+  // An app runs for as long as its script is open.
+  stopAppClosedWith(path);
   const blocks = Object.values(getState().blocks).filter((block) => block.file === path).map((block) => block.id);
   setState((state) => ({
     tabs,
