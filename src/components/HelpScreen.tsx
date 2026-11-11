@@ -193,7 +193,7 @@ const TOPICS: Topic[] = [
           <kbd>{keyLabel("⇧⌘↩")}</kbd> runs the whole file and moves the cursor to its end, as running a section or chunk moves it to the end of that part. If a line fails, it stops there, so nothing after it runs on bad data. <kbd>{keyLabel("⌘.")}</kbd> stops whatever is running.
         </p>
         <p>
-          The Run button above the script does the same. Its arrow lets you pick a line, the chunk or section you are in, or the whole file, and it can remember your choice for each file. In a script with
+          The Run button above the script does the same. Its arrow lets you pick a line, the chunk or section you are in, or the whole file, and choosing one runs it and keeps it as what the button does, for every script, or for every document, until you pick another. In a script with
           sections, the name at the top left of the script says which section the cursor is in, and its menu jumps to another.
         </p>
         <p>A line that runs but prints nothing, like an assignment, gets a small check mark in the margin.</p>

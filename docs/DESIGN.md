@@ -680,12 +680,14 @@ button: the button runs the usual thing, and the arrow beside it lists
 every way to run, each with its shortcut shown, so the menu teaches the
 keys as it is used (Lane et al. 2005).
 
-What the button runs depends on the file. A script runs a line, the step
-people take most while working through code. A document runs a chunk,
-its natural unit. The person can change this for any one file from the
-same menu, so a script that always runs top to bottom can carry a Run
-file button. The choice is the person's, set in plain view, never
-inferred: adaptable menus, which people arrange themselves, were faster
+What the button runs depends on the kind of file. A script runs a line,
+the step people take most while working through code. A document runs a
+chunk, its natural unit. The person changes this from the same menu, and
+choosing a way there both runs it and keeps it, so one choice does what
+the person expects of it: pick Run file, and the button stays Run file,
+for every script, until another is picked. Scripts and documents each
+keep their own choice. The choice is the person's, set in plain view,
+never inferred: adaptable menus, which people arrange themselves, were faster
 and better liked than adaptive ones that rearrange on their own
 (Findlater and McGrenere 2004). The button always names what it will do,
 "Run line", "Run chunk", or "Run file", so the default is never a hidden

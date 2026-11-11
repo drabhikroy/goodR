@@ -20,7 +20,7 @@ async function cursorTo(page: Page, line: number) {
   for (let at = 1; at < line; at += 1) await page.keyboard.press("ArrowDown");
 }
 
-test("Run is a split button whose default can be set for each file", async ({ page }) => {
+test("Run is a split button, and the way it runs stays as it was last chosen", async ({ page }) => {
   await openExample(page);
   const run = page.getByRole("button", { name: "Run line", exact: true });
   await expect(run).toBeVisible();
@@ -28,16 +28,35 @@ test("Run is a split button whose default can be set for each file", async ({ pa
   const menu = page.getByRole("menu", { name: "More ways to run" });
   // Every way to run, with its shortcut, and a script's chunk is its
   // section. The browser build shows shortcuts as Windows and Linux do.
-  await expect(menu.getByRole("menuitem", { name: /Run line/ }).locator("kbd")).toHaveText(/Ctrl.*Enter/);
-  await expect(menu.getByRole("menuitem", { name: /Run section/ }).locator("kbd")).toHaveText(/Ctrl.*Alt.*C|Alt.*Ctrl.*C/);
-  await expect(menu.getByRole("menuitem", { name: /Run file/ }).locator("kbd")).toHaveText(/Shift.*Enter/);
-  await expect(menu.getByRole("menuitemradio", { name: "Run line" })).toHaveAttribute("aria-checked", "true");
-  await menu.getByRole("menuitemradio", { name: "Run file" }).click();
-  // The button now runs the whole file, for this file only.
-  await page.getByRole("button", { name: "Run file", exact: true }).click();
+  await expect(menu.getByRole("menuitemradio", { name: /Run line/ }).locator("kbd")).toHaveText(/Ctrl.*Enter/);
+  await expect(menu.getByRole("menuitemradio", { name: /Run section/ }).locator("kbd")).toHaveText(/Ctrl.*Alt.*C|Alt.*Ctrl.*C/);
+  await expect(menu.getByRole("menuitemradio", { name: /Run file/ }).locator("kbd")).toHaveText(/Shift.*Enter/);
+  await expect(menu.getByRole("menuitemradio", { name: /Run line/ })).toHaveAttribute("aria-checked", "true");
+  // Choosing one runs it now, and the button keeps it.
+  await menu.getByRole("menuitemradio", { name: /Run file/ }).click();
   await expect.poll(async () => (await cardCodes(page)).length).toBeGreaterThan(3);
-  expect(await appState<Record<string, string>>(page, "state.settings.runDefaults")).toEqual({ "/Users/demo/Documents/penguins/analysis.R": "file" });
+  await expect(page.getByRole("button", { name: "Run file", exact: true })).toBeVisible();
+  expect(await appState<{ script: string; document: string }>(page, "state.settings.runMode")).toEqual({ script: "file", document: "chunk" });
+  // It stays for the next script too, until it is changed by hand.
   await newFileWith(page, "1 + 1\n");
+  await expect(page.getByRole("button", { name: "Run file", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "More ways to run" }).click();
+  await expect(page.getByRole("menuitemradio", { name: /Run file/ })).toHaveAttribute("aria-checked", "true");
+  await page.getByRole("menuitemradio", { name: /Run line/ }).click();
+  await expect(page.getByRole("button", { name: "Run line", exact: true })).toBeVisible();
+});
+
+test("a document keeps its own choice, apart from scripts", async ({ page }) => {
+  await openReport(page);
+  await expect(page.getByRole("button", { name: "Run chunk", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "More ways to run" }).click();
+  await page.getByRole("menuitemradio", { name: /Run file/ }).click();
+  await expect(page.getByRole("button", { name: "Run file", exact: true })).toBeVisible();
+  // Scripts were not changed by it.
+  await newFileWith(page, "1 + 1\n");
+  await expect(page.getByRole("button", { name: "Run line", exact: true })).toBeVisible();
+  // And the shortcut for another way runs it without changing the button.
+  await page.keyboard.press("Control+Enter");
   await expect(page.getByRole("button", { name: "Run line", exact: true })).toBeVisible();
 });
 

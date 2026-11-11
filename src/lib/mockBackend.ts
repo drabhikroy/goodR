@@ -297,7 +297,7 @@ export function createMockBackend(): Backend {
     copyResults: true,
     assistantRoute: "",
     assistantModel: "",
-    runDefaults: {},
+    runMode: { script: "line", document: "chunk" },
     undoRuns: true,
     showPackageLog: false,
     updateChecks: "auto",

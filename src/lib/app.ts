@@ -2345,6 +2345,24 @@ export function runFile(upToCursor = false) {
 }
 
 /**
+ * Runs every statement from a line to the end of the file, as one run. After
+ * a line fails and is fixed, this carries on from there, since everything
+ * before it already ran and its objects are still in R, so a slow first
+ * half is not run again. In a document, only the R chunks run.
+ */
+export function runFromLine(path: string, line: number) {
+  if (path.startsWith("data:")) return;
+  if (!runSpan(path, line, Infinity, true)) return notify("There is nothing to run from here to the end of the file.");
+  if (path === getState().active) editor.goToLine(path, editor.getText(path).split("\n").length - 1, true, true);
+}
+
+/** Runs from the line the cursor is on to the end of the file. */
+export function runFromCursor() {
+  const { active } = getState();
+  if (active) runFromLine(active, editor.cursor(active).line);
+}
+
+/**
  * Runs the chunk the cursor is in, in a document, or the section the
  * cursor is in, in a script: the lines from its section comment, such as
  * "# Clean ----", to the next one. A script with no sections runs whole.
@@ -2371,21 +2389,31 @@ export function runChunkAt(path: string, line: number) {
   if (runSpan(path, span.from, span.to) && path === getState().active) editor.goToLine(path, span.to, true, true);
 }
 
-/** What the Run button runs for a file: the user's choice for it, or a
- * line in a script and a chunk in a document. */
+/** What the Run button runs for a file: the choice made for its kind, a
+ * line in a script and a chunk in a document until another is picked. */
 export function runScopeFor(path: string | null): RunScope {
-  if (!path) return "line";
-  return getState().settings.runDefaults[path] ?? (isDocument(path) ? "chunk" : "line");
+  const modes = getState().settings.runMode;
+  return isDocument(path) ? modes.document : modes.script;
 }
 
-/** Remembers what the Run button runs for one file. Choosing the usual
- * default for its kind removes the entry, keeping the list short. */
+/** Keeps what the Run button runs, for scripts or for documents, whichever
+ * kind the file is. The choice stays until the user makes another, across
+ * files and restarts. */
 export function setRunScope(path: string, scope: RunScope) {
-  const runDefaults = { ...getState().settings.runDefaults };
-  if (scope === (isDocument(path) ? "chunk" : "line")) delete runDefaults[path];
-  else runDefaults[path] = scope;
-  updateSettings({ runDefaults });
-  announce(`The Run button now runs the ${scope === "line" ? "line" : scope === "file" ? "whole file" : isDocument(path) ? "chunk" : "section"} for ${baseName(path)}.`);
+  const kind = isDocument(path) ? "document" : "script";
+  updateSettings({ runMode: { ...getState().settings.runMode, [kind]: scope } });
+  const words = scope === "line" ? "the line" : scope === "file" ? "the whole file" : isDocument(path) ? "the chunk" : "the section";
+  announce(`The Run button now runs ${words}, for every ${kind} until you change it.`);
+}
+
+/** Runs one way, and keeps it as what the Run button does. This is what
+ * choosing from the Run menu does. */
+export function runAs(scope: RunScope) {
+  const { active } = getState();
+  if (active && !active.startsWith("data:")) setRunScope(active, scope);
+  if (scope === "file") runFile();
+  else if (scope === "chunk") runChunk();
+  else runLine();
 }
 
 /** Does what the Run button says for the file in front. */

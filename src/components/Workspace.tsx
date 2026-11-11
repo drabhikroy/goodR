@@ -3,7 +3,7 @@
 // (projects, tabs, search); the document bar holds what acts on the file
 // below it. Everything else is in the menus and the command palette.
 
-import { activateTab, baseName, chooseAndOpenProject, chunkWord, openRecentProject, closeTab, folderOf, newFile, openDialog, runChunk, runDefault, runFile, runLine, runScopeFor, sessionLabel, setOutputLayout, setRunScope, shortPath, showSessionTab, showStartScreen, stop, toggleFocus, toggleLive, undoLastRun, togglePalette, togglePane, updateSettings } from "../lib/app";
+import { activateTab, baseName, chooseAndOpenProject, chunkWord, openRecentProject, closeTab, folderOf, newFile, openDialog, runAs, runDefault, runFile, runFromCursor, runScopeFor, sessionLabel, setOutputLayout, shortPath, showSessionTab, showStartScreen, stop, toggleFocus, toggleLive, undoLastRun, togglePalette, togglePane, updateSettings } from "../lib/app";
 import { keyLabel } from "../lib/commands";
 import * as editor from "../lib/editor";
 import { isReport, renderReport, stopRender } from "../lib/report";
@@ -475,10 +475,10 @@ function scopeName(scope: RunScope, path: string | null) {
 }
 
 /**
- * Run, as a split button. The main part runs the file's default (a line
- * in a script, a chunk in a document, or whatever the user picked for
- * this file); the arrow lists the other ways to run and changes that
- * default. While R works it turns into Stop.
+ * Run, as a split button. The main part runs what the user last chose (a
+ * line in a script and a chunk in a document, until another is picked);
+ * the arrow lists the ways to run, and choosing one runs it and keeps it
+ * as the button's. While R works it turns into Stop.
  */
 function RunButton() {
   const busy = useStore((state) => state.r.status === "busy");
@@ -520,28 +520,34 @@ function RunButton() {
       </button>
       {open && (
         <Popover label="More ways to run" className="run-menu">
-          {SCOPES.map((item, index) => (
-            <button
-              key={item.scope}
-              type="button"
-              role="menuitem"
-              autoFocus={index === 0}
-              onClick={() => {
-                setOpen(false);
-                if (item.scope === "file") runFile();
-                else if (item.scope === "chunk") runChunk();
-                else runLine();
-              }}
-            >
-              <PlayIcon size={11} />
-              <span>{scopeName(item.scope, file)}</span>
-              <kbd>{keyLabel(item.keys)}</kbd>
-            </button>
-          ))}
+          {/* One group does both jobs: choosing a way runs it now and keeps
+              it as what the Run button does, for every file of this kind,
+              until another is chosen. The shortcuts beside each run that
+              way without changing the button. */}
+          <p className="popover-heading" id="run-default-heading">
+            What the Run button does
+          </p>
+          <p className="popover-note">Choosing one runs it now and keeps it.</p>
+          <div role="group" aria-labelledby="run-default-heading">
+            {SCOPES.map((item, index) => (
+              <button key={item.scope} type="button" role="menuitemradio" aria-checked={scope === item.scope} autoFocus={index === 0} onClick={() => (setOpen(false), runAs(item.scope))}>
+                <span className="menu-check" aria-hidden="true">
+                  {scope === item.scope && <CheckIcon size={12} />}
+                </span>
+                <span>{scopeName(item.scope, file)}</span>
+                <kbd>{keyLabel(item.keys)}</kbd>
+              </button>
+            ))}
+          </div>
+          <hr />
           <button type="button" role="menuitem" onClick={() => (setOpen(false), runFile(true))}>
             <span className="menu-check" aria-hidden="true" />
             <span>Run to the cursor</span>
             <kbd>{keyLabel("⌥⌘B")}</kbd>
+          </button>
+          <button type="button" role="menuitem" onClick={() => (setOpen(false), runFromCursor())}>
+            <span className="menu-check" aria-hidden="true" />
+            <span>Run from the cursor to the end</span>
           </button>
           {/* Kept in place when there is nothing to undo, so the menu
               never shifts under the pointer. */}
@@ -550,24 +556,6 @@ function RunButton() {
             <span>Undo the last run</span>
             <kbd>{keyLabel("⌥⌘Z")}</kbd>
           </button>
-          {file && (
-            <>
-              <hr />
-              <p className="popover-heading" id="run-default-heading">
-                The Run button, for {baseName(file)}
-              </p>
-              <div role="group" aria-labelledby="run-default-heading">
-                {SCOPES.map((item) => (
-                  <button key={item.scope} type="button" role="menuitemradio" aria-checked={scope === item.scope} onClick={() => (setOpen(false), setRunScope(file, item.scope))}>
-                    <span className="menu-check" aria-hidden="true">
-                      {scope === item.scope && <CheckIcon size={12} />}
-                    </span>
-                    <span>{scopeName(item.scope, file)}</span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
         </Popover>
       )}
     </div>

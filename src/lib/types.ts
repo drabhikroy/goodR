@@ -86,9 +86,9 @@ export type Settings = {
   /** Which Ollama the assistant uses, or empty before it is set up. */
   assistantRoute: "" | "system" | "private";
   assistantModel: string;
-  /** What the Run button does for a file, by path, when the user chose
-   * a default for it. */
-  runDefaults: Record<string, RunScope>;
+  /** What the Run button does, one choice for scripts and one for
+   * documents, kept until the user picks another. */
+  runMode: { script: RunScope; document: RunScope };
   /** Whether R keeps the objects as they were before each run, so the
    * last run can be undone. */
   undoRuns: boolean;

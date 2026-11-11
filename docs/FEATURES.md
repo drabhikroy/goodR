@@ -99,10 +99,12 @@ passes the same contrast checks.
 
 Run is a split button. It runs a line in a script and a chunk in a document.
 Its arrow lists every way to run, each with its shortcut: a line or
-selection, the chunk or section the cursor is in, the whole file, or up to
-the cursor. The same menu sets what the button runs for that one file, so a
-script you always run top to bottom can have a Run file button of its own. In
-a script, a section is the code under a comment such as `# Clean ----`.
+selection, the chunk or section the cursor is in, the whole file, up to the
+cursor, or from the cursor to the end. Choosing a line, a section, or the
+whole file runs it now and keeps it as what the button does, for every script,
+or for every document, until you choose another. The shortcuts run their own
+way without changing the button. In a script, a section is the code under a
+comment such as `# Clean ----`.
 
 If you would rather see results under the code, choose Under each line in the
 Results menu. Each result then sits in a tinted well right below the code
