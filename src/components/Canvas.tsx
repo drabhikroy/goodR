@@ -667,7 +667,11 @@ function Timeline({ outputs, current, pinned }: { outputs: Group[]; current: str
       </div>
       <div className="timeline-list" role="listbox" aria-label="Earlier results" ref={list} onKeyDown={onKeyDown}>
         {lanes.map((lane, laneIndex) => {
-          const problems = lane.items.filter((group) => kindOf(group, blocks) === "problems").length;
+          // Lines that failed are problems, as the document bar counts them.
+          // Lines after one that did not run are said apart, since they have
+          // nothing wrong with them.
+          const problems = lane.items.filter((group) => (group.type === "block" ? blocks[group.blockId]?.status === "error" : kindOf(group, blocks) === "problems")).length;
+          const notRun = lane.items.filter((group) => group.type === "block" && ["skipped", "stopped"].includes(blocks[group.blockId]?.status ?? "")).length;
           return (
             <div key={`${laneIndex}:${lane.section}`} role="group" aria-label={lane.section} className={`timeline-lane ${lane.items.some((group) => keyOf(group) === current) ? "has-current" : ""}`}>
               <div className="timeline-lane-label" aria-hidden="true">
@@ -681,6 +685,7 @@ function Timeline({ outputs, current, pinned }: { outputs: Group[]; current: str
                       <TriangleIcon size={11} /> {problems === 1 ? "1 problem" : `${problems} problems`}
                     </span>
                   )}
+                  {notRun > 0 && <span>{notRun === 1 ? "1 not run" : `${notRun} not run`}</span>}
                 </span>
               </div>
               <div className="timeline-cards">

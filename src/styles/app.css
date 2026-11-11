@@ -2333,6 +2333,59 @@ body.is-resizing-columns * {
   text-align: center;
 }
 
+/* What the failing line was using: each name it reads, the ones R has
+   nothing under first, in words and with a mark as well as color. */
+.error-using {
+  margin: 0.7rem 0 0.3rem;
+  padding: 0.5rem 0.75rem 0.6rem;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.error-using-title {
+  margin: 0 0 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.error-using ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.error-using li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.7rem;
+  font-size: 0.88rem;
+}
+
+.using-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-muted);
+}
+
+.using-missing code,
+.using-missing .using-state {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+/* The count of failed lines in the document bar. */
+.problems-button {
+  flex: none;
+  color: var(--danger);
+}
+
 /* The timeline: every output as a small preview, oldest on the left. */
 .timeline {
   position: relative;

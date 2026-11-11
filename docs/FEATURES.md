@@ -271,6 +271,21 @@ is explained, but not corrected, since the functions R can see depend on
 the packages loaded. Errors at the prompt get the same
 treatment, and R's own message is one click away.
 
+Under the explanation, What this line was using lists every name the line
+reads and what R holds under each right now. An object says what it is, a
+column says which data frame it belongs to, and a name R has nothing under
+comes first, with a mark and words, since it is the likely cause. That catches
+a misspelling, or a line that ran before the line that makes its data, without
+typing anything at the prompt.
+
+After a failed line is fixed, Run from line on, beside the explanation, runs it
+and everything after it, so a slow first half is not run again. The Run
+button's menu has the same as Run from the cursor to the end. While lines in a
+file are failed, the bar above the script counts them, and pressing it, or F8,
+goes to the next one, with Shift F8 going back and both going round at the
+ends. The stage follows the cursor, so the explanation is there when you
+arrive.
+
 A warning, such as values that would not turn into numbers or rows a plot
 left out, is explained the same way, with a round mark instead of an error's
 triangle. A package that fails to install says which software it needs on

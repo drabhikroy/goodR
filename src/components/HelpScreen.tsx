@@ -510,6 +510,15 @@ const TOPICS: Topic[] = [
           makes it for you. R&#8217;s original message is always one click away.
         </p>
         <p>
+          Under the explanation, What this line was using lists every name the line reads and what R holds under each right now: an object, with what it is, a column of a data frame the line uses, or a
+          name R has nothing under, which goes first because it is the likely cause. A misspelled name or a line that ran before its data was made shows up there without typing anything at the prompt.
+        </p>
+        <p>
+          After you fix a failed line, Run from line on carries on from it to the end of the file, so what ran before is not run again. The same is in the Run button&#8217;s menu as Run from the cursor to
+          the end. While lines in a file are failed, the bar above the script says how many, and pressing it, or <kbd>{keyLabel("F8")}</kbd>, goes to the next one, with <kbd>{keyLabel("⇧F8")}</kbd> going
+          back. The result beside the script follows the cursor, so its explanation is there when you arrive.
+        </p>
+        <p>
           A warning means the line ran, but R noticed something worth a look, such as values that could not become numbers. Warnings are explained the same way, marked with a round sign rather than the
           triangle of an error.
         </p>

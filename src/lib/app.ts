@@ -2382,6 +2382,38 @@ export function runFromCursor() {
   if (active) runFromLine(active, editor.cursor(active).line);
 }
 
+/** The first line of each statement in a file that failed, in order, counted
+ * from zero. A statement run again replaces its old result, so only the
+ * latest of each counts. */
+export function problemLines(path: string): number[] {
+  const { blocks, blockOrder } = getState();
+  const lines = editor.blockLines(path);
+  const found = new Set<number>();
+  for (const id of blockOrder) {
+    const block = blocks[id];
+    if (!block || block.file !== path || block.status !== "error") continue;
+    const to = lines.get(id) ?? block.toLine;
+    found.add(Math.max(0, to - (block.toLine - block.fromLine)));
+  }
+  return [...found].sort((a, b) => a - b);
+}
+
+/**
+ * Puts the cursor on the next line in this file that failed, or the one
+ * before it, going round at either end. The output beside it follows the
+ * cursor, so its explanation is on the stage when the cursor arrives.
+ */
+export function goToProblem(direction: 1 | -1 = 1) {
+  const { active } = getState();
+  if (!active || active.startsWith("data:")) return;
+  const found = problemLines(active);
+  if (!found.length) return notify("No line in this file has failed. A line that does will be listed here.");
+  const at = editor.cursor(active).line;
+  const next = direction === 1 ? (found.find((line) => line > at) ?? found[0]) : ([...found].reverse().find((line) => line < at) ?? found[found.length - 1]);
+  editor.goToLine(active, next, true);
+  announce(`Problem ${found.indexOf(next) + 1} of ${found.length}, on line ${next + 1}.`);
+}
+
 /**
  * Runs the chunk the cursor is in, in a document, or the section the
  * cursor is in, in a script: the lines from its section comment, such as
@@ -2842,6 +2874,9 @@ export function runCommand(id: string) {
     "run.line": runLine,
     "run.file": () => runFile(),
     "run.toHere": () => runFile(true),
+    "run.fromHere": runFromCursor,
+    "run.nextProblem": () => goToProblem(1),
+    "run.prevProblem": () => goToProblem(-1),
     "run.chunk": runChunk,
     "file.newDocument": () => openDialog("newDocument"),
     "edit.chunk": insertChunk,

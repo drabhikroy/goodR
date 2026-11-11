@@ -21,6 +21,11 @@ export const COMMANDS: Command[] = [
   // the section the cursor is in.
   { id: "run.chunk", title: "Run chunk or section", section: "Run", keys: "⌥⌘C", combo: "Alt+Mod+c" },
   { id: "run.toHere", title: "Run to here", section: "Run", keys: "⌥⌘B", combo: "Alt+Mod+b", advanced: true },
+  { id: "run.fromHere", title: "Run from here to the end", section: "Run", advanced: true },
+  // The line that failed, then the next one that did, as a code editor's
+  // problems are stepped through.
+  { id: "run.nextProblem", title: "Go to the next problem", section: "Run", keys: "F8", combo: "F8" },
+  { id: "run.prevProblem", title: "Go to the previous problem", section: "Run", keys: "⇧F8", combo: "Shift+F8" },
   { id: "run.stop", title: "Stop", section: "Run", keys: "⌘.", combo: "Mod+." },
   // Command Z undoes typing in the script. Undoing a run is a different
   // thing, so it has its own shortcut, one key away.

@@ -8,12 +8,14 @@ import { useLayoutEffect, useState } from "react";
 import type { RunProfile } from "../lib/types";
 import { plotKind, readLabels, type PlotKind, type PlotLabels } from "../lib/plotEdit";
 import { plotColors } from "../theme/theme";
-import { applyFix, copyResult, editPlotCode, installPackages, openExportPlot, runBlockAgain, showPlot, toggleResult, viewPlot } from "../lib/app";
+import { applyFix, copyResult, editPlotCode, installPackages, openExportPlot, runBlockAgain, runFromLine, showPlot, toggleResult, viewPlot } from "../lib/app";
 import { askAssistantAboutError } from "../lib/assistant";
 import * as editor from "../lib/editor";
 import { explainError, userFrames } from "../lib/errors";
 import { openAskOnline } from "../lib/trace";
+import { usedBy } from "../lib/troubleshoot";
 import { isQuiet, SLOW_MS, useStore, type Block, type OutputItem } from "../lib/store";
+import type { Used } from "../lib/troubleshoot";
 import { ExerciseResult } from "./ExerciseResult";
 import { StatsWriteUp } from "./StatsWriteUp";
 import { StreamText } from "./StreamText";
@@ -316,10 +318,50 @@ function PlotLabelsForm({ blockId, code, kind, onDone }: { blockId: string; code
   );
 }
 
+// A long line reads many names, and the first few are the likely cause.
+const USING_LIMIT = 6;
+
+/**
+ * What the failing line was working with: each name it reads, and what R
+ * holds under it right now, so a name that was never made, or a column the
+ * data frame does not have, shows up beside the ones that are fine. A name
+ * with an object behind it says what it is, and a column says which data
+ * frame it belongs to.
+ */
+function Using({ used }: { used: Used[] }) {
+  const [all, setAll] = useState(false);
+  const shown = all ? used : used.slice(0, USING_LIMIT);
+  return (
+    <section className="error-using" aria-label="What this line was using">
+      <p className="error-using-title">What this line was using</p>
+      <ul>
+        {shown.map((item) => (
+          <li key={item.name} className={`using-${item.kind}`}>
+            <code>{item.name}</code>
+            {item.kind === "missing" && (
+              <span className="using-state">
+                <TriangleIcon size={12} /> R has nothing called this right now
+              </span>
+            )}
+            {item.kind === "object" && <span className="using-state">{item.object.summary}</span>}
+            {item.kind === "column" && <span className="using-state">a column of {item.of}</span>}
+          </li>
+        ))}
+      </ul>
+      {used.length > USING_LIMIT && (
+        <button type="button" className="button small quiet" aria-expanded={all} onClick={() => setAll(!all)}>
+          {all ? "Show fewer" : `Show ${used.length - USING_LIMIT} more`}
+        </button>
+      )}
+    </section>
+  );
+}
+
 function ErrorItem({ message, traceback, parsed, blockId }: { message: string; traceback: string[]; parsed: string; blockId: string }) {
   const objects = useStore((state) => state.objects);
   const block = useStore((state) => state.blocks[blockId]);
   const assistantReady = useStore((state) => Boolean(state.assistant.model));
+  const fileOpen = useStore((state) => state.tabs.some((tab) => tab.path === block?.file));
   const [showOriginal, setShowOriginal] = useState(false);
   const explained = explainError(message, objects, block?.code ?? "", traceback, parsed);
   const calls = userFrames(traceback);
@@ -330,6 +372,9 @@ function ErrorItem({ message, traceback, parsed, blockId }: { message: string; t
   const current = block ? editor.blockLines(block.file).get(blockId) ?? block.toLine : 0;
   const fileLine = block && where ? current - (block.toLine - block.fromLine) + where.line : 0;
   const marked = codeLine.slice(where?.from ?? 0, where?.to ?? 0);
+  // The statement's first line in the file, where a run from here begins.
+  const startLine = block ? current - (block.toLine - block.fromLine) : 0;
+  const used = block ? usedBy(block.code, objects) : [];
   return (
     <div className="output-error">
       <p className="error-title">{explained.title}</p>
@@ -356,6 +401,7 @@ function ErrorItem({ message, traceback, parsed, blockId }: { message: string; t
           <strong>Try this:</strong> {explained.hint}
         </p>
       )}
+      {used.length > 0 && <Using used={used} />}
       <div className="button-row">
         {fix?.kind === "replace" && (
           <button type="button" className="button primary" onClick={() => applyFix(blockId, fix.from, fix.to)}>
@@ -370,6 +416,11 @@ function ErrorItem({ message, traceback, parsed, blockId }: { message: string; t
         {where && block && marked && (
           <button type="button" className="button quiet" onClick={() => editor.selectSpan(block.file, fileLine, marked, where.from)}>
             Go to the spot
+          </button>
+        )}
+        {block && fileOpen && (
+          <button type="button" className="button quiet" title="Once the line is fixed, runs it and everything after it, without running what came before again" onClick={() => runFromLine(block.file, startLine)}>
+            Run from line {startLine + 1} on
           </button>
         )}
         {assistantReady && (

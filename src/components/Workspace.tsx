@@ -3,7 +3,7 @@
 // (projects, tabs, search); the document bar holds what acts on the file
 // below it. Everything else is in the menus and the command palette.
 
-import { activateTab, baseName, chooseAndOpenProject, chunkWord, openRecentProject, closeTab, folderOf, newFile, openDialog, runAs, runDefault, runFile, runFromCursor, runScopeFor, sessionButtonLabel, sessionKind, sessionLabel, setOutputLayout, shortPath, showSessionTab, showStartScreen, stop, toggleFocus, toggleLive, undoLastRun, togglePalette, togglePane, updateSettings } from "../lib/app";
+import { activateTab, baseName, chooseAndOpenProject, chunkWord, openRecentProject, closeTab, folderOf, newFile, goToProblem, openDialog, runAs, runDefault, runFile, runFromCursor, runScopeFor, sessionButtonLabel, sessionKind, sessionLabel, setOutputLayout, shortPath, showSessionTab, showStartScreen, stop, toggleFocus, toggleLive, undoLastRun, togglePalette, togglePane, updateSettings } from "../lib/app";
 import { keyLabel } from "../lib/commands";
 import * as editor from "../lib/editor";
 import { isReport, renderReport, stopRender } from "../lib/report";
@@ -15,7 +15,7 @@ import { Canvas, elapsedWords, PlotViewer, useElapsed } from "./Canvas";
 import { Composer } from "./Composer";
 import { DataViewer } from "./DataViewer";
 import { EditorPane, SectionBar } from "./EditorPane";
-import { AppWindowIcon, HistoryIcon, CheckIcon, ChevronIcon, CloseIcon, FileIcon, FolderIcon, HomeIcon, PanelIcon, PencilIcon, PlayIcon, SearchIcon, PlusIcon, ReportIcon, StopIcon, TableIcon, UndoIcon } from "./Icons";
+import { AppWindowIcon, HistoryIcon, CheckIcon, ChevronIcon, CloseIcon, FileIcon, FolderIcon, HomeIcon, PanelIcon, PencilIcon, PlayIcon, SearchIcon, PlusIcon, ReportIcon, StopIcon, TableIcon, TriangleIcon, UndoIcon } from "./Icons";
 import { Sidebar } from "./Sidebar";
 import { Popover, usePopover } from "./Popover";
 import { openFileHistory } from "../lib/fileHistory";
@@ -69,6 +69,7 @@ function DocumentBar() {
           {active && !untitled ? shortPath(folderOf(active)) : "Not saved yet"}
         </span>
         <SectionBar />
+        <ProblemsButton />
         {active && !untitled && (
           <button type="button" className="icon-button doc-history" aria-label="Earlier versions of this file" title="Earlier versions of this file" onClick={openFileHistory}>
             <HistoryIcon size={15} />
@@ -82,6 +83,22 @@ function DocumentBar() {
         <RunButton />
       </div>
     </div>
+  );
+}
+
+/**
+ * Says how many lines in this file have failed, and steps to the next one.
+ * It is there only while there is something to go to, so a file that runs
+ * cleanly has nothing extra in its bar.
+ */
+function ProblemsButton() {
+  const active = useStore((state) => state.active);
+  const count = useStore((state) => state.blockOrder.filter((id) => state.blocks[id]?.file === active && state.blocks[id]?.status === "error").length);
+  if (!count) return null;
+  return (
+    <button type="button" className="button quiet problems-button" title={`Go to the next problem, ${keyLabel("F8")}`} aria-keyshortcuts="F8" onClick={() => goToProblem(1)}>
+      <TriangleIcon size={13} /> {count === 1 ? "1 problem" : `${count} problems`}
+    </button>
   );
 }
 
