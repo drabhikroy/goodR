@@ -187,7 +187,7 @@ test("the assistant's setup steps and conversation pass the same checks", async 
   await audit(page);
   expect(await smallTargets(page)).toEqual([]);
   await dialog.getByRole("button", { name: "Install and continue" }).click();
-  await dialog.getByRole("button", { name: "Check this Mac" }).click();
+  await dialog.getByRole("button", { name: "Check this computer" }).click();
   await audit(page);
   await dialog.getByRole("button", { name: "Continue" }).click();
   await expect(dialog.locator(".model-card")).toHaveCount(4);

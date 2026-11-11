@@ -957,7 +957,21 @@ fn deliver(app: &AppHandle, paths: Vec<PathBuf>) {
 pub fn run() {
     let settings_path = settings::settings_path();
     let loaded = settings::load(&settings_path);
-    let app = tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    // It must come before every other plugin, so a second launch ends
+    // before it opens anything of its own.
+    #[cfg(any(windows, target_os = "linux"))]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
+        // The first argument is the program itself. A script named with a
+        // relative path is relative to where the second launch started.
+        let paths = argv.into_iter().skip(1).map(|arg| PathBuf::from(&cwd).join(arg)).collect();
+        deliver(app, paths);
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window.unminimize();
+            let _ = window.set_focus();
+        }
+    }));
+    let app = builder
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())

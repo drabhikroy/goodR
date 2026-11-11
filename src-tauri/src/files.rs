@@ -10,6 +10,7 @@
 //! other file on the disk.
 
 use anyhow::{anyhow, Context, Result};
+use rsession::windowless::Windowless;
 use serde::Serialize;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -242,7 +243,7 @@ pub fn scan_project(project_file: &Path) -> Result<ProjectInfo> {
 /// True when git can be run, which decides whether a new project offers
 /// to keep a history.
 pub fn git_available() -> bool {
-    Command::new("git").arg("--version").output().is_ok_and(|output| output.status.success())
+    Command::new("git").windowless().arg("--version").output().is_ok_and(|output| output.status.success())
 }
 
 const RPROJ: &str = "Version: 1.0\n\nRestoreWorkspace: No\nSaveWorkspace: No\nAlwaysSaveHistory: Default\n\nEnableCodeIndexing: Yes\nUseSpacesForTab: Yes\nNumSpacesForTab: 2\nEncoding: UTF-8\n";
@@ -297,7 +298,7 @@ pub fn create_project(parent: &Path, name: &str, template: &str, git: bool) -> R
             std::fs::write(folder.join(".gitignore"), GITIGNORE)?;
         }
         if !folder.join(".git").exists() {
-            let status = Command::new("git").args(["init", "-q", "-b", "main"]).current_dir(&folder).status()?;
+            let status = Command::new("git").windowless().args(["init", "-q", "-b", "main"]).current_dir(&folder).status()?;
             if !status.success() {
                 return Err(anyhow!("git could not start a history in {}", folder.display()));
             }

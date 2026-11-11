@@ -101,7 +101,15 @@
         "rank": "Alternate",
         "mimeType": "text/x-quarto"
       }
-    ]
+    ],
+    "linux": {
+      "deb": {
+        "desktopTemplate": "linux/goodr.desktop",
+        "files": {
+          "/usr/share/mime/packages/goodr.xml": "linux/goodr-mime.xml"
+        }
+      }
+    }
   },
   "plugins": {
     "updater": {

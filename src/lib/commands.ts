@@ -174,6 +174,20 @@ export function matchesCombo(event: KeyboardEvent, combo: string): boolean {
 /** True on a Mac, where shortcuts use the Command key and its symbols. */
 export const IS_MAC = typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
 
+/** True on Windows, where files are shown in File Explorer. */
+export const IS_WINDOWS = typeof navigator !== "undefined" && /Win/.test(navigator.platform);
+
+/** What the app calls the computer it runs on, as each system's own apps
+ * do. A Mac says "this Mac", and Windows and Linux say "this computer". */
+export const THIS_COMPUTER = IS_MAC ? "this Mac" : "this computer";
+
+/** The same words at the start of a sentence. */
+export const THIS_COMPUTER_START = IS_MAC ? "This Mac" : "This computer";
+
+/** The app that shows files and folders on this system. Linux has several,
+ * so it is described rather than named. */
+export const FILE_MANAGER = IS_MAC ? "Finder" : IS_WINDOWS ? "File Explorer" : "your file manager";
+
 const WORDS: Record<string, string> = { "⌘": "Ctrl", "⌃": "Ctrl", "⌥": "Alt", "⇧": "Shift", "↩": "Enter", "−": "-" };
 
 /**

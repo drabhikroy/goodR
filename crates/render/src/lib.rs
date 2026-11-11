@@ -34,6 +34,7 @@ pub mod plan;
 pub mod run;
 pub mod serve;
 pub mod shiny;
+pub mod windowless;
 
 pub use find::Tools;
 pub use parse::{Failure, Line};

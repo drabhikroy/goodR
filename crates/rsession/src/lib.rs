@@ -9,6 +9,7 @@ pub mod connection;
 pub mod discover;
 pub mod helpers;
 pub mod session;
+pub mod windowless;
 pub mod wire;
 
 pub use discover::{find_installations, RInstall};

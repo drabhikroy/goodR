@@ -137,8 +137,8 @@ async function setUpAssistant(page: Page) {
   await page.getByRole("button", { name: "Set up the assistant" }).click();
   const dialog = page.getByRole("dialog", { name: "Set up the assistant" });
   await dialog.getByRole("button", { name: "Install and continue" }).click();
-  await expect(dialog.locator("[aria-current=step]")).toContainText("This Mac", { timeout: 10_000 });
-  await dialog.getByRole("button", { name: "Check this Mac" }).click();
+  await expect(dialog.locator("[aria-current=step]")).toContainText("This computer", { timeout: 10_000 });
+  await dialog.getByRole("button", { name: "Check this computer" }).click();
   await expect(dialog.locator(".specs")).toContainText("16 GB");
   await dialog.getByRole("button", { name: "Continue" }).click();
   await expect(dialog.locator(".model-card")).toHaveCount(4);

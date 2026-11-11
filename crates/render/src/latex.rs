@@ -13,6 +13,7 @@
 //! it once to ask its version, is separate, since it is slower.
 
 use crate::plan::Plan;
+use crate::windowless::Windowless;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
@@ -141,7 +142,7 @@ pub fn describe(dir: &Path) -> String {
         .iter()
         .map(|name| program(dir, name))
         .find(|engine| engine.is_file())
-        .and_then(|engine| std::process::Command::new(engine).arg("--version").output().ok())
+        .and_then(|engine| std::process::Command::new(engine).windowless().arg("--version").output().ok())
         .map(|output| String::from_utf8_lossy(&output.stdout).lines().next().unwrap_or_default().to_string())
         .unwrap_or_default();
     name_from_version(&first_line, tinytex)

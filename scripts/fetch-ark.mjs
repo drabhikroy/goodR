@@ -86,7 +86,9 @@ async function main() {
     const zip = join(work, "ark.zip");
     writeFileSync(zip, await download(asset));
     const exe = triple.includes("windows") ? ".exe" : "";
-    if (exe) execFileSync("tar", ["-xf", zip, "-C", work]);
+    // Windows's own tar reads zip files. It is named by its full path, since
+    // a shell such as Git Bash puts a GNU tar that cannot read them first.
+    if (exe) execFileSync(join(process.env.SystemRoot ?? "C:\\Windows", "System32", "tar.exe"), ["-xf", zip, "-C", work]);
     else execFileSync("unzip", ["-q", "-o", zip, "-d", work]);
     mkdirSync(binaries, { recursive: true });
     mkdirSync(notices, { recursive: true });

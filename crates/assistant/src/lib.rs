@@ -13,3 +13,4 @@ pub mod ollama;
 pub mod prompts;
 pub mod runtime;
 pub mod specs;
+pub mod windowless;

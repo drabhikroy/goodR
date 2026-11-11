@@ -25,7 +25,7 @@ import {
   showHelpScreen,
   startTour,
 } from "../lib/app";
-import { keyLabel } from "../lib/commands";
+import { FILE_MANAGER, keyLabel } from "../lib/commands";
 import { startGuide } from "../lib/firstProject";
 import { isSupportedR, OLDEST_R } from "../lib/rversion";
 import { useStore } from "../lib/store";
@@ -203,7 +203,7 @@ export function OpeningScreen() {
               </div>
             ))}
           </div>
-          <p className="drop-hint muted">You can also drop scripts onto this window, or open them from Finder.</p>
+          <p className="drop-hint muted">You can also drop scripts onto this window, or open them from {FILE_MANAGER}.</p>
         </section>
       </main>
       <footer className="opening-footer">

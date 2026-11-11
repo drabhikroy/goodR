@@ -4,6 +4,7 @@
 //! different places. Each place is checked, the version read, and the user
 //! picks when there is more than one.
 
+use crate::windowless::Windowless;
 use serde::Serialize;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -95,7 +96,7 @@ fn looks_like_r_home(home: &Path) -> bool {
 }
 
 fn r_home_from_path() -> Option<PathBuf> {
-    let output = Command::new("R").arg("RHOME").output().ok()?;
+    let output = Command::new("R").windowless().arg("RHOME").output().ok()?;
     let text = String::from_utf8(output.stdout).ok()?;
     let line = text.lines().next()?.trim();
     (!line.is_empty()).then(|| PathBuf::from(line))
@@ -116,7 +117,7 @@ fn read_version(home: &Path) -> Option<String> {
         }
     }
     let rscript = home.join("bin").join(if cfg!(windows) { "Rscript.exe" } else { "Rscript" });
-    let output = Command::new(rscript).args(["-e", "cat(as.character(getRversion()))"]).output().ok()?;
+    let output = Command::new(rscript).windowless().args(["-e", "cat(as.character(getRversion()))"]).output().ok()?;
     let version = String::from_utf8(output.stdout).ok()?.trim().to_string();
     (!version.is_empty()).then_some(version)
 }

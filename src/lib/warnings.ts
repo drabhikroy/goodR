@@ -271,6 +271,7 @@ export function systemFix(log: string, platform: string): SystemFix | null {
   }
   if (/gfortran[^\n]*(?:No such file|not found)|cannot find -lgfortran/.test(log)) {
     if (linux) return { what: "a Fortran compiler", command: "sudo apt install gfortran", note: "Run this in a terminal, then install the package again." };
+    if (windows) return { what: "Rtools", command: null, note: "Rtools includes the Fortran compiler. Install Rtools for this version of R from cran.r-project.org/bin/windows/Rtools, then install the package again." };
     return { what: "a Fortran compiler", command: null, note: "R's own tools page, mac.r-project.org/tools, has the Fortran compiler for this Mac. Install it, then install the package again." };
   }
   if (windows && /Rtools|make: not found|'make' not found/.test(log)) {

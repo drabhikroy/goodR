@@ -2,6 +2,7 @@
 //! only when the user agrees in the setup steps, and never sent anywhere.
 //! The numbers decide which models are marked as a good fit.
 
+use crate::windowless::Windowless;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::process::Command;
@@ -38,13 +39,22 @@ fn round1(value: f64) -> f64 {
 
 /// Runs a small system tool and returns what it printed, trimmed.
 fn output(program: &str, args: &[&str]) -> Option<String> {
-    let out = Command::new(program).args(args).output().ok()?;
+    let out = Command::new(program).windowless().args(args).output().ok()?;
     out.status.success().then(|| String::from_utf8_lossy(&out.stdout).trim().to_string())
+}
+
+/// Runs one line of PowerShell, which every Windows system has, since
+/// Windows has no sysctl, /proc, or df.
+fn powershell(script: &str) -> Option<String> {
+    output("powershell", &["-NoProfile", "-NonInteractive", "-Command", script])
 }
 
 fn memory_bytes() -> Option<u64> {
     if cfg!(target_os = "macos") {
         return output("/usr/sbin/sysctl", &["-n", "hw.memsize"])?.parse().ok();
+    }
+    if cfg!(windows) {
+        return powershell("(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory")?.parse().ok();
     }
     // Linux reports kilobytes in /proc/meminfo.
     let text = std::fs::read_to_string("/proc/meminfo").ok()?;
@@ -57,18 +67,28 @@ fn chip_name() -> String {
     if cfg!(target_os = "macos") {
         return output("/usr/sbin/sysctl", &["-n", "machdep.cpu.brand_string"]).unwrap_or_default();
     }
+    if cfg!(windows) {
+        return powershell("(Get-CimInstance Win32_Processor | Select-Object -First 1).Name").unwrap_or_default();
+    }
     std::fs::read_to_string("/proc/cpuinfo")
         .ok()
         .and_then(|text| text.lines().find(|line| line.starts_with("model name")).and_then(|line| line.split(':').nth(1)).map(|name| name.trim().to_string()))
         .unwrap_or_default()
 }
 
-/// Free space through df, which every Mac and Linux system has. The folder
-/// may not exist yet, so the nearest existing parent is measured.
+/// Free space through df, which every Mac and Linux system has, or on
+/// Windows through the drive the folder is on. The folder may not exist
+/// yet, so the nearest existing parent is measured.
 fn free_disk_bytes(dir: &Path) -> Option<u64> {
     let mut target = dir;
     while !target.exists() {
         target = target.parent()?;
+    }
+    if cfg!(windows) {
+        // The drive's root, such as C:\, goes in single quotes, where
+        // PowerShell reads everything literally except a doubled quote.
+        let root = target.ancestors().last()?.to_string_lossy().replace('\'', "''");
+        return powershell(&format!("([System.IO.DriveInfo]::new('{root}')).AvailableFreeSpace"))?.parse().ok();
     }
     let text = output("df", &["-k", &target.to_string_lossy()])?;
     // The second line holds the numbers. The fourth column is the space

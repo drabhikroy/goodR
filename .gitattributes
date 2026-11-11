@@ -1,0 +1,5 @@
+# Every text file keeps Unix line endings on every system. The app knows its
+# own example files by a hash of their bytes, so a Windows checkout that
+# turned line endings into CRLF would ship examples the app then mistakes
+# for copies someone has edited.
+* text=auto eol=lf

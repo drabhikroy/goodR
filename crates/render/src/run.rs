@@ -7,6 +7,7 @@
 
 use crate::parse::{self, Failure, Line, OUTPUT_MARKER};
 use crate::plan::Plan;
+use crate::windowless::Windowless;
 use std::collections::VecDeque;
 use std::path::PathBuf;
 use std::process::Stdio;
@@ -99,6 +100,7 @@ const KEEP_LINES: usize = 5000;
 pub async fn follow(plan: &Plan, stopper: Arc<Stopper>, mut on_text: impl FnMut(&str) + Send) -> std::io::Result<Followed> {
     let mut command = tokio::process::Command::new(&plan.program);
     command
+        .windowless()
         .args(&plan.args)
         .envs(plan.env.iter().map(|(name, value)| (name.as_str(), value.as_os_str())))
         .current_dir(&plan.dir)
@@ -177,7 +179,8 @@ async fn forward(stream: impl AsyncRead + Unpin, tx: mpsc::UnboundedSender<Strin
 /// without waiting further.
 const STOP_GRACE: Duration = Duration::from_secs(2);
 
-/// Asks every process in the render's group to end.
+/// Asks every process in the render's group to end. On Windows, where a
+/// program cannot be asked, everything it started is ended at once.
 fn stop_group(child: &mut tokio::process::Child) {
     #[cfg(unix)]
     if let Some(pid) = child.id() {
@@ -188,8 +191,23 @@ fn stop_group(child: &mut tokio::process::Child) {
         }
         return;
     }
+    end_tree(child);
     let _ = child.start_kill();
 }
+
+/// Ends a program and everything it started, on Windows. Windows has no
+/// process groups, and ending only the program Stop reached would leave the
+/// R and Pandoc it started running, so taskkill walks down from it. It
+/// must run while that program is still alive, since the walk starts there.
+#[cfg(windows)]
+fn end_tree(child: &tokio::process::Child) {
+    if let Some(pid) = child.id() {
+        let _ = std::process::Command::new("taskkill").windowless().args(["/PID", &pid.to_string(), "/T", "/F"]).status();
+    }
+}
+
+#[cfg(not(windows))]
+fn end_tree(_child: &tokio::process::Child) {}
 
 /// Waits for the program to end. After Stop, anything still running after
 /// the grace period is ended without waiting further.
@@ -208,6 +226,7 @@ async fn wait_briefly(child: &mut tokio::process::Child, stopped: bool) -> std::
                     libc::killpg(pid as libc::pid_t, libc::SIGKILL);
                 }
             }
+            end_tree(child);
             let _ = child.start_kill();
             child.wait().await
         }

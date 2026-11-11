@@ -9,11 +9,11 @@ async function setUpAssistant(page: Page) {
   const dialog = page.getByRole("dialog", { name: "Set up the assistant" });
   await expect(dialog.locator("[aria-current=step]")).toContainText("Ollama");
   // No Ollama is installed in the stand-in, so only the private copy is offered.
-  await expect(dialog.getByRole("radio", { name: /Use the Ollama on this Mac/ })).toBeDisabled();
+  await expect(dialog.getByRole("radio", { name: /Use the Ollama on this computer/ })).toBeDisabled();
   await expect(dialog.getByRole("radio", { name: /Install a private copy/ })).toBeChecked();
   await dialog.getByRole("button", { name: "Install and continue" }).click();
-  await expect(dialog.locator("[aria-current=step]")).toContainText("This Mac", { timeout: 10_000 });
-  await dialog.getByRole("button", { name: "Check this Mac" }).click();
+  await expect(dialog.locator("[aria-current=step]")).toContainText("This computer", { timeout: 10_000 });
+  await dialog.getByRole("button", { name: "Check this computer" }).click();
   await expect(dialog.locator(".specs")).toContainText("16 GB");
   await dialog.getByRole("button", { name: "Continue" }).click();
   await expect(dialog.locator("[aria-current=step]")).toContainText("Models");
@@ -31,9 +31,9 @@ test("the assistant is set up in three steps, with an even handed model list", a
     await expect(card.getByText("Weaker at", { exact: true })).toBeVisible();
   }
   // On a 16 GB Mac the suggestion is the 7B code model, from fit alone.
-  const suggested = dialog.locator(".model-card").filter({ hasText: "Suggested for this Mac" });
+  const suggested = dialog.locator(".model-card").filter({ hasText: "Suggested for this computer" });
   await expect(suggested).toContainText("Qwen2.5 Coder 7B");
-  await expect(dialog.locator(".model-card").filter({ hasText: "Qwen3 Coder 30B" })).toContainText("Too large for this Mac's memory");
+  await expect(dialog.locator(".model-card").filter({ hasText: "Qwen3 Coder 30B" })).toContainText("Too large for the memory in this computer");
   // Downloading shows progress, and a second download waits its turn.
   const small = dialog.locator(".model-card").filter({ hasText: "Qwen2.5 Coder 3B" });
   await small.getByRole("button", { name: /^Download/ }).click();
@@ -140,7 +140,7 @@ test("the assistant pane explains itself before setup and never blocks the rest 
   await openExample(page);
   await page.getByRole("button", { name: "Assistant", exact: true }).click();
   const pane = page.getByRole("region", { name: "Assistant" });
-  await expect(pane).toContainText("An assistant that runs on this Mac");
+  await expect(pane).toContainText("An assistant that runs on this computer");
   await expect(pane).toContainText("your work never leaves it");
   // Errors offer the assistant only once a model is ready.
   await newFileWith(page, "nosuchthing\n");

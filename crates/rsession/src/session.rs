@@ -7,12 +7,14 @@
 //! helper queries without them ever appearing in the console.
 
 use crate::connection::ConnectionInfo;
+use crate::windowless::Windowless;
 use crate::wire::{Message, Signer};
 use anyhow::{anyhow, Context, Result};
 use serde::Serialize;
 use serde_json::{json, Value};
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::ffi::OsString;
+use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex as StdMutex};
@@ -102,6 +104,26 @@ pub struct Session {
     pub log_path: PathBuf,
 }
 
+/// The PATH ark runs with on Windows: R's bin\x64 folder first, so R.dll is
+/// found there, then everything the app itself was given.
+fn windows_path(r_home: &Path, inherited: Option<OsString>) -> OsString {
+    let first = r_home.join("bin").join("x64");
+    let mut dirs = vec![first.clone()];
+    if let Some(path) = &inherited {
+        dirs.extend(std::env::split_paths(path));
+    }
+    // A folder name holding the separator cannot be joined. Rather than
+    // lose the rest of the PATH, the folder is put in front as text.
+    std::env::join_paths(dirs).unwrap_or_else(|_| {
+        let mut joined = first.into_os_string();
+        if let Some(path) = inherited {
+            joined.push(";");
+            joined.push(path);
+        }
+        joined
+    })
+}
+
 impl Session {
     /// Starts ark with the chosen R and waits until R answers.
     pub async fn start(config: SessionConfig, events: mpsc::UnboundedSender<Event>) -> Result<Arc<Session>> {
@@ -133,6 +155,12 @@ impl Session {
         if cfg!(target_os = "linux") {
             command.env("LD_LIBRARY_PATH", config.r_home.join("lib"));
         }
+        // Windows finds R.dll, and the DLLs R loads after it, only through
+        // the PATH. They sit in bin\x64, so that folder goes first.
+        if cfg!(windows) {
+            command.env("PATH", windows_path(&config.r_home, std::env::var_os("PATH")));
+        }
+        command.windowless();
         let child = command.spawn().with_context(|| format!("could not start {}", config.ark_path.display()))?;
 
         // State shared between the socket readers and the public methods.
@@ -528,4 +556,19 @@ pub fn log_tail(path: &std::path::Path) -> String {
 pub fn parse_helper_json(text: &str) -> Result<Value> {
     let line = text.lines().rev().find(|line| !line.trim().is_empty()).unwrap_or("null");
     Ok(serde_json::from_str(line.trim())?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_windows_path_puts_r_first_and_keeps_the_rest() {
+        let home = Path::new("R-4.5.1");
+        let rest = std::env::join_paths([PathBuf::from("one"), PathBuf::from("two")]).unwrap();
+        let dirs: Vec<PathBuf> = std::env::split_paths(&windows_path(home, Some(rest))).collect();
+        assert_eq!(dirs, [home.join("bin").join("x64"), PathBuf::from("one"), PathBuf::from("two")]);
+        let alone: Vec<PathBuf> = std::env::split_paths(&windows_path(home, None)).collect();
+        assert_eq!(alone, [home.join("bin").join("x64")]);
+    }
 }

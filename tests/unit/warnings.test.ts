@@ -60,5 +60,9 @@ describe("explainWarning", () => {
     expect(systemFix("xcrun: error: invalid active developer path", "macos")?.command).toBe("xcode-select --install");
     expect(systemFix("gdal-config: not found", "linux")?.command).toBe("sudo apt install libgdal-dev");
     expect(systemFix("all fine", "macos")).toBeNull();
+    // Windows gets its Fortran compiler with Rtools, not from the Mac tools page.
+    const fortran = "gfortran: No such file or directory";
+    expect(systemFix(fortran, "windows")?.what).toBe("Rtools");
+    expect(systemFix(fortran, "macos")?.note).toContain("mac.r-project.org");
   });
 });

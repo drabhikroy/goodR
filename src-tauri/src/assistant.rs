@@ -15,6 +15,7 @@ use assistant::ollama::{ChatMessage, Client, Installed, PRIVATE_URL, SYSTEM_URL}
 use assistant::prompts::{self, Context, Task};
 use assistant::runtime::{self, Found, Paths};
 use assistant::specs::{self, Specs};
+use rsession::windowless::Windowless;
 use serde::Serialize;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex as StdMutex};
@@ -121,6 +122,7 @@ pub async fn assistant_connect(state: State<'_, AssistantState>, route: String) 
             let path = start.ok_or("Ollama is not installed on this computer. Install it from ollama.com, or choose the private copy.")?;
             runtime::Server::new(
                 tokio::process::Command::new(path)
+                    .windowless()
                     .arg("serve")
                     .stdin(std::process::Stdio::null())
                     .stdout(std::process::Stdio::null())

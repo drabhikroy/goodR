@@ -20,13 +20,14 @@ import {
   removePrivateOllama,
 } from "../lib/assistant";
 import { openDialog, openUrl } from "../lib/app";
+import { THIS_COMPUTER, THIS_COMPUTER_START } from "../lib/commands";
 import { useStore } from "../lib/store";
 import type { CatalogModel, MachineSpecs, ModelCatalog, ModelFit } from "../lib/types";
 import { Modal } from "./Dialogs";
 import { CheckIcon, HollowIcon, StopIcon, TriangleIcon } from "./Icons";
 
 type Step = 0 | 1 | 2;
-const STEPS = ["Ollama", "This Mac", "Models"];
+const STEPS = ["Ollama", THIS_COMPUTER_START, "Models"];
 
 const close = () => openDialog(null);
 
@@ -103,7 +104,7 @@ function OllamaStep({ onNext }: { onNext: () => void }) {
     <>
       <div className="dialog-body">
         <p>
-          The assistant uses Ollama, a free program, to run an AI model on this Mac. Nothing you type, and none of your work, leaves this computer.
+          The assistant uses Ollama, a free program, to run an AI model on {THIS_COMPUTER}. Nothing you type, and none of your work, leaves this computer.
         </p>
         <fieldset>
           <legend>Which Ollama should the assistant use?</legend>
@@ -111,13 +112,13 @@ function OllamaStep({ onNext }: { onNext: () => void }) {
             <label className={`choice tall ${route === "system" ? "is-on" : ""} ${hasSystem ? "" : "is-unavailable"}`}>
               <input type="radio" name="ollama" checked={route === "system"} disabled={!hasSystem} onChange={() => setRoute("system")} data-autofocus={hasSystem ? true : undefined} />
               <span>
-                <strong>Use the Ollama on this Mac</strong>
+                <strong>Use the Ollama on {THIS_COMPUTER}</strong>
                 {hasSystem ? (
                   <span className="muted">
                     {found?.systemRunning ? `Found and running, version ${found.systemVersion}.` : "Found. The app starts it when needed."} Models you already downloaded with it can be used.
                   </span>
                 ) : (
-                  <span className="muted">Not found on this Mac. Install it from ollama.com, then check again.</span>
+                  <span className="muted">Not found on {THIS_COMPUTER}. Install it from ollama.com, then check again.</span>
                 )}
               </span>
             </label>
@@ -148,7 +149,7 @@ function OllamaStep({ onNext }: { onNext: () => void }) {
         {setup?.target === "runtime" && <Progress label="the download" />}
         {status?.connected && (
           <p className="setup-ok">
-            <CheckIcon size={16} /> Connected to {status.connected === "private" ? "the private copy" : "the Ollama on this Mac"}, version {status.version}.
+            <CheckIcon size={16} /> Connected to {status.connected === "private" ? "the private copy" : `the Ollama on ${THIS_COMPUTER}`}, version {status.version}.
           </p>
         )}
       </div>
@@ -183,7 +184,7 @@ function MachineStep({ specs, onSpecs, onBack, onNext }: { specs: MachineSpecs |
     <>
       <div className="dialog-body">
         <p>
-          To suggest models that suit this Mac, the app can read how much memory and free disk space it has, and which chip it uses. The numbers stay on this computer and are not saved. This step is optional.
+          To suggest models that suit {THIS_COMPUTER}, the app can read how much memory and free disk space it has, and which chip it uses. The numbers stay on this computer and are not saved. This step is optional.
         </p>
         {specs ? (
           <dl className="specs">
@@ -203,7 +204,7 @@ function MachineStep({ specs, onSpecs, onBack, onNext }: { specs: MachineSpecs |
         ) : (
           <div className="button-row">
             <button type="button" className="button primary" data-autofocus onClick={check} disabled={reading}>
-              {reading ? "Checking" : "Check this Mac"}
+              {reading ? "Checking" : `Check ${THIS_COMPUTER}`}
             </button>
           </div>
         )}
@@ -221,9 +222,9 @@ function MachineStep({ specs, onSpecs, onBack, onNext }: { specs: MachineSpecs |
 }
 
 const FIT_WORDS: Record<ModelFit, string> = {
-  good: "Fits this Mac well",
+  good: `Fits ${THIS_COMPUTER} well`,
   tight: "Runs, but slowly, and other apps may slow down",
-  tooLarge: "Too large for this Mac's memory",
+  tooLarge: `Too large for the memory in ${THIS_COMPUTER}`,
   noRoom: "Not enough free disk space",
 };
 
@@ -271,8 +272,8 @@ function ModelsStep({ specs, onBack }: { specs: MachineSpecs | null; onBack: () 
     <>
       <div className="dialog-body">
         <p>
-          Each model below is free and runs on this Mac. Larger models give better answers but download more and answer more slowly. You can add or remove models at any time.
-          {specs ? "" : " The memory each one needs is listed, since this Mac was not checked."}
+          Each model below is free and runs on {THIS_COMPUTER}. Larger models give better answers but download more and answer more slowly. You can add or remove models at any time.
+          {specs ? "" : ` The memory each one needs is listed, since ${THIS_COMPUTER} was not checked.`}
         </p>
         <ul className="model-list" aria-label="Models">
           {catalog?.models.map((model) => {
@@ -284,7 +285,7 @@ function ModelsStep({ specs, onBack }: { specs: MachineSpecs | null; onBack: () 
                 <div className="model-head">
                   <strong>{model.name}</strong>
                   <span className="muted">{`${model.kind}, about ${model.sizeGb} GB`}</span>
-                  {suggested && <span className="badge">{specs ? "Suggested for this Mac" : "A safe first choice"}</span>}
+                  {suggested && <span className="badge">{specs ? `Suggested for ${THIS_COMPUTER}` : "A safe first choice"}</span>}
                 </div>
                 <FitNote model={model} />
                 <div className="pros-cons">
@@ -339,8 +340,8 @@ function ModelsStep({ specs, onBack }: { specs: MachineSpecs | null; onBack: () 
           })}
         </ul>
         {others.length > 0 && (
-          <section aria-label="Other models on this Mac">
-            <h3 className="setup-subhead">Other models already on this Mac</h3>
+          <section aria-label={`Other models on ${THIS_COMPUTER}`}>
+            <h3 className="setup-subhead">Other models already on {THIS_COMPUTER}</h3>
             <ul className="model-list">
               {others.map((model) => (
                 <li key={model.id} className={`model-card compact ${assistant.model === model.id ? "is-in-use" : ""}`}>

@@ -1,6 +1,7 @@
 # First steps ----
 #
-# Put the cursor on a line and press Command Return to run it.
+# Put the cursor on a line and press Command Return on a Mac, or Ctrl Enter
+# on Linux and Windows, to run it.
 # The result appears in the canvas on the right, with a link
 # back to this line. Lines that print nothing, such as an
 # assignment, get a small check in the margin instead.

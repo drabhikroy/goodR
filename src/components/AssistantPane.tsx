@@ -6,6 +6,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { assistOnCode, askAssistant, checkCode, chooseModel, clearConversation, codeBlocks, codeToConsole, insertAssistantCode, isOneOffStep, likeness, openAssistantSetup, refreshAssistant, replaceWithAssistantCode, stopAnswer } from "../lib/assistant";
+import { THIS_COMPUTER } from "../lib/commands";
 import { useStore, type AssistantTurn } from "../lib/store";
 import { CheckIcon, CopyIcon, SparkIcon, StopIcon, TriangleIcon } from "./Icons";
 
@@ -24,7 +25,7 @@ function AssistantIntro({ connecting, connected }: { connecting: boolean; connec
   return (
     <section className="assistant-intro" aria-label="Assistant">
       <SparkIcon size={22} />
-      <h3>An assistant that runs on this Mac</h3>
+      <h3>An assistant that runs on {THIS_COMPUTER}</h3>
       <ul>
         <li>Explains errors and fixes them, in plain words</li>
         <li>Explains code, or adds comments to it</li>

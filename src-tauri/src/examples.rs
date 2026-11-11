@@ -43,6 +43,7 @@ const FILES: &[(&str, &str)] = &[
 const SHIPPED: &[(&str, u64)] = &[
     ("01-first-steps.R", 0x0a6012c0a9e76142),
     ("01-first-steps.R", 0x170dba5f206c4a2d),
+    ("01-first-steps.R", 0x6b6317e5f6dd9077),
     ("01-first-steps.R", 0xb1f85c3bbb4e577d),
     ("01-first-steps.R", 0xe9ebeaeba57b2cf6),
     ("02-data-frames.R", 0x3b24d150684775a1),

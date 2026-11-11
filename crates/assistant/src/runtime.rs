@@ -7,6 +7,7 @@
 //! SHA-256 before anything is unpacked, so a changed or damaged download is
 //! refused rather than run.
 
+use crate::windowless::Windowless;
 use anyhow::{anyhow, Context, Result};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -103,6 +104,7 @@ pub async fn install_from(paths: &Paths, url: &str, sha256: &str, size: u64, can
     let _ = std::fs::remove_file(&archive);
 
     let mut child = tokio::process::Command::new("curl")
+        .windowless()
         // Redirects may only lead to HTTPS. The checksum below is the real
         // guard, and this keeps the transfer itself off plain HTTP.
         .args(["--location", "--proto-redir", "=https", "--fail", "--silent", "--show-error", "--output"])
@@ -152,7 +154,7 @@ pub async fn install_from(paths: &Paths, url: &str, sha256: &str, size: u64, can
     let staging = paths.root.join("runtime-new");
     let _ = std::fs::remove_dir_all(&staging);
     std::fs::create_dir_all(&staging)?;
-    let status = tokio::process::Command::new("tar").arg("-xzf").arg(&archive).arg("-C").arg(&staging).status().await.context("could not start tar")?;
+    let status = tokio::process::Command::new("tar").windowless().arg("-xzf").arg(&archive).arg("-C").arg(&staging).status().await.context("could not start tar")?;
     let _ = std::fs::remove_file(&archive);
     if !status.success() || !staging.join("ollama").is_file() {
         let _ = std::fs::remove_dir_all(&staging);
@@ -247,7 +249,7 @@ fn start_watching(paths: &Paths, parent: u32) -> Result<Server> {
     let mut command = {
         let _ = parent;
         let mut command = tokio::process::Command::new(paths.binary());
-        command.arg("serve");
+        command.windowless().arg("serve");
         command
     };
     let child = command

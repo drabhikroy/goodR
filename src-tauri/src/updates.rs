@@ -13,6 +13,7 @@
 
 use std::time::Duration;
 
+use rsession::windowless::Windowless;
 use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 use tauri_plugin_updater::UpdaterExt;
@@ -44,6 +45,7 @@ async fn fetch(url: &str) -> Option<String> {
     let output = tokio::time::timeout(
         Duration::from_secs(20),
         tokio::process::Command::new("curl")
+            .windowless()
             .args(["--location", "--proto-redir", "=https", "--fail", "--silent", "--max-time", "15", "--header", "Accept: application/json", "--user-agent", "goodr"])
             .arg(url)
             .output(),
