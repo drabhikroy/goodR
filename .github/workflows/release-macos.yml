@@ -36,7 +36,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: macos-14
+    runs-on: macos-15
     env:
       APP: ${{ github.workspace }}/target/universal-apple-darwin/release/bundle/macos/goodR.app
       HAS_UPDATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
