@@ -3,7 +3,7 @@
 // (projects, tabs, search); the document bar holds what acts on the file
 // below it. Everything else is in the menus and the command palette.
 
-import { activateTab, baseName, chooseAndOpenProject, chunkWord, openRecentProject, closeTab, folderOf, newFile, openDialog, runAs, runDefault, runFile, runFromCursor, runScopeFor, sessionLabel, setOutputLayout, shortPath, showSessionTab, showStartScreen, stop, toggleFocus, toggleLive, undoLastRun, togglePalette, togglePane, updateSettings } from "../lib/app";
+import { activateTab, baseName, chooseAndOpenProject, chunkWord, openRecentProject, closeTab, folderOf, newFile, openDialog, runAs, runDefault, runFile, runFromCursor, runScopeFor, sessionButtonLabel, sessionKind, sessionLabel, setOutputLayout, shortPath, showSessionTab, showStartScreen, stop, toggleFocus, toggleLive, undoLastRun, togglePalette, togglePane, updateSettings } from "../lib/app";
 import { keyLabel } from "../lib/commands";
 import * as editor from "../lib/editor";
 import { isReport, renderReport, stopRender } from "../lib/report";
@@ -15,7 +15,7 @@ import { Canvas, elapsedWords, PlotViewer, useElapsed } from "./Canvas";
 import { Composer } from "./Composer";
 import { DataViewer } from "./DataViewer";
 import { EditorPane, SectionBar } from "./EditorPane";
-import { AppWindowIcon, HistoryIcon, CheckIcon, ChevronIcon, CloseIcon, HomeIcon, PanelIcon, PlayIcon, SearchIcon, PlusIcon, ReportIcon, StopIcon, TableIcon, UndoIcon } from "./Icons";
+import { AppWindowIcon, HistoryIcon, CheckIcon, ChevronIcon, CloseIcon, FileIcon, FolderIcon, HomeIcon, PanelIcon, PencilIcon, PlayIcon, SearchIcon, PlusIcon, ReportIcon, StopIcon, TableIcon, UndoIcon } from "./Icons";
 import { Sidebar } from "./Sidebar";
 import { Popover, usePopover } from "./Popover";
 import { openFileHistory } from "../lib/fileHistory";
@@ -187,11 +187,20 @@ function Tabs() {
   );
 }
 
+/** The small picture that tells a project, a script on its own, and
+ * untitled work apart, so a session is never mistaken for a tab. */
+function SessionIcon({ session, size = 14 }: { session: string; size?: number }) {
+  const kind = sessionKind(session);
+  const Icon = kind === "project" ? FolderIcon : kind === "file" ? FileIcon : PencilIcon;
+  return <Icon size={size} />;
+}
+
 /**
  * What is open, by project, as a menu to switch between them: each
  * project, script on its own, or untitled work with a tab open, whether
- * its R is busy, and the projects opened recently. The name of the one on
- * show is the button's label, so it also says where the tabs belong.
+ * its R is busy, and the projects opened recently. The button says which
+ * kind is on show, with a picture and a name that is never a file's, so it
+ * cannot be taken for the tab beside it; the list inside names each one.
  */
 function ProjectSwitcher() {
   const active = useStore((state) => state.activeSession);
@@ -209,9 +218,20 @@ function ProjectSwitcher() {
   };
   return (
     <div className="popover-anchor project-switcher" ref={box}>
-      <button type="button" className="project-switch" aria-haspopup="menu" aria-expanded={open} title="Switch to another open project or script" onClick={() => setOpen(!open)}>
+      <button
+        type="button"
+        className="project-switch"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title={sessionKind(active) === "file" ? `${sessionLabel(active)} runs in its own R. Switch to another open project or script` : "Switch to another open project or script"}
+        onClick={() => setOpen(!open)}
+      >
         {status !== "ready" && status !== "none" && <span className={`r-dot tone-${status === "busy" || status === "starting" ? "busy" : "danger"}`} title={R_WORDS[status]} aria-hidden="true" />}
-        <span className="truncate">{sessionLabel(active)}</span>
+        <span className="project-kind" aria-hidden="true">
+          <SessionIcon session={active} />
+        </span>
+        <span className="truncate">{sessionButtonLabel(active)}</span>
+        {sessionKind(active) === "file" && <span className="visually-hidden">, {sessionLabel(active)} on its own</span>}
         {openKeys.length > 1 && (
           <>
             <span className="project-count" aria-hidden="true">
@@ -230,7 +250,12 @@ function ProjectSwitcher() {
               <span className="menu-check" aria-hidden="true">
                 {key === active && <CheckIcon size={13} />}
               </span>
-              <span className="truncate">{sessionLabel(key)}</span>
+              <span className="session-row">
+                <span className="project-kind" aria-hidden="true">
+                  <SessionIcon session={key} />
+                </span>
+                <span className="truncate">{sessionLabel(key)}</span>
+              </span>
               <span className="menu-hint">{sessions[key].r.status === "busy" ? "Running" : `${tabs.filter((tab) => tab.session === key).length} open`}</span>
             </button>
           ))}
@@ -238,7 +263,12 @@ function ProjectSwitcher() {
           {closed.map((item) => (
             <button key={item.path} type="button" role="menuitem" title={shortPath(item.path)} onClick={() => pick(() => openRecentProject(item.path))}>
               <span className="menu-check" aria-hidden="true" />
-              <span className="truncate">{baseName(folderOf(item.path))}</span>
+              <span className="session-row">
+                <span className="project-kind" aria-hidden="true">
+                  <FolderIcon size={14} />
+                </span>
+                <span className="truncate">{baseName(folderOf(item.path))}</span>
+              </span>
             </button>
           ))}
           <hr />

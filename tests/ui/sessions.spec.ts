@@ -54,6 +54,22 @@ test("a project and a script on its own keep separate objects", async ({ page })
   expect(await runningSessions(page)).toEqual(["file:/Users/demo/Desktop/quick.R", `project:${ROOT}`, "scratch"]);
 });
 
+test("the project menu never repeats the name on a tab", async ({ page }) => {
+  await openExample(page);
+  const menu = page.locator(".project-switch");
+  // A project is named on the menu, and its scripts on the tabs.
+  await expect(menu).toContainText("penguins");
+  // A script on its own is called what it is, so its file name is on its
+  // tab only, though the menu's list still names it.
+  await page.evaluate(() => (window.goodforPick = ["/Users/demo/Desktop/quick.R"]));
+  await page.keyboard.press("Control+o");
+  await expect(page.getByRole("tab", { name: /quick\.R/ })).toHaveAttribute("aria-selected", "true");
+  await expect(menu).toContainText("Single script");
+  await expect(menu.locator(".truncate")).not.toContainText("quick.R");
+  await menu.click();
+  await expect(page.getByRole("menu", { name: "Projects" }).getByRole("menuitemradio", { name: /quick\.R/ })).toBeVisible();
+});
+
 test("closing a script on its own ends its R, and a project's R stays until the project closes", async ({ page }) => {
   await openExample(page);
   await page.evaluate(() => (window.goodforPick = ["/Users/demo/Desktop/quick.R"]));

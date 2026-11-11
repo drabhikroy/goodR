@@ -1822,6 +1822,22 @@ function handleEvent(session: string, generation: number, event: REvent) {
   }
 }
 
+/** What a session is: a project, a script that runs in its own R, or
+ * untitled work, which shares one. */
+export function sessionKind(session: string): "project" | "file" | "scratch" {
+  return sessionOf(session).project ? "project" : kindOf(session);
+}
+
+/**
+ * What the project menu's own button says. A script on its own would be
+ * named for its file, which is also the name on its tab, so the same words
+ * showed twice side by side. The button names what the session is instead,
+ * and the file's name stays on the tab and in the menu's list.
+ */
+export function sessionButtonLabel(session: string) {
+  return sessionKind(session) === "file" ? "Single script" : sessionLabel(session);
+}
+
 /** A session's short name: its project, its script, or Untitled work. */
 export function sessionLabel(session: string) {
   const project = sessionOf(session).project;
