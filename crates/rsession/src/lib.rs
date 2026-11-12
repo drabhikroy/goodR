@@ -12,7 +12,7 @@ pub mod session;
 pub mod windowless;
 pub mod wire;
 
-pub use discover::{find_installations, RInstall};
+pub use discover::{find_installations, plain_path, RInstall};
 pub use session::{parse_helper_json, Event, Session, SessionConfig};
 
 /// Decodes a plot as ark sends it. ark wraps the base64 text across lines

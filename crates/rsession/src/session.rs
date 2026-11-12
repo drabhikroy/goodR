@@ -137,13 +137,17 @@ impl Session {
         // Console mode is what Positron uses for its console. It keeps
         // readline and menu prompts on the stdin channel and renders plots
         // as images in the output, which is what inline output needs.
+        // R and ark read these folders the ordinary way, so they are given
+        // without the prefix Windows puts on a resolved path.
+        let r_home = crate::plain_path(&config.r_home);
+        let working_dir = crate::plain_path(&config.working_dir);
         let mut command = tokio::process::Command::new(&config.ark_path);
         command
             .arg("--connection_file")
             .arg(&connection_file)
             .args(["--session-mode", "console"])
-            .current_dir(&config.working_dir)
-            .env("R_HOME", &config.r_home)
+            .current_dir(&working_dir)
+            .env("R_HOME", &r_home)
             // ark is quiet unless something goes wrong, which keeps the log
             // short enough to show someone when R fails to start.
             .env("RUST_LOG", "error")
@@ -153,12 +157,12 @@ impl Session {
             .kill_on_drop(true);
         // On Linux the loader must be able to find libR before ark opens it.
         if cfg!(target_os = "linux") {
-            command.env("LD_LIBRARY_PATH", config.r_home.join("lib"));
+            command.env("LD_LIBRARY_PATH", r_home.join("lib"));
         }
         // Windows finds R.dll, and the DLLs R loads after it, only through
         // the PATH. They sit in bin\x64, so that folder goes first.
         if cfg!(windows) {
-            command.env("PATH", windows_path(&config.r_home, std::env::var_os("PATH")));
+            command.env("PATH", windows_path(&r_home, std::env::var_os("PATH")));
         }
         command.windowless();
         let child = command.spawn().with_context(|| format!("could not start {}", config.ark_path.display()))?;

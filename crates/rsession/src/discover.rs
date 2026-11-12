@@ -20,13 +20,35 @@ pub struct RInstall {
     pub source: String,
 }
 
+/// Windows spells a resolved path with a `\\?\` prefix, which tells its file
+/// functions to skip their usual path handling. Programs that read a path
+/// the ordinary way, R and ark included, do not understand the prefix, so a
+/// folder handed to them must be written without it. A network share keeps
+/// its two leading backslashes. Any other path comes back unchanged.
+pub fn plain_path(path: &Path) -> PathBuf {
+    match path.to_str().and_then(strip_verbatim) {
+        Some(plain) => PathBuf::from(plain),
+        None => path.to_path_buf(),
+    }
+}
+
+fn strip_verbatim(text: &str) -> Option<String> {
+    if let Some(share) = text.strip_prefix(r"\\?\UNC\") {
+        return Some(format!(r"\\{share}"));
+    }
+    let rest = text.strip_prefix(r"\\?\")?;
+    let mut chars = rest.chars();
+    let drive = chars.next()?.is_ascii_alphabetic() && chars.next() == Some(':');
+    drive.then(|| rest.to_string())
+}
+
 /// Every R that can be found, newest first, with duplicates removed.
 pub fn find_installations() -> Vec<RInstall> {
     let mut by_home: BTreeMap<PathBuf, RInstall> = BTreeMap::new();
     for (home, source) in candidate_homes() {
         // Symlinks such as Versions/Current point at a real version folder,
         // so compare resolved paths to avoid listing one R twice.
-        let Ok(real) = home.canonicalize() else { continue };
+        let Ok(real) = home.canonicalize().map(|resolved| plain_path(&resolved)) else { continue };
         if by_home.contains_key(&real) || !looks_like_r_home(&real) {
             continue;
         }
@@ -143,6 +165,18 @@ pub fn compare_versions(a: &str, b: &str) -> std::cmp::Ordering {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_resolved_windows_path_loses_its_prefix_and_nothing_else_changes() {
+        let plain = |text: &str| plain_path(Path::new(text)).to_string_lossy().into_owned();
+        assert_eq!(plain(r"\\?\C:\Program Files\R\R-4.6.2"), r"C:\Program Files\R\R-4.6.2");
+        assert_eq!(plain(r"\\?\UNC\server\share\R"), r"\\server\share\R");
+        // Only a drive letter or a share may follow the prefix.
+        assert_eq!(plain(r"\\?\Volume{1234}\R"), r"\\?\Volume{1234}\R");
+        assert_eq!(plain(r"C:\R\R-4.6.2"), r"C:\R\R-4.6.2");
+        assert_eq!(plain("/usr/lib/R"), "/usr/lib/R");
+        assert_eq!(plain(""), "");
+    }
 
     #[test]
     fn version_header_is_parsed() {
