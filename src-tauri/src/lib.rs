@@ -605,7 +605,15 @@ fn ark_path() -> CommandResult<PathBuf> {
         return Ok(PathBuf::from(path));
     }
     let exe = std::env::current_exe().map_err(text_error)?;
-    let name = if cfg!(windows) { "ark.exe" } else { "ark" };
+    // Linux installs it as goodr-ark, since /usr/bin/ark is the KDE archive
+    // manager. See scripts/fetch-ark.mjs and tauri.linux.conf.json.
+    let name = if cfg!(windows) {
+        "ark.exe"
+    } else if cfg!(target_os = "linux") {
+        "goodr-ark"
+    } else {
+        "ark"
+    };
     let path = exe.parent().ok_or("the app folder could not be found")?.join(name);
     if path.exists() {
         Ok(path)

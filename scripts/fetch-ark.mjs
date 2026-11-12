@@ -58,11 +58,19 @@ async function download(asset) {
   return bytes;
 }
 
+// The name the kernel is installed under. On Linux the Debian package puts
+// it in /usr/bin, where the name ark already belongs to the KDE archive
+// manager, so the two could not be installed together. Linux uses a name of
+// its own, and the Mac and Windows builds keep ark.
+function sidecar(triple) {
+  return triple.includes("linux") ? "goodr-ark" : "ark";
+}
+
 // Is ark in place, at the pinned version, for this triple?
 function placed(triple) {
   const exe = triple.includes("windows") ? ".exe" : "";
   const stamp = join(binaries, `.ark-${triple}.version`);
-  return existsSync(join(binaries, `ark-${triple}${exe}`)) && existsSync(stamp) && readFileSync(stamp, "utf8") === ARK_VERSION;
+  return existsSync(join(binaries, `${sidecar(triple)}-${triple}${exe}`)) && existsSync(stamp) && readFileSync(stamp, "utf8") === ARK_VERSION;
 }
 
 async function main() {
@@ -93,7 +101,7 @@ async function main() {
     mkdirSync(binaries, { recursive: true });
     mkdirSync(notices, { recursive: true });
     for (const each of missing) {
-      const destination = join(binaries, `ark-${each}${exe}`);
+      const destination = join(binaries, `${sidecar(each)}-${each}${exe}`);
       copyFileSync(join(work, `ark${exe}`), destination);
       if (!exe) chmodSync(destination, 0o755);
       writeFileSync(join(binaries, `.ark-${each}.version`), ARK_VERSION);

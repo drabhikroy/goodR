@@ -12,7 +12,8 @@ fn ark_path() -> PathBuf {
     let text = String::from_utf8(output.stdout).unwrap();
     let triple = text.lines().find_map(|line| line.strip_prefix("host: ")).unwrap().trim().to_string();
     let exe = if cfg!(windows) { ".exe" } else { "" };
-    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(format!("../../src-tauri/binaries/ark-{triple}{exe}"));
+    let name = if cfg!(target_os = "linux") { "goodr-ark" } else { "ark" };
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(format!("../../src-tauri/binaries/{name}-{triple}{exe}"));
     assert!(path.exists(), "ark is missing; run `node scripts/fetch-ark.mjs` first");
     path
 }
