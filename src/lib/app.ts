@@ -2738,6 +2738,11 @@ async function checkPackages(path: string) {
   }
 }
 
+// When no library can be written to, as with the system's R on Linux, R
+// stops to ask whether to make a personal one, and the answer is nearly
+// always yes. So the app makes it and puts it first, and R never has to ask.
+const LIBRARY_SETUP = `if (!any(file.access(.libPaths(), 2) == 0)) { personal <- path.expand(Sys.getenv("R_LIBS_USER")); if (nzchar(personal)) { dir.create(personal, recursive = TRUE, showWarnings = FALSE); .libPaths(personal) } }`;
+
 // A package name as CRAN allows it. Names are checked against this before
 // they are written into R code, so nothing else can reach R that way.
 const PACKAGE_NAME = /^[A-Za-z][A-Za-z0-9.]*$/;
@@ -2757,7 +2762,7 @@ export function installPackages(names: string[]) {
   echo(session, code, batch, "install");
   showPanel("canvas");
   notify(`Installing ${clean.join(", ")}. Progress is on the stage.`);
-  enqueue([{ code, batch, console: true, session }]);
+  enqueue([{ code: `${LIBRARY_SETUP}\n${CRAN_SETUP}\n${code}`, batch, console: true, session }]);
 }
 
 // When R has no package source chosen yet, the update functions would stop
@@ -2784,7 +2789,7 @@ export async function updateAllPackages(): Promise<string | null> {
   showPanel("canvas");
   notify("Updating packages. Progress is on the stage.");
   return runInConsole(
-    `${CRAN_SETUP}\nlocal({\n  old <- old.packages()\n  if (is.null(old)) cat("Every installed package is up to date.\\n") else update.packages(oldPkgs = rownames(old), ask = FALSE, checkBuilt = TRUE)\n})`,
+    `${LIBRARY_SETUP}\n${CRAN_SETUP}\nlocal({\n  old <- old.packages()\n  if (is.null(old)) cat("Every installed package is up to date.\\n") else update.packages(oldPkgs = rownames(old), ask = FALSE, checkBuilt = TRUE)\n})`,
     "update",
   );
 }

@@ -2758,6 +2758,39 @@ body.is-resizing-columns * {
   box-shadow: 0 0 0 1px var(--focus);
 }
 
+/* The question R is asking, in full above the prompt. */
+.composer-question {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--code-bg);
+}
+
+.composer-question p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.composer-question-text {
+  font-family: var(--code-font, "DM Mono", ui-monospace, monospace);
+  white-space: pre-wrap;
+}
+
+.composer-question-note {
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.composer-question-answers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .composer-folder {
   margin: 0.3rem 0.2rem 0;
   font-size: 0.8rem;

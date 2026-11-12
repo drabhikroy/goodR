@@ -214,6 +214,19 @@ test("a readline prompt is answered from the console", async ({ page }) => {
   await expect(feed(page)).toContainText("hi Ada");
 });
 
+test("a yes or no question from R is written out in full, with a button for each answer", async ({ page }) => {
+  await openExample(page);
+  const input = page.getByRole("textbox", { name: "R console input" });
+  await input.fill("answer <- readline('Would you like to use a personal library instead? (yes/No/cancel) '); cat('got', answer)");
+  await input.press("Enter");
+  const question = page.getByRole("group", { name: "R is asking" });
+  await expect(question).toContainText("Would you like to use a personal library instead?");
+  await expect(question).toContainText("home folder");
+  await question.getByRole("button", { name: "Yes" }).click();
+  await expect(feed(page)).toContainText("got yes");
+  await expect(question).toHaveCount(0);
+});
+
 test("results from the script land in the canvas as a card with a link back to their line", async ({ page }) => {
   await openExample(page);
   await newFileWith(page, "x <- 5\n1 + 1\n");

@@ -18,6 +18,7 @@ import { EditorView, keymap, placeholder } from "@codemirror/view";
 import { useEffect, useRef, useState } from "react";
 import { historyToConsole, historyToScript, runConsole, shortPath, updateSettings } from "../lib/app";
 import { keyLabel } from "../lib/commands";
+import { describePrompt } from "../lib/prompts";
 import { rCompletion } from "../lib/completion";
 import { highlight, registerConsoleView, rLanguage } from "../lib/editor";
 import { getState, useStore } from "../lib/store";
@@ -41,10 +42,33 @@ export function Composer() {
   return (
     <div className="composer" hidden={!shown}>
       <Splitter className="composer-edge" label="R prompt height" axis="row" value={height} min={PROMPT_MIN} max={PROMPT_MAX} onChange={(value) => updateSettings({ consoleInputHeight: value })} />
+      {pending && !pending.password && <Question prompt={pending.prompt} />}
       <div className="composer-box" style={{ height }}>
         <ConsoleInput prompt={pending?.prompt} password={pending?.password ?? false} />
       </div>
       {workingDir && <p className="composer-folder muted truncate">R is working in {shortPath(workingDir)}</p>}
+    </div>
+  );
+}
+
+/** The question R is waiting on, written in full above the prompt, since
+ * R's own wording can be longer than the prompt is wide. Questions with a
+ * fixed set of answers get a button for each. */
+function Question({ prompt }: { prompt: string }) {
+  const { choices, explanation } = describePrompt(prompt);
+  return (
+    <div className="composer-question" role="group" aria-label="R is asking">
+      <p className="composer-question-text">{prompt.trim() || "R is waiting for an answer."}</p>
+      {explanation && <p className="muted composer-question-note">{explanation}</p>}
+      {choices.length > 0 && (
+        <div className="composer-question-answers">
+          {choices.map((choice) => (
+            <button key={choice} type="button" className="button small" onClick={() => void runConsole(choice)}>
+              {choice[0].toUpperCase() + choice.slice(1)}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -187,7 +211,7 @@ function ConsoleInput({ prompt, password }: { prompt?: string; password: boolean
   return (
     <div className={`console-input ${asking ? "is-asking" : ""}`}>
       <span className="prompt" aria-hidden="true">
-        {asking ? prompt || "?" : lines > 1 ? "+" : ">"}
+        {asking ? "?" : lines > 1 ? "+" : ">"}
       </span>
       <div ref={host} className="console-editor" hidden={password} />
       {password && (
