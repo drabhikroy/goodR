@@ -23,7 +23,23 @@ jobs:
   linux:
     # The oldest supported Ubuntu, since a program built against an older
     # system library runs on newer systems but not the other way round.
-    runs-on: ubuntu-22.04
+    # Each kind of processor builds on a machine of its own kind, because
+    # the program and the libraries it links to must match the processor.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            triple: x86_64-unknown-linux-gnu
+            deb: amd64
+            appimage: x86_64
+            label: x64
+          - runner: ubuntu-22.04-arm
+            triple: aarch64-unknown-linux-gnu
+            deb: arm64
+            appimage: aarch64
+            label: arm64
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
@@ -53,7 +69,7 @@ jobs:
         run: npm ci
 
       - name: Download ark
-        run: node scripts/fetch-ark.mjs x86_64-unknown-linux-gnu
+        run: node scripts/fetch-ark.mjs ${{ matrix.triple }}
 
       - name: Checks before building
         run: |
@@ -70,15 +86,15 @@ jobs:
         run: |
           version="$(jq -r .version package.json)"
           mkdir -p out
-          cp target/release/bundle/deb/*.deb "out/goodR-$version-amd64.deb"
-          cp target/release/bundle/appimage/*.AppImage "out/goodR-$version-x86_64.AppImage"
+          cp target/release/bundle/deb/*.deb "out/goodR-$version-${{ matrix.deb }}.deb"
+          cp target/release/bundle/appimage/*.AppImage "out/goodR-$version-${{ matrix.appimage }}.AppImage"
           cd out
-          sha256sum goodR-* | tee SHA256SUMS-linux.txt
+          sha256sum goodR-* | tee SHA256SUMS-linux-${{ matrix.label }}.txt
 
       - name: Keep the installers as a workflow artifact
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: goodr-linux
+          name: goodr-linux-${{ matrix.label }}
           path: out/*
           if-no-files-found: error
 

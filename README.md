@@ -73,7 +73,7 @@ It never changes your files on its own. Saving, installing, and running happen o
 ## Requirements
 
 - **macOS:** macOS 12 Monterey or later, on an Apple silicon or Intel Mac
-- **Linux (preview):** a 64-bit Intel or AMD computer running Ubuntu 22.04, Debian 12, or a newer release of either, or another current distribution
+- **Linux (preview):** a 64-bit Intel, AMD, or ARM computer running Ubuntu 22.04, Debian 12, or a newer release of either, or another current distribution
 - **Windows (preview):** Windows 10 or 11 on a 64-bit Intel or AMD computer
 - **R:** version 4.2 or later, on every system
 
@@ -107,13 +107,15 @@ The installer is signed and notarized by Apple, so macOS opens it without a warn
 
 ### Linux (preview)
 
-On Ubuntu, Debian, and other systems that use `.deb` packages, download `goodR-1.1.0-amd64.deb` and install it with this command, run in the folder you downloaded it to.
+Each Linux installer comes in two kinds, one for Intel and AMD processors and one for ARM processors. To see which you have, run `dpkg --print-architecture` or `uname -m`. A result of `amd64` or `x86_64` means Intel or AMD, and `arm64` or `aarch64` means ARM. A Linux virtual machine on an Apple silicon Mac is ARM.
+
+On Ubuntu, Debian, and other systems that use `.deb` packages, download `goodR-1.1.0-amd64.deb` for Intel or AMD, or `goodR-1.1.0-arm64.deb` for ARM, and install it with this command, run in the folder you downloaded it to. The example is for Intel or AMD.
 
 ```bash
 sudo apt install ./goodR-1.1.0-amd64.deb
 ```
 
-On any other distribution, download `goodR-1.1.0-x86_64.AppImage`, make it runnable, and open it.
+On any other distribution, download `goodR-1.1.0-x86_64.AppImage` for Intel or AMD, or `goodR-1.1.0-aarch64.AppImage` for ARM, make it runnable, and open it. The example is for Intel or AMD.
 
 ```bash
 chmod +x goodR-1.1.0-x86_64.AppImage
@@ -130,13 +132,13 @@ If the AppImage does not open, your system may need FUSE 2, which AppImages use.
 
 ### Checking the download
 
-Each release lists a checksum for every installer: `SHA256SUMS.txt` for the Mac, `SHA256SUMS-linux.txt` for Linux, and `SHA256SUMS-windows.txt` for Windows. Put the file in the same folder as the installer and run the command for your system. On macOS and Linux it should report `OK`, and on Windows it should print `True`.
+Each release lists a checksum for every installer: `SHA256SUMS.txt` for the Mac, `SHA256SUMS-linux-x64.txt` or `SHA256SUMS-linux-arm64.txt` for Linux, and `SHA256SUMS-windows.txt` for Windows. Put the file in the same folder as the installer and run the command for your system. On macOS and Linux it should report `OK`, and on Windows it should print `True`.
 
 ```bash
 # macOS
 shasum -a 256 -c SHA256SUMS.txt
 # Linux
-sha256sum -c --ignore-missing SHA256SUMS-linux.txt
+sha256sum -c --ignore-missing SHA256SUMS-linux-x64.txt
 ```
 
 ```powershell

@@ -282,9 +282,12 @@ Updates page links to the release page instead.
 The Linux and Windows installers are built on GitHub Actions by
 `.github/workflows/release-linux-windows.yml`, since neither can be built
 on a Mac. It runs only by hand, on a version tag, so the tag goes up
-first. The workflow builds both, then adds `goodR-VERSION-amd64.deb`,
-`goodR-VERSION-x86_64.AppImage`, `goodR-VERSION-x64-setup.exe`,
-`SHA256SUMS-linux.txt`, and `SHA256SUMS-windows.txt` to the draft release
+first. The workflow builds Linux for Intel or AMD and for ARM, each on a
+machine of its own kind, and Windows. It then adds `goodR-VERSION-amd64.deb`,
+`goodR-VERSION-x86_64.AppImage`, `goodR-VERSION-arm64.deb`,
+`goodR-VERSION-aarch64.AppImage`, `goodR-VERSION-x64-setup.exe`,
+`SHA256SUMS-linux-x64.txt`, `SHA256SUMS-linux-arm64.txt`, and
+`SHA256SUMS-windows.txt` to the draft release
 for that tag. If the Mac draft is already there it joins it, and if not
 it starts the draft. Each system has its own checksum file, so the Mac's
 `SHA256SUMS.txt` is never replaced.
