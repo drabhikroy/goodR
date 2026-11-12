@@ -134,5 +134,7 @@ jobs:
       - name: Download ark
         run: node scripts/fetch-ark.mjs
 
+      # Every group of tests runs even after one fails, so a single run shows
+      # all that differs on Windows.
       - name: Rust tests with real R
-        run: cargo test --workspace
+        run: cargo test --workspace --no-fail-fast

@@ -135,7 +135,7 @@ async fn a_missing_package_in_r_markdown_is_reported_from_its_chunk() {
             assert_eq!(from, 7);
             assert!(message.contains("there is no package called"), "{message}");
         }
-        other => panic!("expected a chunk failure, got {other:?}"),
+        other => panic!("expected a chunk failure, got {other:?}\n{}", outcome.lines.join("\n")),
     }
 }
 
