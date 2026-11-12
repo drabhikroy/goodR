@@ -43,12 +43,17 @@ const BANNED = [
 const CONTRACTION = /\b[A-Za-z]+(?:n't|'re|'ve|'ll|'m|'d)\b/;
 const DASHES = /[\u2013\u2014]/;
 
+// Every path the rules see uses forward slashes, as written in the rules
+// themselves, so an exemption such as scripts/standards/spelling holds on
+// Windows, where the system writes paths with backslashes.
+const slashed = (path) => path.replaceAll("\\", "/");
+
 function walk(dir, files = []) {
   for (const name of readdirSync(dir)) {
     if (SKIP_DIRS.has(name)) continue;
     const path = join(dir, name);
     if (statSync(path).isDirectory()) walk(path, files);
-    else if (CHECKED.has(extname(name)) && !EXEMPT.some((pattern) => pattern.test(path))) files.push(path);
+    else if (CHECKED.has(extname(name)) && !EXEMPT.some((pattern) => pattern.test(slashed(path)))) files.push(path);
   }
   return files;
 }
@@ -75,7 +80,7 @@ function commentDensity(text, ext) {
 
 const problems = [];
 for (const path of walk(root)) {
-  const rel = relative(root, path);
+  const rel = slashed(relative(root, path));
   const text = readFileSync(path, "utf8");
   const ext = extname(path);
   text.split("\n").forEach((line, index) => {
