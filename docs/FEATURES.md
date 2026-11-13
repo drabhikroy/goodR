@@ -38,7 +38,7 @@ The R prompt is a box under the script, on the same side, where your eye
 already is while you write R. What it runs takes the stage and joins the
 timeline beside results from the script. It colors R the way the script
 does, completes names with Tab, continues unfinished statements, walks back
-through what you typed with Up, and answers `readline()` prompts.
+through what you typed with Up, and answers `readline()` prompts. When R asks a yes-or-no question, such as whether to use a personal library, the question is written out in full above the prompt with a button for each answer it accepts.
 
 The objects in R sit as small cards along the top of the canvas, with Import
 data and Clear all objects as two small buttons at the end of the row. A data

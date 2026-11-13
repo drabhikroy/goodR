@@ -119,6 +119,8 @@ ark is not committed to the repository. `scripts/fetch-ark.mjs` downloads
 the pinned release from Posit and checks its SHA256 against values recorded
 in the script before anything uses it.
 
+On Linux the sidecar is installed as `goodr-ark`, not `ark`. Ubuntu and Debian already have a package called `ark`, the KDE archive manager, which owns `/usr/bin/ark`, so a Debian package that installed a file by that name would refuse to install next to it. The Mac and Windows sidecars keep the name `ark`.
+
 ## Running from source
 
 You need Node.js 22, Rust 1.90 or later, and R 4.2 or later.

@@ -122,7 +122,9 @@ chmod +x goodR-1.1.0-x86_64.AppImage
 ./goodR-1.1.0-x86_64.AppImage
 ```
 
-goodR draws its window without the graphics card's help on Linux, because with it the window comes up blank in virtual machines and with some drivers. On a computer where the card works well, start goodR with `GOODR_GPU=1` to turn the card's help back on.
+After installing, open goodR from your applications menu or run `goodr` in a terminal. It draws its window without the graphics card's help on Linux, because with it the window comes up blank in virtual machines and with some drivers. On a computer where the card works well, start goodR with `GOODR_GPU=1` to turn the card's help back on.
+
+On most Linux computers the main R library is read-only for your account. When you install packages from goodR, it first sets up a personal library in your home folder, so R does not stop to ask.
 
 If the AppImage does not open, your system may need FUSE 2, which AppImages use. On Ubuntu 24.04 it installs with `sudo apt install libfuse2t64`, and other distributions name the package `fuse2` or `fuse-libs`.
 
