@@ -1,5 +1,5 @@
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
-import { expectReady } from "../ui/helpers";
+import { expectReady, openProjectMenu, showObjects } from "../ui/helpers";
 
 // One test per screenshot, each starting from a fresh window, so a change
 // to one screen never shifts the others.
@@ -13,6 +13,11 @@ async function save(page: Page, info: TestInfo, name: string) {
 
 /** Opens the app and picks R, in the appearance this run is for. */
 async function start(page: Page, info: TestInfo) {
+  // A first run's layout, not the stand-in's, which keeps the sidebar and
+  // the strip of earlier results on for the interface tests.
+  await page.addInitScript(() => {
+    window.goodforSettings = { showSidebar: false, showTimeline: false, consoleInputHeight: 48, layoutVersion: 2 };
+  });
   await page.goto("/");
   await page.getByRole("button", { name: "Use this R" }).click();
   await page.getByRole("button", { name: "Settings" }).click();
@@ -31,7 +36,7 @@ async function openProject(page: Page, info: TestInfo) {
 }
 
 async function openFile(page: Page, name: RegExp) {
-  await page.getByRole("navigation", { name: "Project" }).getByRole("button", { name }).click();
+  await (await openProjectMenu(page)).getByRole("menuitem", { name }).click();
   await expect(page.getByRole("tab", { name })).toHaveAttribute("aria-selected", "true");
 }
 
@@ -61,7 +66,7 @@ test("data viewer", async ({ page }, info) => {
   await page.keyboard.press("Control+Home");
   for (let line = 0; line < 3; line += 1) await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Control+Enter");
-  await page.locator("#object-cards").getByRole("button", { name: /^penguins / }).click();
+  await (await showObjects(page)).getByRole("button", { name: /^penguins / }).click();
   await expect(page.getByRole("region", { name: "Data viewer, penguins" }).first()).toContainText("Rows 1 to 100");
   await save(page, info, "data-viewer");
 });
@@ -79,7 +84,7 @@ test("Shiny app and how its parts connect", async ({ page }, info) => {
   await start(page, info);
   await page.getByRole("button", { name: "Open the examples" }).click();
   // The second app.R is the space launches app, whose map has the most to show.
-  await page.getByRole("navigation", { name: "Project" }).getByRole("button", { name: "app.R" }).nth(1).click();
+  await (await openProjectMenu(page)).getByRole("menuitem", { name: "shiny-launches/app.R" }).click();
   await page.getByRole("button", { name: "App", exact: true }).click();
   const map = page.getByRole("group", { name: "How the app connects" });
   await map.getByRole("button", { name: "output$failures" }).click();
@@ -114,7 +119,7 @@ test("the tour", async ({ page }, info) => {
 
 test("importing data", async ({ page }, info) => {
   await openProject(page, info);
-  await page.getByRole("navigation", { name: "Project" }).getByRole("button", { name: "Import penguins.csv" }).click();
+  await (await openProjectMenu(page)).getByRole("menuitem", { name: "Import penguins.csv" }).click();
   const dialog = page.getByRole("dialog", { name: "Import data" });
   await expect(dialog.locator("pre")).toHaveText('penguins <- read.csv("data/penguins.csv")');
   await expect(dialog).not.toContainText("R is reading the first rows");

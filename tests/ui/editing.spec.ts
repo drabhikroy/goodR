@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { newFileWith, openExample } from "./helpers";
+import { newFileWith, openExample, openProjectMenu } from "./helpers";
 
 // The editing tools that reach past one line: hints, explaining a line,
 // tidying, renaming everywhere, and finding in every file.
@@ -119,7 +119,7 @@ test("each save keeps a version, and an earlier one can be compared, taken back 
   await page.keyboard.insertText("brightest <- head(mass_by_species, 1)\n");
   await page.keyboard.press("Control+s");
   await expect(page.getByRole("tab", { name: /analysis\.R/ })).not.toContainText("edited");
-  await page.getByRole("button", { name: "Earlier versions of this file" }).click();
+  await (await openProjectMenu(page)).getByRole("menuitem", { name: "Earlier versions of this file" }).click();
   const dialog = page.getByRole("dialog", { name: "Earlier versions of analysis.R" });
   const versions = dialog.getByRole("group", { name: "Saved versions" }).getByRole("button");
   await expect(versions).toHaveCount(2);

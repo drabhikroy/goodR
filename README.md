@@ -14,7 +14,7 @@ Everything runs on your computer. No account is needed, and the app collects no 
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/opening-dark.png">
-  <img alt="The opening screen. On the left are the app name and buttons to start a new script, report, Shiny app, or project, or to open one. On the right are the examples, the tour, a first project, and recent projects and scripts." src="docs/images/opening-light.png">
+  <img alt="The opening screen. Under the app name is one row of buttons to start a new script, report, Shiny app, or project, or to open one. Below it, a line offers the examples, the tour, and a first project, and one list holds recent projects and scripts." src="docs/images/opening-light.png">
 </picture>
 
 ## What it does
@@ -23,7 +23,7 @@ Your script is on the left side of the window and your results are on the right.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/workspace-dark.png">
-  <img alt="The workspace with the penguins project. The script is on the left. On the right, the canvas shows a bar chart made by lines 15 and 16, with buttons to edit its labels, show it full size, or export it. Earlier results run in a strip underneath. A band above the script offers to install gt, a package that line 19 needs." src="docs/images/workspace-light.png">
+  <img alt="The workspace with the penguins project. The script is on the left, with Run at the right of the bar above it. On the right, the canvas shows a bar chart made by lines 15 and 16, with arrows to step through earlier results, All results, and a menu above it. The tools run down the right edge as icons. A band above the script offers to install gt, a package that line 19 needs." src="docs/images/workspace-light.png">
 </picture>
 
 ### Writing and running R
@@ -166,7 +166,7 @@ To also remove the app's settings and saved versions, delete its folders, listed
 2. Put the cursor on a line of code and press Command Return on a Mac, or Ctrl Enter on Linux and Windows.
 3. The result appears on the right. Keep going line by line, or press Shift Command Return, or Ctrl Shift Enter, to run the whole file.
 
-New to the app? Choose **Take the tour** on the opening screen. It shows each part of the window in a couple of minutes.
+New to the app? Choose **Take the tour** on the opening screen, or in the Help menu. It shows each part of the window in a couple of minutes.
 
 Help is under the Help menu, or Shift Command / on a Mac and Ctrl Shift / elsewhere. It has a search box and answers to common questions. Each topic can point to the part of the window it describes. The keyboard shortcuts are listed in the [feature guide](docs/FEATURES.md#keyboard-shortcuts-and-sessions).
 

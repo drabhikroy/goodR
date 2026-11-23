@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { appState, expectReady, newFileWith, openExample, runLine } from "./helpers";
+import { appState, expectReady, newFileWith, openExample, runLine, showObjects, showStart, showTool } from "./helpers";
 
 /** The stage, where the output in front is shown. */
 function feed(page: Page) {
@@ -13,7 +13,7 @@ function timeline(page: Page) {
 
 /** Chooses where results appear from the Results menu. */
 async function showResults(page: Page, where: RegExp) {
-  await page.getByRole("button", { name: /^Results/ }).click();
+  await page.getByRole("button", { name: "More ways to run" }).click();
   await page.getByRole("menuitemradio", { name: where }).click();
 }
 
@@ -65,7 +65,7 @@ test("closing the last script returns to the opening screen", async ({ page }) =
   await openExample(page);
   await page.keyboard.press("Control+w");
   await expect(page.getByRole("button", { name: "New script" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Scripts", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Recent", exact: true })).toBeVisible();
 });
 
 test("Home shows the opening screen without closing anything, and Continue working returns to it unchanged", async ({ page }) => {
@@ -78,7 +78,7 @@ test("Home shows the opening screen without closing anything, and Continue worki
   // The objects list is read from R a short moment after the run finishes.
   await expect.poll(() => appState<number>(page, "state.objects.length")).toBeGreaterThan(0);
 
-  await page.getByRole("button", { name: "Show the start screen" }).click();
+  await showStart(page);
   await expect(page.getByRole("button", { name: "New project" })).toBeVisible();
   // Nothing closed: both tabs, the output, and R's objects are still there.
   await expect(page.getByRole("tab", { name: "Untitled 1" })).toHaveCount(0);
@@ -319,9 +319,9 @@ test("unsaved changes are marked and saving clears the mark", async ({ page }) =
 test("results update as you type when asked, and file changes never run that way", async ({ page }) => {
   await openExample(page);
   await newFileWith(page, "1 + 1\n");
-  await page.getByRole("button", { name: /^Results/ }).click();
+  await page.getByRole("button", { name: "More ways to run" }).click();
   await page.getByRole("menuitemcheckbox", { name: /Update as you type/ }).click();
-  await expect(page.getByRole("button", { name: /^Results/ })).toContainText("Live");
+  await expect(page.locator(".run-button")).toContainText("Live");
   await page.locator(".editor-host .cm-content").click();
   await page.keyboard.press("Control+Home");
   await page.keyboard.press("End");
@@ -366,7 +366,7 @@ test("a recent project opens with its scripts and data listed, and its data impo
   await expect(dialog.locator("pre")).toHaveText('penguins <- read.csv("data/penguins.csv")');
   await dialog.getByRole("button", { name: "Cancel" }).click();
   await sidebar.getByRole("button", { name: "Close project" }).click();
-  await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
+  await expect(page.getByRole("radio", { name: "Projects" })).toBeVisible();
 });
 
 test("a new project is created from a template and opened", async ({ page }) => {
@@ -388,7 +388,7 @@ test("a new project is created from a template and opened", async ({ page }) => 
 test("the data viewer shows columns, sorts, and pages through rows", async ({ page }) => {
   await openExample(page);
   await page.keyboard.press("Shift+Control+Enter");
-  await page.getByRole("button", { name: /^penguins data frame/ }).click();
+  await (await showObjects(page)).getByRole("button", { name: /^penguins data frame/ }).click();
   const viewer = page.getByRole("region", { name: "Data viewer, penguins" });
   await expect(viewer.getByRole("columnheader", { name: /body_mass/ })).toContainText("2 missing");
   await expect(viewer).toContainText("Rows 1 to 100 of 344");
@@ -457,8 +457,9 @@ test("a plot fills the stage and opens full size, with every plot a press away i
   await items.first().focus();
   await page.keyboard.press("ArrowRight");
   await expect(feed(page)).toContainText("Line 3");
-  // The objects sit as cards along the canvas's top.
-  await expect(page.getByRole("region", { name: "Objects in R" }).getByRole("button", { name: /^x / })).toBeVisible();
+  // The objects are listed under Objects, in the tools down the right edge.
+  await expect((await showObjects(page)).getByRole("button", { name: /^x / })).toBeVisible();
+  await showTool(page, "Results");
   // Full size, with the arrows moving between plots.
   await figure.getByRole("button", { name: "Full size", exact: true }).click();
   await expect(page.getByRole("dialog", { name: /Plot 2 of 2/ })).toBeVisible();
@@ -466,8 +467,8 @@ test("a plot fills the stage and opens full size, with every plot a press away i
   await expect(page.getByRole("dialog", { name: /Plot 1 of 2/ })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  // The title bar's toggle hides and brings back the whole canvas.
-  const toggle = page.getByRole("button", { name: "Show the canvas" });
+  // Results, pressed again, hides the whole canvas, and brings it back.
+  const toggle = page.getByRole("navigation", { name: "Tools" }).getByRole("button", { name: "Results", exact: true });
   await toggle.click();
   await expect(page.getByRole("complementary", { name: "Canvas" })).toBeHidden();
   await expect(toggle).toHaveAttribute("aria-pressed", "false");
@@ -486,7 +487,8 @@ test("the stage follows the cursor, and a pinned output stays for comparing", as
   await page.keyboard.press("ArrowDown");
   await expect(feed(page).locator(".plot-figure")).toBeVisible();
   // Pinned, it stays above whatever the cursor shows next.
-  await feed(page).getByRole("button", { name: "Pin" }).click();
+  await feed(page).getByRole("button", { name: "More for this result" }).click();
+  await page.getByRole("menuitem", { name: /^Pin/ }).click();
   await page.locator(".editor-host .cm-content").focus();
   await page.keyboard.press("ArrowUp");
   await expect(feed(page).getByRole("group", { name: "Pinned output" }).locator(".plot-figure")).toBeVisible();
@@ -633,7 +635,7 @@ test("the Packages pane lists installed packages and attaches through the consol
   await pane.getByRole("checkbox", { name: "Attach dplyr" }).check();
   // The sheet stays open, and the command is in the feed behind it.
   await expect(pane).toBeVisible();
-  await page.getByRole("navigation", { name: "Canvas views" }).getByRole("button", { name: "Canvas", exact: true }).click();
+  await showTool(page, "Results");
   await expect(feed(page)).toContainText("library(dplyr)");
 });
 
@@ -655,6 +657,7 @@ test("RStudio's insert shortcuts type a pipe, an assignment, and a section", asy
 test("Import data previews a file through R, writes the code, and runs it", async ({ page }) => {
   await openExample(page);
   await newFileWith(page, "");
+  await showObjects(page);
   await page.getByRole("button", { name: "Import data" }).click();
   const dialog = page.getByRole("dialog", { name: "Import data" });
   await dialog.getByRole("button", { name: "Choose" }).click();
@@ -676,6 +679,7 @@ test("Import data previews a file through R, writes the code, and runs it", asyn
   await dialog.getByRole("textbox", { name: "Name in R" }).fill("birds");
   await dialog.getByRole("button", { name: "Import", exact: true }).click();
   await expect(dialog).toBeHidden();
+  await showTool(page, "Results");
   await expect(feed(page)).toContainText('birds <- read.csv("data/penguins.csv", sep = ";"');
   // The code also went into the script, so the import reruns with it.
   await expect(page.locator(".editor-host .cm-content")).toContainText("birds <- read.csv(");

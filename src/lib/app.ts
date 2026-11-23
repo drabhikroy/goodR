@@ -152,7 +152,12 @@ export async function init() {
   // had. Anyone still on the old default, 184, gets the new one; a height
   // that was dragged to something else is kept.
   if (loaded.timelineHeight === 184) settings.timelineHeight = defaultSettings.timelineHeight;
+  // The calmer layout, once: the files move into the project menu and
+  // earlier results behind All results. Either comes back in Settings.
+  const moved = (loaded.layoutVersion ?? 0) < 2;
+  if (moved) Object.assign(settings, { showSidebar: false, showTimeline: false, layoutVersion: 2, ...(settings.consoleInputHeight === 96 ? { consoleInputHeight: defaultSettings.consoleInputHeight } : {}) });
   setState((state) => ({ info, settings, installs, loaded: true, ui: { ...state.ui, sidebar: settings.showSidebar, inspector: settings.showCanvas } }));
+  if (moved) api.saveSettings(settings).catch(() => {});
   applyTheme(settings);
   watchSystemAppearance(() => {
     applyTheme(getState().settings);
@@ -437,7 +442,7 @@ export function updateSettings(patch: Partial<Settings>) {
 /** The settings each section of Settings shows, so a section can be put
  * back to its defaults on its own. */
 export const SETTINGS_SECTIONS: Record<string, (keyof Settings)[]> = {
-  appearance: ["appearance", "textSize", "compact", "readingWidth"],
+  appearance: ["appearance", "textSize", "compact", "readingWidth", "toolNames"],
   code: ["codeFont", "codeSize", "lineSpacing", "ligatures", "scriptItalics"],
   editor: ["lineNumbers", "highlightLine", "wrapLines", "closeBrackets", "rainbowBrackets", "autosave", "hints", "formatOnType", "tabWidth"],
   results: ["outputLayout", "resultStyle", "copyResults", "keepResults", "plotStyle"],

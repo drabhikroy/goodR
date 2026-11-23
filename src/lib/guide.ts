@@ -11,17 +11,17 @@ export type GuideTarget = "run" | "results" | "stage" | "timeline" | "prompt" | 
 /** Each part: what to call it, and how to find it on screen. */
 export const TARGETS: Record<GuideTarget, { label: string; selector: string }> = {
   run: { label: "Run", selector: ".run-split, .run-button" },
-  results: { label: "Results menu", selector: "[data-guide='results']" },
+  results: { label: "Run menu", selector: ".run-split .split-arrow" },
   stage: { label: "The stage", selector: ".stage" },
-  timeline: { label: "Earlier results", selector: ".timeline" },
+  timeline: { label: "All results", selector: ".all-results, .timeline" },
   prompt: { label: "The R prompt", selector: ".composer" },
-  objects: { label: "Objects in R", selector: "#object-cards" },
-  sheets: { label: "Canvas views", selector: ".canvas-views" },
+  objects: { label: "Objects", selector: ".tool-button[data-sheet='objects']" },
+  sheets: { label: "Tools", selector: ".tool-strip" },
   search: { label: "Search", selector: ".search-field" },
   session: { label: "What is open", selector: ".project-switch" },
-  home: { label: "Home", selector: ".home-button" },
+  home: { label: "Start screen, in the project menu", selector: ".project-switch" },
   sidebar: { label: "Project sidebar", selector: ".sidebar" },
-  canvasToggle: { label: "Show or hide the canvas", selector: ".panel-toggle" },
+  canvasToggle: { label: "Show or hide the canvas", selector: ".tool-button[data-sheet='canvas']" },
 };
 
 // How long the rings play before they clear by themselves.

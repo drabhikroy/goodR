@@ -38,6 +38,11 @@ pub struct Settings {
     pub show_timeline: bool,
     /// Width of the right column in pixels.
     pub inspector_width: u32,
+    /// Whether the tools down the right edge show their names.
+    pub tool_names: bool,
+    /// Which layout the file has been moved to. A file from before 1.2 has
+    /// none, read as 0, and the interface moves it to the calmer layout once.
+    pub layout_version: u32,
     /// Share of the right column given to its top pane, in percent.
     pub pane_split: u32,
     /// "system", "light", "dark", or "paper".
@@ -56,6 +61,8 @@ pub struct Settings {
     pub layout_chosen: bool,
     /// Set once the tour has been seen, so it opens by itself only once.
     pub tour_seen: bool,
+    /// Set when the ways in for newcomers are put away on the opening screen.
+    pub hide_new_here: bool,
     /// "ask" or "auto".
     pub missing_packages: String,
     /// The code typeface: "dm-mono", "jetbrains-mono", "ibm-plex-mono",
@@ -165,13 +172,15 @@ impl Default for Settings {
             recent_projects: Vec::new(),
             session_project: String::new(),
             console_height: 230,
-            console_input_height: 96,
+            console_input_height: 48,
             timeline_height: 184,
-            show_sidebar: true,
+            show_sidebar: false,
             show_canvas: true,
             show_prompt: true,
-            show_timeline: true,
+            show_timeline: false,
             inspector_width: 520,
+            tool_names: false,
+            layout_version: 0,
             pane_split: 45,
             appearance: "system".into(),
             palette: "standard".into(),
@@ -181,6 +190,7 @@ impl Default for Settings {
             output_layout: "canvas".into(),
             layout_chosen: false,
             tour_seen: false,
+            hide_new_here: false,
             missing_packages: "ask".into(),
             code_font: "dm-mono".into(),
             code_size: 15,

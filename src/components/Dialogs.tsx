@@ -290,6 +290,13 @@ function AppearancePane() {
               <span className="hint">The text of a Quarto or R Markdown document wraps at about 80 characters, however wide the window is. Scripts are not affected.</span>
             </span>
           </label>
+          <label className="check">
+            <input type="checkbox" checked={settings.toolNames} onChange={(event) => updateSettings({ toolNames: event.target.checked })} />
+            <span>
+              Show names under the tool icons
+              <span className="hint">The tools down the right edge, such as Objects and Help. Otherwise a name appears after the pointer rests on an icon for five seconds.</span>
+            </span>
+          </label>
         </div>
       </fieldset>
     </>

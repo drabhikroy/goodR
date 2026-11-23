@@ -456,6 +456,48 @@ that drag to resize. The tabs in each panel are a segmented control, so
 the one on show is plain from its raised surface rather than from color
 alone.
 
+### The calmer layout
+
+The seventh design still put about a dozen things in view before any code
+ran: a sidebar, a document bar with the folder, the section, file history,
+the Results menu, and Run, a row of named views over the canvas, a row of
+object cards, a strip of earlier results, and two lines saying where R was
+working. Each was useful, but together they were the clutter the measures
+above warn about (Rosenholtz, Li, and Nakano 2007), and the same facts
+appeared in more than one place. People using the app said so too.
+
+The eighth design keeps every feature and shows two things by default: the
+script and one result. The rest is one press away, in the place it belongs.
+
+| Before | Now |
+| --- | --- |
+| Sidebar of files | The project menu lists the files; the sidebar is a choice in the same menu |
+| Document bar: folder, section, file history, Results menu, Render, Run | One bar over the script: tabs, the section, search, Render, and Run; the Results menu folds into the Run menu, and file history into the project menu |
+| Home button | Start screen, in the project menu |
+| Row of named views over the canvas, and a canvas toggle | A column of icons down the window's right edge; pressing Results again hides the canvas |
+| Object cards along the canvas's top | Objects, a list with a few words about each, as one of the tools |
+| Strip of earlier results | Arrows and All results above the stage; the strip remains a choice |
+| Run again, Copy, Hide, Undo run, and Pin as buttons on the stage | One menu on the stage's header |
+| Plot buttons always under a plot | Shown when the plot is pointed at or reached with the keyboard |
+| "R started in" and "R is working in" lines | Said once, at the top of the project menu |
+| Three line prompt | One line, which drags taller |
+
+The bar over the script belongs to the script's column alone, so its menus
+open over code rather than over the result and its buttons, and the canvas
+and the tools start at the top of the window. Icons without words are
+harder to learn than labeled ones (Wiedenbeck 1999), so each tool says its
+name to screen readers at once, shows it after the pointer rests on it, and
+can show it under its icon all the time from Settings. The delay before the
+name appears is five seconds, a choice made with the person the app is for,
+who wanted names out of the way once the icons are known. A settings file
+from before the change moves to the new layout once, on its first launch;
+anything the person turns back on afterward stays as they set it.
+
+The opening screen went the same way: the start and open buttons in one row,
+the ways in for newcomers in one line that can be put away, and projects and
+scripts in one recent list with filters, each naming its folder so two files
+with one name are told apart.
+
 ### Completion, help, and packages from R itself
 
 The typing box at the R prompt is a small code editor, so typed R is

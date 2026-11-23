@@ -36,3 +36,29 @@ export function appState<T>(page: Page, read: string): Promise<T> {
     return new Function("state", `return ${expression}`)(state);
   }, read) as Promise<T>;
 }
+
+/** Opens the project menu at the left of the title bar, which holds the
+ * project's files, the start screen, and closing the project. */
+export async function openProjectMenu(page: Page) {
+  await page.locator(".project-switch").click();
+  return page.getByRole("menu", { name: "Projects" });
+}
+
+/** Shows the start screen over open work, from the project menu. */
+export async function showStart(page: Page) {
+  const menu = await openProjectMenu(page);
+  await menu.getByRole("menuitem", { name: /^Start screen/ }).click();
+}
+
+/** Shows one of the tools down the right edge, such as Objects or R help,
+ * unless it is already on show. */
+export async function showTool(page: Page, name: string) {
+  const tool = page.getByRole("navigation", { name: "Tools" }).getByRole("button", { name, exact: true });
+  if ((await tool.getAttribute("aria-pressed")) !== "true") await tool.click();
+}
+
+/** Shows the objects in R and returns their list. */
+export async function showObjects(page: Page) {
+  await showTool(page, "Objects");
+  return page.locator("#object-cards");
+}

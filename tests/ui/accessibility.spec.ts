@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { expectReady, newFileWith, openExample, runLine } from "./helpers";
+import { expectReady, newFileWith, openExample, runLine, showObjects, showStart, showTool } from "./helpers";
 
 // Automated checks against WCAG 2.2 A and AA. They catch missing names,
 // broken roles, and contrast in the rendered page. They do not replace
@@ -29,7 +29,7 @@ for (const appearance of ["Light", "Dark", "Paper"]) {
     await expect(page.getByRole("tab", { name: /analysis\.R/ })).toBeVisible();
     await expect(page.getByRole("status").filter({ hasText: /^R is ready$/ })).toHaveCount(1);
     // Home, reached with work open, offers Continue working back to it.
-    await page.getByRole("button", { name: "Show the start screen" }).click();
+    await showStart(page);
     await audit(page);
     await page.getByRole("button", { name: "Continue working" }).click();
     await expect(page.getByRole("tab", { name: /analysis\.R/ })).toHaveAttribute("aria-selected", "true");
@@ -37,7 +37,7 @@ for (const appearance of ["Light", "Dark", "Paper"]) {
     await expect(page.locator(".output-card.status-error")).toBeVisible();
     await audit(page);
     // The menus that open from the title bar pass too.
-    await page.getByRole("button", { name: /^Results/ }).click();
+    await page.getByRole("button", { name: "More ways to run" }).click();
     await audit(page);
     await page.keyboard.press("Escape");
     await page.locator(".project-switch").click();
@@ -56,9 +56,11 @@ for (const appearance of ["Light", "Dark", "Paper"]) {
     await expect(page.locator(".update-list")).toContainText("2 with newer versions");
     await audit(page);
     await page.keyboard.press("Escape");
-    await page.getByRole("button", { name: /^penguins data frame/ }).click();
+    await audit(page);
+    await (await showObjects(page)).getByRole("button", { name: /^penguins data frame/ }).click();
     await expect(page.getByRole("region", { name: "Data viewer, penguins" })).toContainText("Rows 1 to 100");
     await audit(page);
+    await showTool(page, "Results");
     await page.keyboard.press("Control+Shift+n");
     await audit(page);
     await page.keyboard.press("Escape");
@@ -83,7 +85,7 @@ for (const appearance of ["Light", "Dark", "Paper"]) {
     await expect(page.locator(".package-row").first()).toBeVisible();
     await page.getByRole("button", { name: "History", exact: true }).click();
     await audit(page);
-    await page.getByRole("navigation", { name: "Canvas views" }).getByRole("button", { name: "Canvas", exact: true }).click();
+    await showObjects(page);
     await page.getByRole("button", { name: "Import data" }).click();
     await page.getByRole("dialog", { name: "Import data" }).getByRole("button", { name: "Choose" }).click();
     await expect(page.getByRole("columnheader", { name: /species/ })).toBeVisible();
@@ -94,7 +96,7 @@ for (const appearance of ["Light", "Dark", "Paper"]) {
 
 test("dialogs trap focus and give it back when they close", async ({ page }) => {
   await openExample(page);
-  const trigger = page.getByRole("button", { name: /^Results/ });
+  const trigger = page.getByRole("button", { name: "More ways to run" });
   await trigger.focus();
   await page.keyboard.press("Control+k");
   await expect(page.getByRole("combobox")).toBeFocused();
@@ -134,7 +136,7 @@ test("every pointer target is at least 44 pixels tall", async ({ page }) => {
   await expect(page.locator(".output-card.status-error")).toBeVisible();
   expect(await smallTargets(page)).toEqual([]);
   // Home, and the opening screen it shows over the still open workspace.
-  await page.getByRole("button", { name: "Show the start screen" }).click();
+  await showStart(page);
   expect(await smallTargets(page)).toEqual([]);
   await page.getByRole("button", { name: "Continue working" }).click();
   await expect(page.getByRole("tab", { name: /analysis\.R/ })).toHaveAttribute("aria-selected", "true");
@@ -145,10 +147,16 @@ test("every pointer target is at least 44 pixels tall", async ({ page }) => {
   await page.keyboard.press("Control+k");
   expect(await smallTargets(page)).toEqual([]);
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: /^Results/ }).click();
+  await page.getByRole("button", { name: "More ways to run" }).click();
   expect(await smallTargets(page)).toEqual([]);
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: /^penguins data frame/ }).click();
+  await page.locator(".project-switch").click();
+  expect(await smallTargets(page)).toEqual([]);
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "More for this result" }).click();
+  expect(await smallTargets(page)).toEqual([]);
+  await page.keyboard.press("Escape");
+  await (await showObjects(page)).getByRole("button", { name: /^penguins data frame/ }).click();
   await expect(page.getByRole("region", { name: "Data viewer, penguins" })).toContainText("Rows 1 to 100");
   expect(await smallTargets(page)).toEqual([]);
   await page.keyboard.press("Control+Shift+n");
@@ -165,11 +173,10 @@ test("every pointer target is at least 44 pixels tall", async ({ page }) => {
   expect(await smallTargets(page)).toEqual([]);
   await page.keyboard.press("Escape");
   for (const sheet of ["R help", "Packages", "History", "Assistant"]) {
-    await page.getByRole("navigation", { name: "Canvas views" }).getByRole("button", { name: sheet, exact: true }).click();
+    await showTool(page, sheet);
     expect(await smallTargets(page)).toEqual([]);
   }
-  // Back to the canvas from the last sheet.
-  await page.getByRole("button", { name: "Assistant", exact: true }).click();
+  await showObjects(page);
   await page.getByRole("button", { name: "Import data" }).click();
   await page.getByRole("dialog", { name: "Import data" }).getByRole("button", { name: "Choose" }).click();
   await expect(page.getByRole("columnheader", { name: /species/ })).toBeVisible();
@@ -359,7 +366,7 @@ for (const appearance of ["Light", "Dark", "Paper"]) {
     await page.locator(".editor-host .cm-line", { hasText: "slow_fit" }).getByText("slow_fit").hover();
     await page.mouse.move(0, 0);
     // Changing the data, with a form open.
-    await page.locator("#object-cards").getByRole("button", { name: /^penguins / }).click();
+    await (await showObjects(page)).getByRole("button", { name: /^penguins / }).click();
     const viewer = page.getByRole("region", { name: "Data viewer, penguins" }).first();
     await viewer.getByRole("button", { name: /^bill_len/ }).click();
     await viewer.getByRole("button", { name: "Keep only some rows" }).click();

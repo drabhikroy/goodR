@@ -45,7 +45,7 @@ const STATE_WORDS: Record<string, string> = {
   skipped: "Did not run, because an earlier line stopped",
 };
 
-export function OutputCard({ blockId, showLine = false }: { blockId: string; showLine?: boolean }) {
+export function OutputCard({ blockId, showLine = false, showCode = true }: { blockId: string; showLine?: boolean; showCode?: boolean }) {
   const block = useStore((state) => state.blocks[blockId]);
   // CodeMirror measures block widgets once. When a result grows, as output
   // streams in, the editor is asked to measure again so lines below it do
@@ -82,7 +82,7 @@ export function OutputCard({ blockId, showLine = false }: { blockId: string; sho
       title={done && !quiet ? `${label}, took ${seconds(block.duration)}` : undefined}
       {...link}
     >
-      {showLine && (
+      {showLine && showCode && (
         <div className="cell-in">
           {/* On the stage, the line's link and Run again, Copy, and Hide are
               in the stage's own header above, so the code stands alone. */}

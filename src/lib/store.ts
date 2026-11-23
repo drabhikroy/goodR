@@ -161,7 +161,7 @@ export type OutlineItem = { label: string; line: number; level: number };
 
 /** What the canvas on the right shows: its own feed of results, or one of
  * the sheets that slide over it for a while. */
-export type Panel = "canvas" | "help" | "packages" | "history" | "report" | "app" | "assistant";
+export type Panel = "canvas" | "objects" | "help" | "packages" | "history" | "report" | "app" | "assistant";
 
 /** The latest report render: which file, how far it got, the lines it
  * printed, and what it made or why it stopped. `finished` is zero while it
@@ -289,6 +289,8 @@ export type State = {
     stage: string | null;
     /** An output kept on the stage above the current one, for comparing. */
     stagePin: string | null;
+    /** Whether the stage shows the code above each result. */
+    stageCode: boolean;
     /** The part of the app being pointed at with rings, or null. */
     beacon: GuideTarget | null;
     /** The template the New Project dialog starts on. */
@@ -362,13 +364,15 @@ export const defaultSettings: Settings = {
   recentProjects: [],
   sessionProject: "",
   consoleHeight: 230,
-  consoleInputHeight: 96,
+  consoleInputHeight: 48,
   timelineHeight: 232,
-  showSidebar: true,
+  showSidebar: false,
   showCanvas: true,
   showPrompt: true,
-  showTimeline: true,
+  showTimeline: false,
   inspectorWidth: 520,
+  toolNames: false,
+  layoutVersion: 2,
   paneSplit: 45,
   appearance: "system",
   palette: "standard",
@@ -378,6 +382,7 @@ export const defaultSettings: Settings = {
   outputLayout: "canvas",
   layoutChosen: false,
   tourSeen: false,
+  hideNewHere: false,
   missingPackages: "ask",
   codeFont: "dm-mono",
   codeSize: 15,
@@ -434,7 +439,7 @@ const initial: State = {
   cursorLine: 0,
   dropHover: -1,
   consoleDraft: null,
-  ui: { inspector: true, sidebar: true, palette: false, dialog: null, paletteQuery: "", panel: "canvas", plotView: null, stage: null, stagePin: null, beacon: null, newProjectTemplate: "analysis", showHelp: false, tour: null, showStart: false, focus: false, guide: false, settingsPane: null },
+  ui: { inspector: true, sidebar: true, palette: false, dialog: null, paletteQuery: "", panel: "canvas", plotView: null, stage: null, stagePin: null, stageCode: false, beacon: null, newProjectTemplate: "analysis", showHelp: false, tour: null, showStart: false, focus: false, guide: false, settingsPane: null },
   help: { page: null, back: [], forward: [], query: "", loading: false, missing: "" },
   packages: null,
   importFile: null,

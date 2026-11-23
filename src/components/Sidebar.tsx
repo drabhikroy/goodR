@@ -17,7 +17,7 @@ function byFolder(paths: string[]) {
   return [...groups.entries()];
 }
 
-function ScriptIcon({ path }: { path: string }) {
+export function ScriptIcon({ path }: { path: string }) {
   if (/\.(qmd|Rmd|rmd)$/.test(path)) return <ReportIcon size={16} />;
   if (/(^|\/)(app|ui|server)\.R$/.test(path)) return <AppWindowIcon size={16} />;
   return <FileIcon size={16} />;

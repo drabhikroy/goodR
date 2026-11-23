@@ -170,6 +170,9 @@ const MASS_META: DataMeta = {
 declare global {
   interface Window {
     goodforPick?: string[];
+    /** Settings a test starts from in place of the stand-in's own, such as
+     * a first run's calmer layout. */
+    goodforSettings?: Record<string, unknown>;
   }
 }
 
@@ -273,11 +276,16 @@ export function createMockBackend(): Backend {
     consoleHeight: 230,
     consoleInputHeight: 96,
     timelineHeight: 232,
+    // Most tests reach files through the sidebar and earlier results
+    // through the strip, so the stand-in keeps both on show. The calmer
+    // first-run layout has tests of its own.
     showSidebar: true,
     showCanvas: true,
     showPrompt: true,
     showTimeline: true,
     inspectorWidth: 520,
+    toolNames: false,
+    layoutVersion: 2,
     paneSplit: 45,
     appearance: "light",
     palette: "standard",
@@ -289,6 +297,7 @@ export function createMockBackend(): Backend {
     // The tour opens by itself on a real first run. Tests start it when
     // they mean to, so the stand-in has already seen it.
     tourSeen: true,
+    hideNewHere: false,
     missingPackages: "ask",
     codeFont: "dm-mono",
     codeSize: 15,
@@ -548,7 +557,7 @@ export function createMockBackend(): Backend {
       { version: "4.5.1", home: "/Library/Frameworks/R.framework/Versions/4.5/Resources", source: "CRAN installer" },
       { version: "4.4.3", home: "/opt/homebrew/Cellar/r/4.4.3/lib/R", source: "Homebrew" },
     ],
-    loadSettings: async () => structuredClone(settings),
+    loadSettings: async () => structuredClone({ ...settings, ...(window.goodforSettings ?? {}) }),
     saveSettings: async (next) => {
       settings = structuredClone(next);
     },

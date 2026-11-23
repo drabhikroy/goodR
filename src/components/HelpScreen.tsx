@@ -98,14 +98,13 @@ function WindowMap() {
   );
   return (
     <div className="window-map" role="group" aria-label="Show me in the app">
-      <div className="map-bar">
-        {part("home", "map-home", "Home")}
-        {part("session", "map-session", "Projects")}
-        {part("search", "map-search", "Search")}
-      </div>
       <div className="map-body">
         <div className="map-left">
-          {part("run", "map-run", "Run")}
+          <div className="map-bar">
+            {part("session", "map-session", "Projects")}
+            {part("search", "map-search", "Search")}
+            {part("run", "map-run", "Run")}
+          </div>
           <div className="map-script" aria-hidden="true">
             <span />
             <span />
@@ -114,9 +113,12 @@ function WindowMap() {
           {part("prompt", "map-prompt", "Prompt")}
         </div>
         <div className="map-right">
-          {part("objects", "map-objects", "Objects")}
+          {part("timeline", "map-timeline", "All results")}
           {part("stage", "map-stage", "Stage")}
-          {part("timeline", "map-timeline", "Earlier results")}
+        </div>
+        <div className="map-tools">
+          {part("objects", "map-objects", "Objects")}
+          {part("sheets", "map-sheets", "Tools")}
         </div>
       </div>
     </div>
@@ -251,7 +253,7 @@ const TOPICS: Topic[] = [
     body: () => (
       <>
         <p>
-          Choose an object on the canvas, or put the cursor on its name, and choose Where did this come from? in the Edit menu. It lists the line that made it and every line that changed it since,
+          Choose an object under Objects, or put the cursor on its name, and choose Where did this come from? in the Edit menu. It lists the line that made it and every line that changed it since,
           with the columns each one added. The names it was made from can be traced the same way.
         </p>
         <p>
@@ -300,22 +302,28 @@ const TOPICS: Topic[] = [
           arrives, and the stage tells you which line made it.
         </p>
         <p>
-          Below the stage, the strip of earlier results keeps every result from this session as a small card, under the name of the section of your script it came from. Press one to bring it back, and your
-          script jumps to the line that made it. It works the other way too: click a line in your script and its result comes back. Drag the strip&#8217;s top edge to make it taller, and the cards wrap
-          into more rows, so more are in view at once. When there are lots of results, the filters at its top narrow them to plots, printed results, or problems. The button with three dots saves them all as a
-          report, clears them, or hides the strip.
+          Every result from this session is kept. The arrows above the stage step back and forward through them, one at a time, and All results lays them all out as small cards, under the name of the
+          section of your script each came from. Point at a card and its line lights up in the script; press it to bring it back. It works the other way too: click a line in your script and its result comes
+          back. When there are lots of results, filters narrow them to plots, printed results, or problems. The button with three dots saves them all as a report or clears them. If you would rather see the
+          cards all the time, choose Keep earlier results under the result from that same button.
         </p>
-        <p>Pin a result to keep it on the stage while you look at the next one, for example to compare two plots. Full size shows a plot over the whole window, and Export saves it as a file.</p>
         <p>
-          Edit labels, under a plot from your script, changes its title and axis labels, and the color of a base R plot. The change is made in the code that drew it, so it stays when the script runs again.
+          Everything you can do with the result on the stage is in its menu, the button with three dots beside All results: run it again, copy it, hide it, show the code that made it, undo the run that made
+          it, or pin it. Pin keeps a result on the stage while you look at the next one, for example to compare two plots.
+        </p>
+        <p>
+          Point at a plot and its own buttons appear under it. Full size shows it over the whole window, Export saves it as a file, and Edit labels, for a plot from your script, changes its title and axis
+          labels, and the color of a base R plot. The change is made in the code that drew it, so it stays when the script runs again.
         </p>
         <p>To see only your script and the result, press <kbd>{keyLabel("⌥⌘F")}</kbd> for focus mode. Leave focus, at the top right, brings everything back.</p>
         <p>
-          A row of named views runs across the top of the canvas: Canvas, then App or Report when there is one, then Help, Packages, History, and Assistant. The view on show is marked, and
-          any other is one press away, so you can always get back to the canvas. Under Canvas, the small cards are the objects you have made; press a data frame to look through it.
+          The tools run down the right edge of the window as icons: Results, Objects, then App or Report when there is one, then R help, Assistant, Packages, and History, with Settings at the foot. The one on
+          show is marked. Rest the pointer on an icon for a few seconds and its name appears, or turn on Show names under the tool icons in Settings, under Appearance, to see every name all the time. Objects
+          lists what you have made, with a few words about each; press a data frame to look through it.
         </p>
         <p>
-          Prefer results under each line? Choose Under each line in the Results menu above the script. Drag the edge of the canvas to resize it, or hide it with the button at the far right of the title bar.
+          Prefer results under each line? Choose Under each line in the Run menu, the arrow beside Run. Drag the edge of the canvas to resize it. Press Results while it is on show to hide the canvas and give
+          the script the whole width, and again to bring it back.
         </p>
       </>
     ),
@@ -330,7 +338,7 @@ const TOPICS: Topic[] = [
     body: () => (
       <>
         <p>
-          Import data, on the canvas or in the File menu, reads a CSV, a spreadsheet, or a file from SPSS, Stata, or SAS. It works out the separators for you, shows a preview, and adds the line of R that reads
+          Import data, under Objects or in the File menu, reads a CSV, a spreadsheet, or a file from SPSS, Stata, or SAS. It works out the separators for you, shows a preview, and adds the line of R that reads
           the file to your script, so it runs again next time.
         </p>
         <p>
@@ -358,11 +366,14 @@ const TOPICS: Topic[] = [
           too, starting in the script&#8217;s folder. That way, code does not run in the wrong folder by accident.
         </p>
         <p>
-          The name beside Home, at the top left, is the project or script on show. Its menu lists everything open, with a number when there is more than one, and switches between them, bringing each
-          one&#8217;s objects and results along. It also opens recent projects. While R is busy or has stopped, a dot beside the name says so. Restart R is in the Run menu, and the version of
-          R is chosen in Settings, under R and packages.
+          The name at the top left is the project or script on show. Its menu says which R is running and in which folder, lists the project&#8217;s scripts and data files, and lists everything open, with a
+          number when there is more than one, switching between them and bringing each one&#8217;s objects and results along. It also opens recent projects. While R is busy or has stopped, a dot beside the
+          name says so. Restart R is in the Run menu, and the version of R is chosen in Settings, under R and packages.
         </p>
-        <p>Home, at the left of the title bar, takes you back to the opening screen without closing anything. Continue working, or Escape, brings you right back.</p>
+        <p>
+          The files are not shown down the left unless you ask: choose Keep the files open on the left in the same menu. Start screen, also in that menu, takes you back to the opening screen without closing
+          anything. Continue working, or Escape, brings you right back.
+        </p>
       </>
     ),
   },
@@ -409,7 +420,7 @@ const TOPICS: Topic[] = [
       <>
         <p>
           Results stay on the canvas when you close the app, and come back next time beside the code that made them, marked From last time. The objects behind them are not in R until you run the code
-          again. Clear all results, in the menu with three dots above the earlier results, forgets them, and Settings, under Results, turns keeping off.
+          again. Clear all results, in the menu with three dots under All results, forgets them, and Settings, under Results, turns keeping off.
         </p>
         <p>
           Save as a report, in the same menu, turns the results on the canvas into a Quarto document, one chunk for each result, in the order you made them. Write what they mean between the chunks, then
@@ -548,13 +559,13 @@ const TOPICS: Topic[] = [
     body: () => (
       <>
         <p>
-          Undo the last run, with <kbd>{keyLabel("⌥⌘Z")}</kbd> or the button above its result, puts your objects back as they were before you pressed Run. One press of Run is one run, so it takes back a
+          Undo the last run, with <kbd>{keyLabel("⌥⌘Z")}</kbd> or Undo run in the menu above its result, puts your objects back as they were before you pressed Run. One press of Run is one run, so it takes back a
           whole Run file at once. It tells you what it put back. Files the run saved, and packages it loaded, stay as they are.
         </p>
         <p><kbd>{keyLabel("⌘Z")}</kbd> on its own undoes typing in the script, as anywhere else.</p>
         <p>
-          Each save keeps a version of the script, at most one every five minutes, and the last hundred are kept. The clock button beside the file&#8217;s folder, or Earlier versions of this file in the
-          File menu, lists them by when they were saved, with what has changed since each in a few words. Choose one to see each change: the old lines in red with a minus, the lines now in green with a
+          Each save keeps a version of the script, at most one every five minutes, and the last hundred are kept. Earlier versions of this file, in the project menu at the top left or in the File menu,
+          lists them by when they were saved, with what has changed since each in a few words. Choose one to see each change: the old lines in red with a minus, the lines now in green with a
           plus. Copy the old lines, put one part back, or use the whole version. Nothing is saved until you save, and Undo takes it back.
         </p>
         <p>
@@ -584,7 +595,7 @@ const TOPICS: Topic[] = [
           messages instead, and Settings, under R and packages, can show those every time.
         </p>
         <p>
-          Packages, on the canvas or in the Packages menu, lists what is installed. Check for updates opens the Updates page in Settings, which lists the packages with newer versions, and Update all
+          Packages, in the tools down the right edge or in the Packages menu, lists what is installed. Check for updates opens the Updates page in Settings, which lists the packages with newer versions, and Update all
           brings them up to date, with the progress on the stage. Restart R afterward so the new versions are the ones in use.
         </p>
       </>
@@ -627,7 +638,7 @@ const TOPICS: Topic[] = [
     body: () => (
       <>
         <p>
-          <kbd>{keyLabel("⌘K")}</kbd> opens the search at the right of the title bar. With nothing typed, it lists commands under their menu&#8217;s name. It finds any command by name and looks up any function in R help. These commands have shortcuts of their own:
+          <kbd>{keyLabel("⌘K")}</kbd> opens the search, the magnifying glass beside Run. With nothing typed, it lists commands under their menu&#8217;s name. It finds any command by name and looks up any function in R help. These commands have shortcuts of their own:
         </p>
         <Shortcuts />
       </>
@@ -655,7 +666,7 @@ const TOPICS: Topic[] = [
         </p>
         <p>
           Compact, under Appearance, tightens the space around panes for a small screen, and keeps every button just as easy to hit. Documents wrap at a comfortable line length unless you turn that off
-          there too.
+          there too. Show names under the tool icons, also there, writes the name of each tool down the right edge under its icon.
         </p>
         <p>
           Menus can show the essentials, or everything. Everything adds a few commands for people who know what they want, such as Run to here, Restart R and run the file, and rendering straight to

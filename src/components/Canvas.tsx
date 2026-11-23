@@ -1,12 +1,15 @@
-// The canvas: object cards along the top, a stage showing one output at a
-// time, and the strip of earlier outputs under it. Help, packages, past
-// commands, the assistant, reports, and running apps open as sheets over
-// it from the buttons on its top bar.
+// The canvas: a stage showing one output at a time, with arrows and All
+// results for earlier outputs. Objects, help, packages, past commands, the
+// assistant, reports, and running apps open as sheets over it from the
+// tool strip down the window's right edge.
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   activateTab,
   checkPackageUpdates,
+  copyResult,
+  runBlockAgain,
+  toggleResult,
   clearConsole,
   clearWorkspace,
   helpBack,
@@ -25,6 +28,7 @@ import {
   undoLastRun,
   updateAllPackages,
   isBatchPending,
+  togglePane,
   togglePart,
   updateSettings,
   viewData,
@@ -35,17 +39,17 @@ import { openTrace } from "../lib/trace";
 import { keyLabel } from "../lib/commands";
 import * as editor from "../lib/editor";
 import { cleanHelp } from "../lib/helpHtml";
-import { getState, isQuiet, useStore, type Block, type ConsoleEntry, type Panel } from "../lib/store";
+import { getState, isQuiet, setState, useStore, type Block, type ConsoleEntry, type Panel } from "../lib/store";
 import type { RObject } from "../lib/types";
 import { useViewportSize } from "../lib/viewport";
 import { firstWarningTitle } from "../lib/warnings";
 import { packageProgress } from "../lib/packages";
-import { AppWindowIcon, ArrowIcon, BroomIcon, ChartIcon, CloseIcon, FunctionIcon, HelpIcon, HistoryIcon, ImportIcon, ModelIcon, MoreIcon, PackageIcon, PinIcon, PlusIcon, ReportIcon, SaveIcon, SearchIcon, SparkIcon, StopIcon, TableIcon, TriangleIcon, UndoIcon, ValueIcon } from "./Icons";
+import { AppWindowIcon, ArrowIcon, BroomIcon, ChartIcon, CodeIcon, CopyIcon, EyeIcon, GearIcon, GridIcon, ObjectsIcon, PlayIcon, CloseIcon, FunctionIcon, HelpIcon, HistoryIcon, ImportIcon, ModelIcon, MoreIcon, PackageIcon, PinIcon, PlusIcon, ReportIcon, SaveIcon, SearchIcon, SparkIcon, StopIcon, TableIcon, TriangleIcon, UndoIcon, ValueIcon } from "./Icons";
 import { AssistantPane } from "./AssistantPane";
 import { AppPane } from "./AppPane";
 import { HistoryList } from "./Composer";
 import { DataViewer } from "./DataViewer";
-import { OutputCard, PlotFigure, ResultActions } from "./OutputCard";
+import { OutputCard, PlotFigure } from "./OutputCard";
 import { ReportPane } from "./ReportPane";
 import { Splitter } from "./Splitter";
 import { Popover, usePopover } from "./Popover";
@@ -54,27 +58,32 @@ import { StreamText } from "./StreamText";
 type Sheet = { id: Exclude<Panel, "canvas">; name: string; Icon: typeof TableIcon };
 
 // The sheets, in the order people reach for them. App and Report join,
-// ahead of these, when there is something to show.
+// after Objects, when there is something to show.
+const OBJECTS: Sheet = { id: "objects", name: "Objects", Icon: ObjectsIcon };
 const SHEETS: Sheet[] = [
   { id: "help", name: "R help", Icon: HelpIcon },
+  { id: "assistant", name: "Assistant", Icon: SparkIcon },
   { id: "packages", name: "Packages", Icon: PackageIcon },
   { id: "history", name: "History", Icon: HistoryIcon },
 ];
 const REPORT: Sheet = { id: "report", name: "Report", Icon: ReportIcon };
 const APP: Sheet = { id: "app", name: "App", Icon: AppWindowIcon };
-const ASSISTANT: Sheet = { id: "assistant", name: "Assistant", Icon: SparkIcon };
+
+/** Every sheet that can be shown now, in the order the tool strip lists them. */
+function useSheets(): Sheet[] {
+  const hasReport = useStore((state) => state.report !== null);
+  // The App sheet appears once an app has run, and also whenever a Shiny
+  // app's code is in front, for the map of how it connects.
+  const hasApp = useStore((state) => state.shinyApp !== null || (state.shinyCheck !== null && state.shinyCheck.file === state.active));
+  return [OBJECTS, ...(hasApp ? [APP] : []), ...(hasReport ? [REPORT] : []), ...SHEETS];
+}
 
 /** The canvas, when it is shown: its bar, and its stage or a sheet. */
 export function Canvas() {
   const open = useStore((state) => state.ui.inspector);
   const width = useStore((state) => state.settings.inspectorWidth);
   const chosen = useStore((state) => state.ui.panel);
-  const hasReport = useStore((state) => state.report !== null);
-  // The App sheet appears once an app has run, and also whenever a Shiny
-  // app's code is in front, for the map of how it connects.
-  const hasApp = useStore((state) => state.shinyApp !== null || (state.shinyCheck !== null && state.shinyCheck.file === state.active));
-  // The app or report in play comes first, right after the canvas.
-  const sheets = [...(hasApp ? [APP] : []), ...(hasReport ? [REPORT] : []), ...SHEETS, ASSISTANT];
+  const sheets = useSheets();
   const sheet = sheets.find((item) => item.id === chosen) ?? null;
   const { width: windowWidth } = useViewportSize();
   // The canvas can take up to about two thirds of the window, and never so
@@ -85,25 +94,9 @@ export function Canvas() {
   return (
     <aside className="canvas" id="canvas" tabIndex={-1} aria-label="Canvas" style={{ width: shown }}>
       <Splitter className="column-edge" label="Canvas width" axis="column" value={shown} min={360} max={maxWidth} onChange={(value) => updateSettings({ inspectorWidth: value })} />
-      {/* Every view the canvas has, named, in one row: the canvas itself,
-          the app or report when there is one, and the sheets. The one on
-          show is marked, and any other is one press away. */}
-      <nav className="canvas-views" aria-label="Canvas views">
-        <button type="button" className={`canvas-view ${sheet ? "" : "is-on"}`} aria-pressed={!sheet} onClick={() => showPanel("canvas")}>
-          <ChartIcon size={15} />
-          <span className="canvas-view-name">Canvas</span>
-        </button>
-        {sheets.map((item) => (
-          <SheetButton key={item.id} sheet={item} open={sheet?.id === item.id} />
-        ))}
-      </nav>
-      {!sheet && (
-        <header className="canvas-bar">
-          <ObjectCards />
-        </header>
-      )}
       {sheet ? (
         <div className="canvas-sheet" id={`sheet-${sheet.id}`}>
+          {sheet.id === "objects" && <ObjectCards />}
           {sheet.id === "help" && <HelpPane />}
           {sheet.id === "packages" && <PackagesPane />}
           {sheet.id === "history" && <HistoryList />}
@@ -118,31 +111,92 @@ export function Canvas() {
   );
 }
 
-/** A button on the canvas bar that opens its sheet, or closes it when open.
- * Report and App carry a small dot while they work, or a mark when they
- * failed, so their state shows without the sheet open. */
-function SheetButton({ sheet, open }: { sheet: Sheet; open: boolean }) {
+// How long the pointer rests on a tool before its name shows. Long, so the
+// names stay out of the way of people who know the icons; Settings can
+// show every name all the time instead. Keyboard focus shows it at once.
+const NAME_DELAY = 5000;
+
+/**
+ * The tools, as one strip of icons down the right edge of the window:
+ * Results first, then Objects, the app or report when there is one, and
+ * the sheets, with Settings at the foot. The one on show is marked.
+ * Pressing it again hides the canvas, so the script can take the width.
+ */
+export function ToolStrip() {
+  const open = useStore((state) => state.ui.inspector);
+  const chosen = useStore((state) => state.ui.panel);
+  const names = useStore((state) => state.settings.toolNames);
+  const sheets = useSheets();
+  const current = open ? (sheets.find((item) => item.id === chosen)?.id ?? "canvas") : null;
+  const results: Sheet = { id: "canvas" as Sheet["id"], name: "Results", Icon: ChartIcon };
+  return (
+    <nav className={`tool-strip ${names ? "has-names" : ""}`} aria-label="Tools">
+      {[results, ...sheets].map((item) => (
+        <ToolButton key={item.id} sheet={item} on={current === item.id} names={names} />
+      ))}
+      <span className="tool-strip-gap" />
+      <ToolButton sheet={{ id: "settings" as Sheet["id"], name: "Settings", Icon: GearIcon }} on={false} names={names} onPress={() => openDialog("settings")} />
+    </nav>
+  );
+}
+
+/** One tool. Report and App carry a small dot while they work, or a mark
+ * when they failed, so their state shows without the sheet open. */
+function ToolButton({ sheet, on, names, onPress }: { sheet: Sheet; on: boolean; names: boolean; onPress?: () => void }) {
   const report = useStore((state) => state.report?.status);
   const app = useStore((state) => state.shinyApp?.status);
+  const [tip, setTip] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
   let sign: { tone: string; words: string } | null = null;
   if (sheet.id === "report" && report === "running") sign = { tone: "busy", words: "rendering" };
   if (sheet.id === "report" && report === "failed") sign = { tone: "danger", words: "did not render" };
   if (sheet.id === "app" && (app === "running" || app === "starting")) sign = { tone: "ok", words: app };
   const Icon = sheet.Icon;
+  const hide = () => {
+    window.clearTimeout(timer.current);
+    setTip(false);
+  };
+  const press = () => {
+    hide();
+    if (onPress) return onPress();
+    const id = sheet.id as Panel;
+    // The tool on show, pressed again, hides the canvas.
+    if (on) togglePane("inspector");
+    else showPanel(id);
+  };
   return (
-    <button
-      type="button"
-      data-sheet={sheet.id}
-      className={`canvas-view sheet-button ${open ? "is-on" : ""}`}
-      aria-pressed={open}
-      aria-description={sign?.words}
-      title={sign ? `${sheet.name}, ${sign.words}` : sheet.name}
-      onClick={() => showPanel(open ? "canvas" : sheet.id)}
-    >
-      <Icon size={15} />
-      <span className="canvas-view-name">{sheet.name}</span>
-      {sign && <span className={`view-sign tone-${sign.tone}`} aria-hidden="true" />}
-    </button>
+    <span className="tool-slot">
+      <button
+        type="button"
+        data-sheet={sheet.id}
+        className={`tool-button ${on ? "is-on" : ""}`}
+        aria-label={sheet.name}
+        aria-pressed={onPress ? undefined : on}
+        aria-description={sign?.words}
+        onClick={press}
+        onPointerEnter={() => {
+          window.clearTimeout(timer.current);
+          timer.current = window.setTimeout(() => setTip(true), NAME_DELAY);
+        }}
+        onPointerLeave={hide}
+        onFocus={(event) => setTip(!names && event.currentTarget.matches(":focus-visible"))}
+        onBlur={hide}
+      >
+        <Icon size={18} />
+        {names && (
+          <span className="tool-name" aria-hidden="true">
+            {sheet.name}
+          </span>
+        )}
+        {sign && <span className={`view-sign tone-${sign.tone}`} aria-hidden="true" />}
+      </button>
+      {tip && !names && (
+        <span className="tool-tip" aria-hidden="true">
+          {sign ? `${sheet.name}, ${sign.words}` : sheet.name}
+        </span>
+      )}
+    </span>
   );
 }
 
@@ -154,21 +208,29 @@ const KIND_ICON: Record<RObject["kind"], typeof TableIcon> = {
   value: ValueIcon,
 };
 
-/** The objects in R as a row of small cards. A data frame opens in the data
- * viewer; anything else shows what it is in a small card under the row.
- * A long list shows its first few and a count of the rest. */
+/** The objects in R, as a list: each with what it is, a data frame
+ * opening in the data viewer and anything else showing its details. What
+ * is done with them all, importing data and clearing, is at the top. */
 function ObjectCards() {
   const objects = useStore((state) => state.objects);
   const [open, setOpen] = useState<string | null>(null);
-  const [all, setAll] = useState(false);
-  const LIMIT = 8;
-  const shown = all ? objects : objects.slice(0, LIMIT);
   const chosen = objects.find((object) => object.name === open);
   return (
     <section className="object-cards" aria-label="Objects in R">
+      <div className="pane-toolbar">
+        <span className="object-heading">{objects.length === 1 ? "1 object" : `${objects.length} objects`}</span>
+        <button type="button" className="button small quiet push-end" onClick={() => openDialog("importData")}>
+          <ImportIcon size={14} /> Import data
+        </button>
+        {objects.length > 0 && (
+          <button type="button" className="button small quiet object-clear" onClick={clearWorkspace}>
+            <BroomIcon size={14} /> Clear all objects
+          </button>
+        )}
+      </div>
       <div className="object-row" id="object-cards">
-        {objects.length === 0 && <span className="muted object-empty">No objects yet</span>}
-        {shown.map((object) => {
+        {objects.length === 0 && <p className="muted object-empty">No objects yet. Anything you make in R, such as a data frame or a model, is listed here.</p>}
+        {objects.map((object) => {
           const Icon = KIND_ICON[object.kind];
           const viewable = object.kind === "data" && object.class !== "matrix";
           return (
@@ -178,33 +240,17 @@ function ObjectCards() {
               className={`object-card kind-${object.kind} ${open === object.name ? "is-on" : ""}`}
               aria-label={`${object.name} ${object.summary}`}
               aria-expanded={viewable ? undefined : open === object.name}
-              title={`${object.summary}${viewable ? ". Open in the data viewer" : ""}`}
+              title={viewable ? "Open in the data viewer" : undefined}
               onClick={() => (viewable ? viewData(object.name) : setOpen(open === object.name ? null : object.name))}
             >
               <span className="object-card-face">
                 <Icon size={14} />
                 <code>{object.name}</code>
               </span>
+              <span className="object-summary">{object.summary}</span>
             </button>
           );
         })}
-        {objects.length > LIMIT && (
-          <button type="button" className="object-card is-more" onClick={() => setAll(!all)}>
-            <span className="object-card-face">{all ? "Fewer" : `${objects.length - LIMIT} more`}</span>
-          </button>
-        )}
-        {/* What is done with the objects as a whole sits together at the end
-            of the row as two small buttons, so the row is mostly objects. */}
-        <span className="object-tools">
-          <button type="button" className="icon-button" aria-label="Import data" title="Import data" onClick={() => openDialog("importData")}>
-            <ImportIcon size={15} />
-          </button>
-          {objects.length > 0 && (
-            <button type="button" className="icon-button object-clear" aria-label="Clear all objects" title="Clear all objects" onClick={clearWorkspace}>
-              <BroomIcon size={15} />
-            </button>
-          )}
-        </span>
       </div>
       {chosen && (
         <div className="object-detail" role="status">
@@ -269,6 +315,17 @@ function useOutputs(): Group[] {
 /** Puts the script's cursor on the statement that made an output, opening
  * its file first when another is in front. Keyboard focus moves to the
  * script only when asked, so moving along the timeline keeps it there. */
+/** Lights up the lines of the script an output came from while the
+ * pointer is on its card, without moving the cursor or the view. */
+function markSource(key: string, on: boolean) {
+  if (!key.startsWith("b:")) return;
+  const blockId = key.slice(2);
+  const block = getState().blocks[blockId];
+  if (!block) return;
+  const to = editor.blockLines(block.file).get(blockId) ?? block.toLine;
+  editor.markLines(block.file, "linked", on ? [to - (block.toLine - block.fromLine), to] : null);
+}
+
 function revealSource(key: string, focus: boolean) {
   if (!key.startsWith("b:")) return;
   const blockId = key.slice(2);
@@ -310,6 +367,22 @@ function StageArea() {
   const notes = outputs.filter((group): group is Extract<Group, { type: "note" }> => group.type === "note");
   const note = notes[notes.length - 1]?.entry.text.replace(/\n$/, "");
   const current = results.find((group) => keyOf(group) === chosen) ?? results[results.length - 1] ?? null;
+  const index = current ? results.indexOf(current) : -1;
+  // Earlier results are laid out over the stage when asked for, and the
+  // arrows in the stage's header step through them one at a time.
+  const [all, setAll] = useState(false);
+  const nav: StageNav = {
+    index,
+    total: results.length,
+    all,
+    toggleAll: () => setAll(!all),
+    go: (step) => {
+      const next = results[index + step];
+      if (!next) return;
+      showOnStage(keyOf(next));
+      revealSource(keyOf(next), false);
+    },
+  };
   const pinned = pin && pin !== (current && keyOf(current)) ? (results.find((group) => keyOf(group) === pin) ?? null) : null;
 
   // Moving the cursor onto a line that made an output brings it to the
@@ -361,19 +434,22 @@ function StageArea() {
             <StageArt />
             <p className="feed-empty-title">Your plots and results appear here</p>
             <p className="muted">
-              Run a line with <kbd>{keyLabel("⌘↩")}</kbd>, or type R in the box under the script. Each plot, table, and printed result fills this space as it arrives, and every one stays in the strip of earlier results underneath.
+              Run a line with <kbd>{keyLabel("⌘↩")}</kbd>, or type R in the box under the script. Each plot, table, and printed result fills this space as it arrives. Earlier ones are a press away, with the arrows or All results.
             </p>
           </div>
         )}
-        {pinned && <StagePane group={pinned} pinned />}
-        {current && <StagePane group={current} pinned={false} />}
+        {pinned && !all && <StagePane group={pinned} pinned />}
+        {current && <StagePane group={current} pinned={false} nav={nav} />}
+        {all && current && <Timeline outputs={results} current={keyOf(current)} pinned={pin} overlay onPick={() => setAll(false)} />}
       </section>
+      {/* Notes such as R starting are read out, not shown: where R is and
+          what it is doing is in the project menu. */}
       {note && (
-        <p className="stage-note truncate" title={note}>
+        <p className="visually-hidden" role="status">
           {note}
         </p>
       )}
-      {showTimeline && <Timeline outputs={results} current={current ? keyOf(current) : null} pinned={pin} />}
+      {showTimeline && !all && <Timeline outputs={results} current={current ? keyOf(current) : null} pinned={pin} />}
     </>
   );
 }
@@ -446,10 +522,14 @@ function StageArt() {
 }
 
 /** One output on the stage, under a line that names where it came from. */
-function StagePane({ group, pinned }: { group: Group; pinned: boolean }) {
+/** Stepping through results on the stage, and the view of them all. */
+type StageNav = { index: number; total: number; all: boolean; toggleAll: () => void; go: (step: number) => void };
+
+function StagePane({ group, pinned, nav }: { group: Group; pinned: boolean; nav?: StageNav }) {
   const key = keyOf(group);
   const pin = useStore((state) => state.ui.stagePin);
-  // Undo shows on the result of the run it would undo, where the user
+  const showCode = useStore((state) => state.ui.stageCode);
+  // Undo is offered on the result of the run it would undo, where the user
   // is already looking, and nowhere else on the stage.
   const batch = useStore((state) => (group.type === "block" ? state.blocks[group.blockId]?.batch : group.type === "typed" ? group.input?.batch : undefined));
   // Not while R is still running it, when there is nothing to undo yet.
@@ -459,8 +539,8 @@ function StagePane({ group, pinned }: { group: Group; pinned: boolean }) {
   const actions = group.type === "block" && block && block.status !== "running" && block.status !== "queued" && !isQuiet(block) && block.status !== "skipped";
   return (
     <div className={`stage-pane ${pinned ? "is-pinned" : ""}`} aria-label={pinned ? "Pinned output" : "Output"} role="group">
-      {/* One header for the output: where it came from on the left, and on
-          the right what can be done with it, which was in two rows before. */}
+      {/* One quiet header: where the output came from, the way through the
+          others, and everything that can be done with it behind one menu. */}
       <header className="stage-head">
         {group.type === "block" ? (
           <button type="button" className="stage-title is-link" title="Go to this line in the script" onClick={() => revealSource(key, true)}>
@@ -474,15 +554,35 @@ function StagePane({ group, pinned }: { group: Group; pinned: boolean }) {
           </span>
         )}
         <div className="stage-tools push-end">
-          {actions && block && group.type === "block" && <ResultActions blockId={group.blockId} block={block} inline />}
-          {undoable && (
-            <button type="button" className="button small quiet" title={`Put back the objects this run changed, ${keyLabel("⌥⌘Z")}`} onClick={undoLastRun}>
-              <UndoIcon size={14} /> Undo run
+          {pinned ? (
+            <button type="button" className="button small quiet" aria-pressed onClick={() => pinOnStage(null)}>
+              <PinIcon size={14} /> Unpin
             </button>
+          ) : (
+            nav && (
+              <>
+                {nav.total > 1 && (
+                  <span className="stage-steps">
+                    <button type="button" className="icon-button" aria-label="Earlier result" disabled={nav.index <= 0} onClick={() => nav.go(-1)}>
+                      <ArrowIcon size={14} direction="left" />
+                    </button>
+                    <span className="stage-position" aria-live="polite">
+                      {nav.index + 1} of {nav.total}
+                    </span>
+                    <button type="button" className="icon-button" aria-label="Later result" disabled={nav.index >= nav.total - 1} onClick={() => nav.go(1)}>
+                      <ArrowIcon size={14} direction="right" />
+                    </button>
+                  </span>
+                )}
+                {nav.total > 1 && (
+                  <button type="button" className={`button small all-results ${nav.all ? "is-on" : ""}`} aria-expanded={nav.all} onClick={nav.toggleAll}>
+                    <GridIcon size={14} /> All results <span className="all-results-count">{nav.total}</span>
+                  </button>
+                )}
+                <ResultMenu group={group} block={actions ? block : undefined} undoable={undoable} pinned={pin === key} showCode={showCode} />
+              </>
+            )
           )}
-          <button type="button" className="button small quiet" aria-pressed={pin === key} onClick={() => pinOnStage(pin === key ? null : key)}>
-            <PinIcon size={14} /> {pin === key ? "Unpin" : "Pin"}
-          </button>
         </div>
       </header>
       <div className="stage-body">
@@ -494,10 +594,64 @@ function StagePane({ group, pinned }: { group: Group; pinned: boolean }) {
   );
 }
 
+/** Everything that can be done with the result on the stage, in one menu:
+ * running it again, copying, hiding, the code that made it, undo, and pin. */
+function ResultMenu({ group, block, undoable, pinned, showCode }: { group: Group; block?: Block; undoable: boolean; pinned: boolean; showCode: boolean }) {
+  const { open, setOpen, box } = usePopover();
+  const key = keyOf(group);
+  const blockId = group.type === "block" ? group.blockId : "";
+  const hasText = Boolean(block?.items.some((item) => item.type !== "plot"));
+  const pick = (action: () => void) => {
+    setOpen(false);
+    action();
+  };
+  return (
+    <div className="popover-anchor" ref={box}>
+      <button type="button" className="icon-button" aria-haspopup="menu" aria-expanded={open} aria-label="More for this result" onClick={() => setOpen(!open)}>
+        <MoreIcon size={16} />
+      </button>
+      {open && (
+        <Popover label="More for this result" className="result-menu">
+          {block && (
+            <button type="button" role="menuitem" autoFocus onClick={() => pick(() => runBlockAgain(blockId))}>
+              <PlayIcon size={12} /> Run again
+            </button>
+          )}
+          {block && hasText && (
+            <button type="button" role="menuitem" onClick={() => pick(() => copyResult(blockId))}>
+              <CopyIcon size={14} /> Copy result
+            </button>
+          )}
+          {block && block.items.length > 0 && (
+            <button type="button" role="menuitem" onClick={() => pick(() => toggleResult(blockId))}>
+              <EyeIcon size={14} closed={!block.collapsed} /> {block.collapsed ? "Show result" : "Hide result"}
+            </button>
+          )}
+          {group.type === "block" && (
+            <button type="button" role="menuitem" onClick={() => pick(() => setState((state) => ({ ui: { ...state.ui, stageCode: !showCode } })))}>
+              <CodeIcon size={14} /> {showCode ? "Hide the code above results" : "Show the code above results"}
+            </button>
+          )}
+          {undoable && (
+            <button type="button" role="menuitem" onClick={() => pick(undoLastRun)}>
+              <UndoIcon size={14} /> Undo run
+              <kbd>{keyLabel("⌥⌘Z")}</kbd>
+            </button>
+          )}
+          <button type="button" role="menuitem" autoFocus={!block} onClick={() => pick(() => pinOnStage(pinned ? null : key))}>
+            <PinIcon size={14} /> {pinned ? "Unpin" : "Pin, to keep it above the next result"}
+          </button>
+        </Popover>
+      )}
+    </div>
+  );
+}
+
 /** A script result on the stage: a data frame as a table, anything else
  * as its card, with the printed version of a table one press away. */
 function StageBlock({ blockId }: { blockId: string }) {
   const frame = useBareFrame(blockId);
+  const showCode = useStore((state) => state.ui.stageCode);
   const [printed, setPrinted] = useState(false);
   if (frame && !printed) {
     return (
@@ -522,7 +676,7 @@ function StageBlock({ blockId }: { blockId: string }) {
           </button>
         </div>
       )}
-      <OutputCard blockId={blockId} showLine />
+      <OutputCard blockId={blockId} showLine showCode={showCode} />
     </>
   );
 }
@@ -578,7 +732,7 @@ const TIMELINE_MAX = 560;
  * to plots, printed results, or problems. It is a list box, so the arrow
  * keys move along it and Home and End jump to either end.
  */
-function Timeline({ outputs, current, pinned }: { outputs: Group[]; current: string | null; pinned: string | null }) {
+function Timeline({ outputs, current, pinned, overlay = false, onPick }: { outputs: Group[]; current: string | null; pinned: string | null; overlay?: boolean; onPick?: () => void }) {
   const list = useRef<HTMLDivElement>(null);
   const blocks = useStore((state) => state.blocks);
   const outline = useStore((state) => state.outline);
@@ -648,11 +802,11 @@ function Timeline({ outputs, current, pinned }: { outputs: Group[]; current: str
   const firstStop = shown.some((item) => keyOf(item) === current) ? null : shown[0] && keyOf(shown[0]);
 
   return (
-    <div className="timeline" style={{ height: timelineHeight }}>
-      <Splitter className="timeline-edge" label="Height of earlier results" axis="row" value={timelineHeight} min={TIMELINE_MIN} max={TIMELINE_MAX} onChange={(value) => updateSettings({ timelineHeight: value })} />
+    <div className={`timeline ${overlay ? "is-overlay" : ""}`} style={overlay ? undefined : { height: timelineHeight }} role={overlay ? "dialog" : undefined} aria-label={overlay ? "All results" : undefined}>
+      {!overlay && <Splitter className="timeline-edge" label="Height of earlier results" axis="row" value={timelineHeight} min={TIMELINE_MIN} max={TIMELINE_MAX} onChange={(value) => updateSettings({ timelineHeight: value })} />}
       <div className="timeline-head">
         <span className="timeline-title">
-          Earlier results <span className="timeline-count">{outputs.length}</span>
+          {overlay ? "All results" : "Earlier results"} <span className="timeline-count">{outputs.length}</span>
         </span>
         {outputs.length > FILTER_FROM && (
           <div className="timeline-filters" role="radiogroup" aria-label="Show in earlier results" onKeyDown={filterKeys}>
@@ -663,7 +817,12 @@ function Timeline({ outputs, current, pinned }: { outputs: Group[]; current: str
             ))}
           </div>
         )}
-        <TimelineMenu />
+        <TimelineMenu overlay={overlay} />
+        {overlay && (
+          <button type="button" className="icon-button" aria-label="Close all results" onClick={onPick}>
+            <CloseIcon size={14} />
+          </button>
+        )}
       </div>
       <div className="timeline-list" role="listbox" aria-label="Earlier results" ref={list} onKeyDown={onKeyDown}>
         {lanes.map((lane, laneIndex) => {
@@ -700,7 +859,17 @@ function Timeline({ outputs, current, pinned }: { outputs: Group[]; current: str
                       aria-description={lane.section}
                       tabIndex={selected || key === firstStop ? 0 : -1}
                       className={`timeline-item ${selected ? "is-current" : ""} ${key === pinned ? "is-pinned" : ""}`}
-                      onClick={() => (showOnStage(key), revealSource(key, false))}
+                      onClick={() => (showOnStage(key), revealSource(key, false), onPick?.())}
+                      onKeyDown={(event) => {
+                        if (overlay && (event.key === "Enter" || event.key === " ")) {
+                          event.preventDefault();
+                          showOnStage(key);
+                          revealSource(key, false);
+                          onPick?.();
+                        }
+                      }}
+                      onPointerEnter={() => markSource(key, true)}
+                      onPointerLeave={() => markSource(key, false)}
                     >
                       <Thumb group={group} />
                       <span className="timeline-label">
@@ -721,7 +890,7 @@ function Timeline({ outputs, current, pinned }: { outputs: Group[]; current: str
 
 /** What can be done with every earlier result at once, kept behind one
  * small button so the cards have the room. */
-function TimelineMenu() {
+function TimelineMenu({ overlay = false }: { overlay?: boolean }) {
   const { open, setOpen, box } = usePopover();
   const pick = (action: () => void) => {
     setOpen(false);
@@ -741,7 +910,7 @@ function TimelineMenu() {
             Clear all results
           </button>
           <button type="button" role="menuitem" onClick={() => pick(() => togglePart("showTimeline"))}>
-            Hide this strip
+            {overlay ? "Keep earlier results under the result" : "Hide this strip"}
           </button>
         </Popover>
       )}

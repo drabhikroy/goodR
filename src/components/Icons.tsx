@@ -349,3 +349,30 @@ export const SparkIcon = (props: IconProps) => (
     <path d="M8 1Q8.9 7.1 15 8Q8.9 8.9 8 15Q7.1 8.9 1 8Q7.1 7.1 8 1Z" fill="currentColor" stroke="none" />
   </Svg>
 );
+
+/** Objects in R: braces, as around the things a program holds. */
+export const ObjectsIcon = (props: IconProps) => (
+  <Svg {...props}>
+    <path d="M5.5 2c-1.4 0-1.9.7-1.9 1.9v1.8c0 .9-.5 1.5-1.6 2.3 1.1.8 1.6 1.4 1.6 2.3v1.8c0 1.2.5 1.9 1.9 1.9" />
+    <path d="M10.5 2c1.4 0 1.9.7 1.9 1.9v1.8c0 .9.5 1.5 1.6 2.3-1.1.8-1.6 1.4-1.6 2.3v1.8c0 1.2-.5 1.9-1.9 1.9" />
+  </Svg>
+);
+
+/** Many results laid out together. */
+export const GridIcon = (props: IconProps) => (
+  <Svg {...props}>
+    <rect x="1.5" y="1.5" width="5.25" height="5.25" rx="1" />
+    <rect x="9.25" y="1.5" width="5.25" height="5.25" rx="1" />
+    <rect x="1.5" y="9.25" width="5.25" height="5.25" rx="1" />
+    <rect x="9.25" y="9.25" width="5.25" height="5.25" rx="1" />
+  </Svg>
+);
+
+/** Settings. */
+export const GearIcon = (props: IconProps) => (
+  <Svg {...props}>
+    <circle cx="8" cy="8" r="2.2" />
+    <path d="M8 1.5v1.8M8 12.7v1.8M14.5 8h-1.8M3.3 8H1.5M12.6 3.4l-1.3 1.3M4.7 11.3l-1.3 1.3M12.6 12.6l-1.3-1.3M4.7 4.7L3.4 3.4" />
+    <circle cx="8" cy="8" r="4.6" />
+  </Svg>
+);

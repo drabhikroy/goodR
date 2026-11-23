@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { appState, newFileWith, openExample, runLine } from "./helpers";
+import { appState, newFileWith, openExample, runLine, showTool } from "./helpers";
 
 /** Walks the setup steps with the private copy, the machine check, and the
  * small code model, as a first time user would. */
@@ -74,7 +74,7 @@ test("an error can be handed to the assistant, and its fix replaces the failing 
   await answer.getByRole("button", { name: "Replace line 2" }).click();
   await expect(page.locator(".editor-host .cm-content")).toContainText("fit <- lm(body_mass ~ flipper_len, data = penguins)");
   // Nothing ran: the replacement waits for the user to run it.
-  await page.getByRole("navigation", { name: "Canvas views" }).getByRole("button", { name: "Canvas", exact: true }).click();
+  await showTool(page, "Results");
   await expect(page.locator(".output-card.status-error")).toHaveCount(1);
 });
 

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectReady, openExample } from "./helpers";
+import { expectReady, openExample, showTool } from "./helpers";
 
 /** Opens the penguins project and its Quarto report. */
 async function openReport(page: Page) {
@@ -96,7 +96,7 @@ test("a rendered report renders again after each save, opening at the section be
   await expect(pane.getByRole("checkbox", { name: "Render again each time the file is saved" })).toBeChecked();
   const first = await page.evaluate(() => (window as unknown as { goodfor: { getState: () => { report: { finished: number } } } }).goodfor.getState().report.finished);
   // Back on the canvas, the next render happens without taking it over.
-  await page.getByRole("navigation", { name: "Canvas views" }).getByRole("button", { name: "Canvas", exact: true }).click();
+  await showTool(page, "Results");
   await page.locator(".editor-host .cm-content").click();
   await page.keyboard.press("Control+End");
   await page.keyboard.insertText("\nMore words.\n");

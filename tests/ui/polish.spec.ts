@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectReady, newFileWith, openExample, runLine } from "./helpers";
+import { expectReady, newFileWith, openExample, runLine, showObjects, showTool } from "./helpers";
 
 // The fourteen improvements made together: warnings, undo, progress,
 // safety for unsaved work, quick help, snippets, focus mode, Paper, data
@@ -48,19 +48,27 @@ test("Undo puts back what the last run changed, from the stage or the Run menu",
   // One press of Run file is one run.
   await page.keyboard.press("Control+Shift+Enter");
   await expect(stage(page)).toContainText("[1] 1");
-  const objectCards = page.locator("#object-cards");
+  const objectCards = await showObjects(page);
   await expect(objectCards.getByRole("button", { name: /^y / })).toBeVisible();
-  await stage(page).getByRole("button", { name: "Undo run" }).click();
+  await showTool(page, "Results");
+  // Undo is in the result's menu, on the result of the run it undoes.
+  await stage(page).getByRole("button", { name: "More for this result" }).click();
+  await page.getByRole("menuitem", { name: /^Undo run/ }).click();
   await expect(page.locator(".notice")).toContainText("Undid the last run. Removed x and y, which the run made.");
-  await expect(objectCards.getByRole("button", { name: /^y / })).toHaveCount(0);
+  await expect((await showObjects(page)).getByRole("button", { name: /^y / })).toHaveCount(0);
+  await showTool(page, "Results");
   await expect(stage(page)).toContainText("Undone. The objects this run changed are back as they were.");
-  // There is nothing more to undo, and the Run menu says so by graying it.
-  await expect(stage(page).getByRole("button", { name: "Undo run" })).toHaveCount(0);
+  // There is nothing more to undo, so the result's menu leaves it out,
+  // and the Run menu says so by graying it.
+  await stage(page).getByRole("button", { name: "More for this result" }).click();
+  await expect(page.getByRole("menuitem", { name: /^Undo run/ })).toHaveCount(0);
+  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "More ways to run" }).click();
   await expect(page.getByRole("menuitem", { name: /Undo the last run/ })).toBeDisabled();
   await page.keyboard.press("Escape");
   // The shortcut works for a command typed at the prompt too.
   await typeAtPrompt(page, "z <- 5");
+  await showObjects(page);
   await expect(objectCards.getByRole("button", { name: /^z / })).toBeVisible();
   await page.keyboard.press("Alt+Control+z");
   await expect(page.locator(".notice")).toContainText("Removed z");
@@ -122,20 +130,22 @@ test("after R stops, one press restarts it and runs the script back to where it 
   for (let line = 0; line < 3; line += 1) await page.keyboard.press("ArrowDown");
   // Run to the cursor, on line 4, data(penguins).
   await page.keyboard.press("Alt+Control+b");
-  await expect(page.locator("#object-cards").getByRole("button", { name: /^penguins / })).toBeVisible();
+  await expect((await showObjects(page)).getByRole("button", { name: /^penguins / })).toBeVisible();
   await typeAtPrompt(page, "quit()");
   const banner = page.getByRole("alert");
   await expect(banner).toContainText("R quit.");
   await banner.getByRole("button", { name: "Restart and run to line 4" }).click();
   await expectReady(page);
-  await expect(page.locator("#object-cards").getByRole("button", { name: /^penguins / })).toBeVisible();
+  await expect((await showObjects(page)).getByRole("button", { name: /^penguins / })).toBeVisible();
 });
 
 test("resting the pointer on a function or an object shows quick help, and Escape closes it", async ({ page }) => {
   await openExample(page);
   await newFileWith(page, "data(penguins)\nmean(penguins$body_mass)");
   await runLine(page);
-  await expect(page.locator("#object-cards").getByRole("button", { name: /^penguins / })).toBeVisible();
+  await expect((await showObjects(page)).getByRole("button", { name: /^penguins / })).toBeVisible();
+  // Back in the script, where Escape is heard.
+  await page.locator(".editor-host .cm-content").focus();
   await page.locator(".editor-host .cm-line", { hasText: "mean(" }).getByText("mean", { exact: true }).hover();
   const tip = page.locator(".quick-help");
   await expect(tip).toContainText("mean, from base");
@@ -196,7 +206,7 @@ test("keeping some rows from the data viewer writes the line into the script and
   await page.keyboard.press("Control+Home");
   for (let line = 0; line < 3; line += 1) await page.keyboard.press("ArrowDown");
   await runLine(page);
-  await page.locator("#object-cards").getByRole("button", { name: /^penguins / }).click();
+  await (await showObjects(page)).getByRole("button", { name: /^penguins / }).click();
   const viewer = page.getByRole("region", { name: "Data viewer, penguins" }).first();
   await viewer.getByRole("button", { name: /^bill_len/ }).click();
   await viewer.getByRole("button", { name: "Keep only some rows" }).click();
@@ -206,7 +216,7 @@ test("keeping some rows from the data viewer writes the line into the script and
   await expect(page.locator(".notice")).toContainText(/Added line \d+ to analysis\.R and ran it: kept the rows where bill_len is more than 40/);
   await page.getByRole("tab", { name: /analysis\.R/ }).click();
   await expect(page.locator(".editor-host .cm-content")).toContainText("penguins <- subset(penguins, bill_len > 40)");
-  await expect(page.locator("#object-cards").getByRole("button", { name: /^penguins data frame, 120 rows/ })).toBeVisible();
+  await expect((await showObjects(page)).getByRole("button", { name: /^penguins data frame, 120 rows/ })).toBeVisible();
 });
 
 test("a plot's labels can be changed from the stage, in the code that drew it", async ({ page }) => {

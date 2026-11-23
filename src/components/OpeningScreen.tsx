@@ -4,7 +4,7 @@
 // Home in the title bar brings it back over open work without closing
 // anything; Continue working or Escape returns to the workspace.
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   baseName,
   chooseAndOpen,
@@ -24,26 +24,13 @@ import {
   shortPath,
   showHelpScreen,
   startTour,
+  updateSettings,
 } from "../lib/app";
-import { FILE_MANAGER, keyLabel } from "../lib/commands";
+import { keyLabel } from "../lib/commands";
 import { startGuide } from "../lib/firstProject";
 import { isSupportedR, OLDEST_R } from "../lib/rversion";
 import { useStore } from "../lib/store";
-import type { RecentFile } from "../lib/types";
 import { AppWindowIcon, ArrowIcon, CloseIcon, FileIcon, FolderIcon, PlusIcon, ReportIcon } from "./Icons";
-
-function group(recents: RecentFile[]) {
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const today = startOfToday.getTime() / 1000;
-  const week = today - 6 * 86400;
-  const groups: { label: string; items: RecentFile[] }[] = [
-    { label: "Today", items: recents.filter((recent) => recent.openedAt >= today) },
-    { label: "Earlier this week", items: recents.filter((recent) => recent.openedAt < today && recent.openedAt >= week) },
-    { label: "Older", items: recents.filter((recent) => recent.openedAt < week) },
-  ];
-  return groups.filter((item) => item.items.length);
-}
 
 function when(seconds: number) {
   const date = new Date(seconds * 1000);
@@ -53,25 +40,20 @@ function when(seconds: number) {
   return date.toLocaleDateString([], { month: "short", day: "numeric" });
 }
 
-/** One choice on the opening screen: what it makes, in a word and a line. */
-function StartButton({ label, Icon, title, hint, keys, onClick }: { label: string; Icon: typeof FileIcon; title: string; hint: string; keys?: string; onClick: () => void }) {
+/** One choice on the opening screen, as a compact button. What it makes
+ * is in its description and tooltip, so nobody has to know the words first. */
+function StartButton({ label, Icon, hint, keys, primary = false, onClick }: { label: string; Icon: typeof FileIcon; hint: string; keys?: string; primary?: boolean; onClick: () => void }) {
   return (
-    <button type="button" className="start" aria-label={label} aria-description={hint} title={keys ? `${label}, ${keyLabel(keys)}` : label} onClick={onClick}>
-      <span className="start-icon" aria-hidden="true">
-        <Icon size={18} />
-      </span>
-      <span className="start-text">
-        <strong>{title}</strong>
-        <span className="start-hint">{hint}</span>
-      </span>
+    <button type="button" className={`button start ${primary ? "primary" : ""}`} aria-description={hint} title={keys ? `${hint}, ${keyLabel(keys)}` : hint} onClick={onClick}>
+      {primary && <Icon size={15} />}
+      {label}
     </button>
   );
 }
 
 export function OpeningScreen() {
   const platform = useStore((state) => state.info?.platform);
-  const recents = useStore((state) => state.settings.recentFiles);
-  const projects = useStore((state) => state.settings.recentProjects);
+  const hideNewHere = useStore((state) => state.settings.hideNewHere);
   const version = useStore((state) => state.info?.version);
   // Reached from Home, over work still open behind it, rather than shown
   // because nothing is open at all.
@@ -104,113 +86,122 @@ export function OpeningScreen() {
           </button>
         </div>
       </header>
-      <main className="opening-grid">
+      <main className="opening-main">
         <section className="opening-hero" aria-labelledby="app-title">
-          <img src="/icon.svg" alt="R:" className="hero-icon" width="96" height="96" />
-          <h1 id="app-title">
-            What Is It
-            <br />
-            Good For?
-          </h1>
-          <p className="tagline">Absolutely everything.</p>
-          {/* Starting and opening are two groups, each in the order of
-              what people make most: a script, a document, an app, then a
-              whole project. Each choice says what it makes in a line, so
-              nobody has to know the words first. */}
-          <div className="start-actions">
-            <h2 className="start-heading">Start something new</h2>
-            <div className="start-grid">
-              <StartButton label="New script" Icon={FileIcon} title="Script" hint="A plain R file" keys="⌘N" onClick={newFile} />
-              <StartButton label="New report" Icon={ReportIcon} title="Report" hint="Quarto or R Markdown" keys="⌥⌘N" onClick={() => openDialog("newDocument")} />
-              <StartButton label="New Shiny app" Icon={AppWindowIcon} title="Shiny app" hint="An interactive web app" onClick={() => openNewProject("shiny")} />
-              <StartButton label="New project" Icon={PlusIcon} title="Project" hint="A folder with its own R" keys="⇧⌘N" onClick={() => openNewProject("analysis")} />
-            </div>
-            <h2 className="start-heading">Open</h2>
-            <div className="start-grid">
-              <StartButton label="Open script" Icon={FileIcon} title="Script" hint="An .R, .Rmd, or .qmd file" keys="⌘O" onClick={chooseAndOpen} />
-              <StartButton label="Open project" Icon={FolderIcon} title="Project" hint="A folder with an .Rproj file" keys="⇧⌘O" onClick={chooseAndOpenProject} />
-            </div>
+          <img src="/icon.svg" alt="R:" className="hero-icon" width="56" height="56" />
+          <div>
+            <h1 id="app-title">What Is It Good For?</h1>
+            <p className="tagline">Absolutely everything.</p>
           </div>
-          <RLine />
         </section>
-        <section className="opening-recents" aria-label="Recent work">
-          {/* Three ways in for someone new to the app or to R, each with a
-              line saying what it is, as Start here in Help shows them. */}
-          <div className="examples-card">
-            <h2>New here?</h2>
-            <div className="examples-actions">
-              <button type="button" className="examples-action" aria-labelledby="way-examples" aria-describedby="way-examples-hint" onClick={openExamples}>
-                <span id="way-examples" className="examples-action-title">Open the examples</span>
-                <span id="way-examples-hint" className="examples-action-hint">Eight scripts and documents and four Shiny apps to try things on</span>
-              </button>
-              <button type="button" className="examples-action" aria-labelledby="way-tour" aria-describedby="way-tour-hint" onClick={startTour}>
-                <span id="way-tour" className="examples-action-title">Take the tour</span>
-                <span id="way-tour-hint" className="examples-action-hint">Eleven short steps around the workspace</span>
-              </button>
-              <button type="button" className="examples-action" aria-labelledby="way-first" aria-describedby="way-first-hint" onClick={startGuide}>
-                <span id="way-first" className="examples-action-title">Do a first project</span>
-                <span id="way-first-hint" className="examples-action-hint">Five steps with your own data, from a file to a report</span>
-              </button>
-            </div>
+        {/* Starting and opening, in one row, in the order of what people
+            make most. Each button says in its tooltip what it makes. */}
+        <div className="start-row">
+          <StartButton label="New script" Icon={FileIcon} hint="A plain R file" keys="⌘N" primary onClick={newFile} />
+          <StartButton label="New report" Icon={ReportIcon} hint="Quarto or R Markdown" keys="⌥⌘N" onClick={() => openDialog("newDocument")} />
+          <StartButton label="New Shiny app" Icon={AppWindowIcon} hint="An interactive web app" onClick={() => openNewProject("shiny")} />
+          <StartButton label="New project" Icon={PlusIcon} hint="A folder with its own R" keys="⇧⌘N" onClick={() => openNewProject("analysis")} />
+          <StartButton label="Open script" Icon={FileIcon} hint="An .R, .Rmd, or .qmd file" keys="⌘O" onClick={chooseAndOpen} />
+          <StartButton label="Open project" Icon={FolderIcon} hint="A folder with an .Rproj file" keys="⇧⌘O" onClick={chooseAndOpenProject} />
+        </div>
+        {!hideNewHere && (
+          <div className="new-here" role="group" aria-label="New here?">
+            <span className="muted">New here?</span>
+            <button type="button" className="link-button" aria-description="Eight scripts and documents and four Shiny apps to try things on" onClick={openExamples}>
+              Open the examples
+            </button>
+            <button type="button" className="link-button" aria-description="Eleven short steps around the workspace" onClick={startTour}>
+              Take the tour
+            </button>
+            <button type="button" className="link-button" aria-description="Five steps with your own data, from a file to a report" onClick={startGuide}>
+              Do a first project
+            </button>
+            <button type="button" className="icon-button push-end" aria-label="Put these away" title="Put these away. They stay in the Help menu." onClick={() => updateSettings({ hideNewHere: true })}>
+              <CloseIcon size={12} />
+            </button>
           </div>
-          {projects.length > 0 && (
-            <div className="recent-block">
-              <h2>Projects</h2>
-              <ul>
-                {projects.map((recent) => (
-                  <li key={recent.path} className="recent-row">
-                    <button type="button" className="recent" onClick={() => openRecentProject(recent.path)}>
-                      <span className="recent-mark" aria-hidden="true">
-                        {baseName(recent.path).slice(0, 1).toUpperCase()}
-                      </span>
-                      <span className="recent-text">
-                        <strong>{baseName(recent.path).replace(/\.Rproj$/, "")}</strong>
-                        <span className="muted recent-path" title={folderOf(recent.path)}>{shortPath(folderOf(recent.path))}</span>
-                      </span>
-                      <span className="muted recent-when">{when(recent.openedAt)}</span>
-                    </button>
-                    <button type="button" className="icon-button recent-forget" aria-label={`Remove ${baseName(recent.path)} from this list`} title="Remove from this list" onClick={() => forgetProject(recent.path)}>
-                      <CloseIcon size={11} />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <div className="recent-block">
-            <h2 id="recent-heading">Scripts</h2>
-            {recents.length === 0 && <p className="muted">Scripts you open are listed here, so you can pick up where you left off.</p>}
-            {group(recents).map((item) => (
-              <div key={item.label} className="recent-group">
-                <h3>{item.label}</h3>
-                <ul>
-                  {item.items.map((recent) => (
-                    <li key={recent.path} className="recent-row">
-                      <button type="button" className="recent" onClick={() => openRecent(recent.path)}>
-                        <FileIcon size={16} />
-                        <span className="recent-text">
-                          <strong>{baseName(recent.path)}</strong>
-                          <span className="muted recent-path" title={folderOf(recent.path)}>{shortPath(folderOf(recent.path))}</span>
-                        </span>
-                        <span className="muted recent-when">{when(recent.openedAt)}</span>
-                      </button>
-                      <button type="button" className="icon-button recent-forget" aria-label={`Remove ${baseName(recent.path)} from this list`} title="Remove from this list" onClick={() => forgetRecent(recent.path)}>
-                        <CloseIcon size={11} />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          <p className="drop-hint muted">You can also drop scripts onto this window, or open them from {FILE_MANAGER}.</p>
-        </section>
+        )}
+        <Recent />
       </main>
       <footer className="opening-footer">
-        <span>Version {version}</span>
+        <RLine />
+        <span className="push-end">Version {version}</span>
         <span>PolyForm Noncommercial 1.0.0</span>
       </footer>
     </div>
+  );
+}
+
+type Show = "all" | "projects" | "files";
+
+/** Projects and scripts opened before, in one list, newest first. Each
+ * names its folder, so two files with one name are told apart; the full
+ * path is in its tooltip. */
+function Recent() {
+  const files = useStore((state) => state.settings.recentFiles);
+  const projects = useStore((state) => state.settings.recentProjects);
+  const [show, setShow] = useState<Show>("all");
+  const [more, setMore] = useState(false);
+  const rows = [...projects.map((item) => ({ ...item, project: true })), ...files.map((item) => ({ ...item, project: false }))]
+    .filter((item) => show === "all" || item.project === (show === "projects"))
+    .sort((a, b) => b.openedAt - a.openedAt);
+  const LIMIT = 8;
+  const shown = more ? rows : rows.slice(0, LIMIT);
+  const choices: { id: Show; label: string }[] = [
+    { id: "all", label: "All" },
+    { id: "projects", label: "Projects" },
+    { id: "files", label: "Scripts" },
+  ];
+  return (
+    <section className="recent-list" aria-labelledby="recent-heading">
+      <div className="recent-head">
+        <h2 id="recent-heading">Recent</h2>
+        {projects.length > 0 && files.length > 0 && (
+          <div className="recent-filter" role="radiogroup" aria-label="Show">
+            {choices.map((choice) => (
+              <button key={choice.id} type="button" role="radio" aria-checked={show === choice.id} className={show === choice.id ? "is-on" : ""} onClick={() => (setShow(choice.id), setMore(false))}>
+                {choice.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      {rows.length === 0 && <p className="muted">Projects and scripts you open are listed here, so you can pick up where you left off.</p>}
+      <ul>
+        {shown.map((recent) => {
+          const name = recent.project ? baseName(recent.path).replace(/\.Rproj$/, "") : baseName(recent.path);
+          const folder = recent.project ? folderOf(folderOf(recent.path)) : folderOf(recent.path);
+          return (
+            <li key={`${recent.project}:${recent.path}`} className="recent-row">
+              <button type="button" className="recent" title={shortPath(recent.project ? folderOf(recent.path) : recent.path)} onClick={() => (recent.project ? openRecentProject(recent.path) : openRecent(recent.path))}>
+                {recent.project ? (
+                  <span className="recent-mark" aria-hidden="true">
+                    {name.slice(0, 1).toUpperCase()}
+                  </span>
+                ) : (
+                  <span className="recent-file" aria-hidden="true">
+                    <FileIcon size={15} />
+                  </span>
+                )}
+                <span className="recent-text">
+                  <strong>{name}</strong>
+                  <span className="muted recent-path">{recent.project ? "Project in " : ""}{baseName(folder) || shortPath(folder)}</span>
+                </span>
+                <span className="muted recent-when">{when(recent.openedAt)}</span>
+              </button>
+              <button type="button" className="icon-button recent-forget" aria-label={`Remove ${name} from this list`} title="Remove from this list" onClick={() => (recent.project ? forgetProject(recent.path) : forgetRecent(recent.path))}>
+                <CloseIcon size={11} />
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      {rows.length > LIMIT && (
+        <button type="button" className="link-button" onClick={() => setMore(!more)}>
+          {more ? "Show fewer" : `Show all ${rows.length}`}
+        </button>
+      )}
+    </section>
   );
 }
 

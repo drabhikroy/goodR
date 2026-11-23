@@ -110,7 +110,7 @@ const STEPS: Step[] = [
   },
   {
     title: "Earlier results",
-    body: () => "Under the result is a row of small previews, one for each thing you have run. Choose one to see it again, and the script moves to the line that made it. Pin one to keep it in view while you compare.",
+    body: () => "The arrows above the result step back through everything you have run, and All results lays it all out as small previews. Point at one to see its line light up in the script, and choose one to see it again. Pin, in the result's menu, keeps one in view while you compare.",
     target: "timeline",
     art: (
       <>
@@ -144,7 +144,7 @@ const STEPS: Step[] = [
   },
   {
     title: "Your objects",
-    body: () => "Each object you make gets a small card along the top, with a few words about what it is. Choose a data frame to look through it. Above them, named views switch between the canvas, R help, Packages, History, and the assistant.",
+    body: () => "Objects, in the tools down the right edge, lists each object you make with a few words about what it is. Choose a data frame to look through it. The same tools switch to R help, the assistant, Packages, and History, and each says its name if you rest the pointer on it.",
     target: "objects",
     art: (
       <>
@@ -160,7 +160,7 @@ const STEPS: Step[] = [
   },
   {
     title: "Searching",
-    body: () => `The search in the title bar, or ${keyLabel("⌘K")}, finds any command and any R function. Help, in the menu bar, explains each part of the app and can point it out for you, as this tour does.`,
+    body: () => `The magnifying glass beside Run, or ${keyLabel("⌘K")}, finds any command and any R function. Help, in the menu bar, explains each part of the app and can point it out for you, as this tour does.`,
     target: "search",
     art: (
       <>
@@ -176,7 +176,7 @@ const STEPS: Step[] = [
   },
   {
     title: "Projects and R",
-    body: () => "Each project has its own copy of R, and so does a script that is not in a project, so work in one never affects another. The name at the top left says which is on show, and its menu switches between everything open.",
+    body: () => "Each project has its own copy of R, and so does a script that is not in a project, so work in one never affects another. The name at the top left says which is on show. Its menu lists the project's files, switches between everything open, and goes back to the start screen.",
     target: "session",
     art: (
       <>

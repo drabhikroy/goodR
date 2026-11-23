@@ -16,7 +16,7 @@ import { bracketMatching, syntaxHighlighting } from "@codemirror/language";
 import { Compartment, EditorSelection, EditorState } from "@codemirror/state";
 import { EditorView, keymap, placeholder } from "@codemirror/view";
 import { useEffect, useRef, useState } from "react";
-import { historyToConsole, historyToScript, runConsole, shortPath, updateSettings } from "../lib/app";
+import { historyToConsole, historyToScript, runConsole, updateSettings } from "../lib/app";
 import { keyLabel } from "../lib/commands";
 import { describePrompt } from "../lib/prompts";
 import { rCompletion } from "../lib/completion";
@@ -25,15 +25,14 @@ import { getState, useStore } from "../lib/store";
 import { SearchIcon } from "./Icons";
 import { Splitter } from "./Splitter";
 
-/** The shortest the prompt can be, about three lines, and the tallest. */
-const PROMPT_MIN = 88;
+/** The shortest the prompt can be, one line, and the tallest. */
+const PROMPT_MIN = 44;
 const PROMPT_MAX = 480;
 
-/** The prompt, with the folder R is working in written under it. The edge
+/** The prompt under the script. The edge
  * above it drags to make it taller or shorter. */
 export function Composer() {
   const pending = useStore((state) => state.pendingInput);
-  const workingDir = useStore((state) => state.r.workingDir);
   const saved = useStore((state) => state.settings.consoleInputHeight);
   const height = Math.min(PROMPT_MAX, Math.max(PROMPT_MIN, saved));
   // Hidden rather than removed, so what was being typed is still there
@@ -46,7 +45,6 @@ export function Composer() {
       <div className="composer-box" style={{ height }}>
         <ConsoleInput prompt={pending?.prompt} password={pending?.password ?? false} />
       </div>
-      {workingDir && <p className="composer-folder muted truncate">R is working in {shortPath(workingDir)}</p>}
     </div>
   );
 }

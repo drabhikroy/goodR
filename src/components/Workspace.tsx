@@ -3,7 +3,7 @@
 // (projects, tabs, search); the document bar holds what acts on the file
 // below it. Everything else is in the menus and the command palette.
 
-import { activateTab, baseName, chooseAndOpenProject, chunkWord, openRecentProject, closeTab, folderOf, newFile, goToProblem, openDialog, runAs, runDefault, runFile, runFromCursor, runScopeFor, sessionButtonLabel, sessionKind, sessionLabel, setOutputLayout, shortPath, showSessionTab, showStartScreen, stop, toggleFocus, toggleLive, undoLastRun, togglePalette, togglePane, updateSettings } from "../lib/app";
+import { activateTab, baseName, chooseAndOpenProject, closeProject, openImport, openProjectScript, chunkWord, openRecentProject, closeTab, folderOf, newFile, goToProblem, openDialog, runAs, runDefault, runFile, runFromCursor, runScopeFor, sessionButtonLabel, sessionKind, sessionLabel, setOutputLayout, shortPath, showSessionTab, showStartScreen, stop, toggleFocus, toggleLive, undoLastRun, togglePalette, togglePane, updateSettings } from "../lib/app";
 import { keyLabel } from "../lib/commands";
 import * as editor from "../lib/editor";
 import { isReport, renderReport, stopRender } from "../lib/report";
@@ -11,12 +11,12 @@ import { isShinyApp, openShare, runApp, stopApp } from "../lib/shiny";
 import { useStore } from "../lib/store";
 import { useEffect } from "react";
 import type { OutputLayout, ResultStyle, RunScope } from "../lib/types";
-import { Canvas, elapsedWords, PlotViewer, useElapsed } from "./Canvas";
+import { Canvas, elapsedWords, PlotViewer, ToolStrip, useElapsed } from "./Canvas";
 import { Composer } from "./Composer";
 import { DataViewer } from "./DataViewer";
 import { EditorPane, SectionBar } from "./EditorPane";
-import { AppWindowIcon, HistoryIcon, CheckIcon, ChevronIcon, CloseIcon, FileIcon, FolderIcon, HomeIcon, PanelIcon, PencilIcon, PlayIcon, SearchIcon, PlusIcon, ReportIcon, StopIcon, TableIcon, TriangleIcon, UndoIcon } from "./Icons";
-import { Sidebar } from "./Sidebar";
+import { AppWindowIcon, HistoryIcon, CheckIcon, ChevronIcon, CloseIcon, FileIcon, FolderIcon, HomeIcon, PencilIcon, PlayIcon, SearchIcon, PlusIcon, ReportIcon, StopIcon, TableIcon, TriangleIcon, UndoIcon } from "./Icons";
+import { ScriptIcon, Sidebar } from "./Sidebar";
 import { Popover, usePopover } from "./Popover";
 import { openFileHistory } from "../lib/fileHistory";
 
@@ -31,11 +31,12 @@ export function Workspace() {
     <div className={`workspace ${focus ? "is-focus" : ""}`}>
       {sidebar && <Sidebar />}
       <div className="workspace-main">
-        <TitleBar besideSidebar={sidebar} />
         <div className="workspace-body">
           <div className="center">
+            {/* The title bar sits over the script alone, so its menus open
+                over code and never over the result beside it. */}
+            <TitleBar besideSidebar={sidebar} />
             <div className="sheet">
-              {active && !viewingData && <DocumentBar />}
               {/* The editor stays mounted while a data tab is shown, so each
                   script keeps its scroll position and undo history. */}
               <div className={`center-swap ${viewingData ? "is-data" : ""}`}>
@@ -46,6 +47,7 @@ export function Workspace() {
             <Composer />
           </div>
           <Canvas />
+          <ToolStrip />
         </div>
       </div>
       <PlotViewer />
@@ -53,35 +55,16 @@ export function Workspace() {
   );
 }
 
-/**
- * The bar across the top of the document: where the file is and which
- * section the cursor is in, on the left, and what acts on this file on
- * the right, ending with Run. Render and Run app appear only for files
- * they apply to, so the bar never offers what cannot be done.
- */
-function DocumentBar() {
+/** What acts on the file in front, at the end of the title bar: Render
+ * and Run app only for files they apply to, then Run. A data tab has none. */
+function FileActions() {
   const active = useStore((state) => state.active);
-  const untitled = Boolean(active?.startsWith("untitled:"));
+  if (!active || active.startsWith("data:")) return null;
   return (
-    <div className="doc-bar">
-      <div className="doc-where">
-        <span className="doc-folder truncate" title={active && !untitled ? shortPath(active) : "Not saved yet"}>
-          {active && !untitled ? shortPath(folderOf(active)) : "Not saved yet"}
-        </span>
-        <SectionBar />
-        <ProblemsButton />
-        {active && !untitled && (
-          <button type="button" className="icon-button doc-history" aria-label="Earlier versions of this file" title="Earlier versions of this file" onClick={openFileHistory}>
-            <HistoryIcon size={15} />
-          </button>
-        )}
-      </div>
-      <div className="doc-actions">
-        <ResultsMenu />
-        <RenderButton />
-        <RunAppButton />
-        <RunButton />
-      </div>
+    <div className="file-actions">
+      <RenderButton />
+      <RunAppButton />
+      <RunButton />
     </div>
   );
 }
@@ -109,17 +92,16 @@ function TitleBar({ besideSidebar }: { besideSidebar: boolean }) {
     // space drags the window, as in Safari and Xcode. Beside the sidebar,
     // the window buttons sit in the sidebar instead.
     <header className={`title-bar ${platform === "macos" && !besideSidebar ? "has-traffic-lights" : ""}`} data-tauri-drag-region>
-      <button type="button" className="icon-button home-button" aria-label="Show the start screen" title={`Show the start screen, ${keyLabel("⇧⌘H")}`} onClick={showStartScreen}>
-        <HomeIcon size={16} />
-      </button>
       <ProjectSwitcher />
       <Tabs />
+      <SectionBar />
       <div className="title-bar-spacer" data-tauri-drag-region />
       <div className="title-bar-end">
         <LeaveFocus />
+        <ProblemsButton />
         <SearchField />
         <RAnnouncer />
-        <PanelToggle />
+        <FileActions />
       </div>
     </header>
   );
@@ -130,10 +112,8 @@ function TitleBar({ besideSidebar }: { besideSidebar: boolean }) {
  * command palette, which also looks names up in R's help. */
 function SearchField() {
   return (
-    <button type="button" className="search-field" onClick={() => togglePalette()} aria-label="Search help and commands" aria-keyshortcuts="Meta+K">
-      <SearchIcon size={14} />
-      <span>Search</span>
-      <kbd>{keyLabel("⌘K")}</kbd>
+    <button type="button" className="icon-button search-field" onClick={() => togglePalette()} aria-label="Search help and commands" title={`Search help and commands, ${keyLabel("⌘K")}`} aria-keyshortcuts="Meta+K">
+      <SearchIcon size={16} />
     </button>
   );
 }
@@ -146,16 +126,6 @@ function LeaveFocus() {
   return (
     <button type="button" className="button small leave-focus" onClick={toggleFocus} title={`Leave focus mode, ${keyLabel("⌥⌘F")}`}>
       Leave focus
-    </button>
-  );
-}
-
-/** Shows or hides the canvas, giving the script the whole width. */
-function PanelToggle() {
-  const open = useStore((state) => state.ui.inspector);
-  return (
-    <button type="button" className={`icon-button panel-toggle ${open ? "is-on" : ""}`} aria-label="Show the canvas" aria-pressed={open} title={`${open ? "Hide" : "Show"} the canvas, ${keyLabel("⌥⌘0")}`} onClick={() => togglePane("inspector")}>
-      <PanelIcon size={17} />
     </button>
   );
 }
@@ -225,6 +195,10 @@ function ProjectSwitcher() {
   const sessions = useStore((state) => state.sessions);
   const tabs = useStore((state) => state.tabs);
   const recent = useStore((state) => state.settings.recentProjects);
+  const project = useStore((state) => (sessionKind(state.activeSession) === "project" ? state.project : null));
+  const r = useStore((state) => state.r);
+  const file = useStore((state) => (state.active && !state.active.startsWith("untitled:") && !state.active.startsWith("data:") ? state.active : null));
+  const sidebarOn = useStore((state) => state.ui.sidebar);
   const { open, setOpen, box } = usePopover();
   const openKeys = Object.keys(sessions).filter((key) => key === active || tabs.some((tab) => tab.session === key));
   const openRoots = openKeys.map((key) => sessions[key].project?.root).filter(Boolean);
@@ -261,6 +235,37 @@ function ProjectSwitcher() {
       </button>
       {open && (
         <Popover label="Projects" className="project-popover">
+          {/* Where R is and what it is doing, said once, here. */}
+          <p className="popover-note project-where">
+            {r.version ? `R ${r.version} ${R_STATE[r.status]}` : R_WORDS[r.status]}
+            {r.workingDir && <span className="truncate">, in {shortPath(r.workingDir)}</span>}
+          </p>
+          {project && (
+            <>
+              <p className="popover-heading">Files in {project.name}</p>
+              <div className="project-files">
+                {project.scripts.map((path) => (
+                  <button key={path} type="button" role="menuitem" aria-current={file === `${project.root}/${path}` ? "page" : undefined} onClick={() => pick(() => openProjectScript(path))}>
+                    <ScriptIcon path={path} />
+                    <span className="truncate">{path}</span>
+                  </button>
+                ))}
+                {project.data.map((path) => (
+                  <button key={path} type="button" role="menuitem" aria-label={`Import ${path.split("/").pop()}`} title="Preview it and import it into R. You see the code that reads it before it runs." onClick={() => pick(() => openImport(`${project.root}/${path}`))}>
+                    <TableIcon size={16} />
+                    <span className="truncate">{path}</span>
+                  </button>
+                ))}
+              </div>
+              <button type="button" role="menuitemcheckbox" aria-checked={sidebarOn} onClick={() => pick(() => togglePane("sidebar"))}>
+                <span className="menu-check" aria-hidden="true">
+                  {sidebarOn && <CheckIcon size={13} />}
+                </span>
+                Keep the files open on the left
+              </button>
+              <hr />
+            </>
+          )}
           <p className="popover-heading">Open now</p>
           {openKeys.map((key) => (
             <button key={key} type="button" role="menuitemradio" aria-checked={key === active} autoFocus={key === active} onClick={() => pick(() => showSessionTab(key))}>
@@ -297,6 +302,28 @@ function ProjectSwitcher() {
             <span className="menu-check" aria-hidden="true" />
             New project
           </button>
+          <hr />
+          {file && (
+            <button type="button" role="menuitem" onClick={() => pick(openFileHistory)}>
+              <span className="menu-check" aria-hidden="true">
+                <HistoryIcon size={13} />
+              </span>
+              Earlier versions of this file
+            </button>
+          )}
+          <button type="button" role="menuitem" onClick={() => pick(showStartScreen)}>
+            <span className="menu-check" aria-hidden="true">
+              <HomeIcon size={13} />
+            </span>
+            Start screen
+            <kbd>{keyLabel("⇧⌘H")}</kbd>
+          </button>
+          {project && (
+            <button type="button" role="menuitem" onClick={() => pick(() => closeProject())}>
+              <span className="menu-check" aria-hidden="true" />
+              Close project
+            </button>
+          )}
         </Popover>
       )}
     </div>
@@ -317,6 +344,17 @@ const R_WORDS: Record<string, string> = {
   missing: "R is not installed",
 };
 
+// The same, after "R 4.5.1".
+const R_STATE: Record<string, string> = {
+  none: "is not started",
+  starting: "is starting",
+  ready: "is ready",
+  busy: "is running",
+  stopped: "has stopped",
+  failed: "could not start",
+  missing: "is not installed",
+};
+
 function RAnnouncer() {
   const status = useStore((state) => state.r.status);
   return (
@@ -335,77 +373,6 @@ const STYLES: { value: ResultStyle; label: string; hint: string }[] = [
   { value: "cards", label: "Cards", hint: "Code tinted, each result in its own well" },
   { value: "plain", label: "Plain text", hint: "Results printed under the code, nothing around them" },
 ];
-
-/**
- * Where results appear, and whether they update as you type, in one menu.
- * These change rarely, so they sit behind one labeled button instead of
- * four controls that are always on show.
- */
-function ResultsMenu() {
-  const layout = useStore((state) => state.settings.outputLayout);
-  const style = useStore((state) => state.settings.resultStyle);
-  const live = useStore((state) => state.live);
-  const { open, setOpen, box } = usePopover();
-  const pick = (action: () => void) => {
-    setOpen(false);
-    action();
-  };
-  return (
-    <div className="popover-anchor" ref={box} data-guide="results">
-      <button type="button" className="button quiet" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
-        Results
-        {live && <span className="badge">Live</span>}
-        <ChevronIcon size={12} open />
-      </button>
-      {open && (
-        <Popover label="Results">
-          <p className="popover-label">Show results</p>
-          {LAYOUTS.map((item, index) => (
-            <button
-              key={item.value}
-              type="button"
-              role="menuitemradio"
-              aria-checked={layout === item.value}
-              autoFocus={index === 0}
-              onClick={() => pick(() => setOutputLayout(item.value))}
-            >
-              <span className="menu-check" aria-hidden="true">{layout === item.value ? "✓" : ""}</span>
-              <span>{item.label}</span>
-              <kbd>{keyLabel(item.keys)}</kbd>
-            </button>
-          ))}
-          {/* The look applies to results in either place. */}
-          <hr />
-          <p className="popover-label">Look</p>
-          {STYLES.map((item) => (
-            <button
-              key={item.value}
-              type="button"
-              role="menuitemradio"
-              aria-checked={style === item.value}
-              onClick={() => pick(() => updateSettings({ resultStyle: item.value }))}
-            >
-              <span className="menu-check" aria-hidden="true">{style === item.value ? "✓" : ""}</span>
-              <span>
-                {item.label}
-                <span className="menu-hint">{item.hint}</span>
-              </span>
-            </button>
-          ))}
-          <hr />
-          <button type="button" role="menuitemcheckbox" aria-checked={live} onClick={() => pick(toggleLive)}>
-            <span className="menu-check" aria-hidden="true">{live ? "✓" : ""}</span>
-            <span>
-              Update as you type
-              <span className="menu-hint">Reruns the line you are editing when you pause</span>
-            </span>
-            <kbd>{keyLabel("⌥⌘L")}</kbd>
-          </button>
-        </Popover>
-      )}
-    </div>
-  );
-}
 
 const RENDER_AS: { target: "html" | "word" | "pdf"; label: string; hint: string }[] = [
   { target: "html", label: "Render as HTML", hint: "A web page, previewed beside the code" },
@@ -534,6 +501,9 @@ function RunButton() {
   const active = useStore((state) => state.active);
   const scope = useStore((state) => runScopeFor(state.active));
   const undoable = useStore((state) => Boolean(state.undo[state.activeSession]) && state.r.status !== "busy");
+  const layout = useStore((state) => state.settings.outputLayout);
+  const style = useStore((state) => state.settings.resultStyle);
+  const live = useStore((state) => state.live);
   // Read so the button's look follows a script that becomes a Shiny app.
   useStore((state) => state.outline);
   const { open, setOpen, box } = usePopover();
@@ -561,6 +531,8 @@ function RunButton() {
     <div className="popover-anchor split-button run-split" ref={box}>
       <button type="button" className={`button ${tone} run-button`} onClick={runDefault} title={`${scopeName(scope, file)}, ${keyLabel(keys)}`}>
         <PlayIcon size={12} /> {scopeName(scope, file)}
+        {/* Live output is a mode, so it shows on the button it changes. */}
+        {live && <span className="badge on-run">Live</span>}
       </button>
       <button type="button" className={`button ${tone} split-arrow`} aria-label="More ways to run" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
         <ChevronIcon size={12} open />
@@ -602,6 +574,50 @@ function RunButton() {
             <UndoIcon size={12} />
             <span>Undo the last run</span>
             <kbd>{keyLabel("⌥⌘Z")}</kbd>
+          </button>
+          {/* Where results go, how they look, and whether they follow the
+              typing. These change rarely, so they live here rather than in
+              a menu of their own. */}
+          <hr />
+          <p className="popover-heading" id="results-heading">
+            Show results
+          </p>
+          <div role="group" aria-labelledby="results-heading">
+            {LAYOUTS.map((item) => (
+              <button key={item.value} type="button" role="menuitemradio" aria-checked={layout === item.value} onClick={() => (setOpen(false), setOutputLayout(item.value))}>
+                <span className="menu-check" aria-hidden="true">
+                  {layout === item.value && <CheckIcon size={12} />}
+                </span>
+                <span>{item.label}</span>
+                <kbd>{keyLabel(item.keys)}</kbd>
+              </button>
+            ))}
+          </div>
+          <p className="popover-heading" id="look-heading">
+            How results look
+          </p>
+          <div role="group" aria-labelledby="look-heading">
+            {STYLES.map((item) => (
+              <button key={item.value} type="button" role="menuitemradio" aria-checked={style === item.value} onClick={() => (setOpen(false), updateSettings({ resultStyle: item.value }))}>
+                <span className="menu-check" aria-hidden="true">
+                  {style === item.value && <CheckIcon size={12} />}
+                </span>
+                <span>
+                  {item.label}
+                  <span className="menu-hint">{item.hint}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+          <button type="button" role="menuitemcheckbox" aria-checked={live} onClick={() => (setOpen(false), toggleLive())}>
+            <span className="menu-check" aria-hidden="true">
+              {live && <CheckIcon size={12} />}
+            </span>
+            <span>
+              Update as you type
+              <span className="menu-hint">Reruns the line you are editing when you pause</span>
+            </span>
+            <kbd>{keyLabel("⌥⌘L")}</kbd>
           </button>
         </Popover>
       )}

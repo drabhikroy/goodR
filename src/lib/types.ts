@@ -55,6 +55,12 @@ export type Settings = {
   showPrompt: boolean;
   showTimeline: boolean;
   inspectorWidth: number;
+  /** Whether the tools down the right edge show their names under their
+   * icons. Without them, a name shows after the pointer rests a while. */
+  toolNames: boolean;
+  /** Which layout this settings file has been moved to. Version 2 is the
+   * calmer layout: no sidebar or strip of earlier results unless chosen. */
+  layoutVersion: number;
   paneSplit: number;
   appearance: Appearance;
   palette: PaletteName;
@@ -67,6 +73,8 @@ export type Settings = {
   layoutChosen: boolean;
   /** Set once the tour has been seen, so it opens by itself only once. */
   tourSeen: boolean;
+  /** Set when the ways in for newcomers are put away on the opening screen. */
+  hideNewHere: boolean;
   missingPackages: "ask" | "auto";
   /** The typeface, size in pixels, and spacing of code everywhere it shows. */
   codeFont: CodeFont;
