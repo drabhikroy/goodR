@@ -8,11 +8,11 @@
 // losing their place. Open hands the file to the system's own app for a
 // full size view, and Word files always open there.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { baseName, openFile, updateSettings } from "../lib/app";
 import { headingId } from "../lib/chunks";
 import * as editor from "../lib/editor";
-import { explainRender, openOutput, previewUrl, renderReport, runRenderAction, stopRender } from "../lib/report";
+import { checkReportOnDisk, explainRender, openOutput, previewUrl, renderReport, runRenderAction, stopRender } from "../lib/report";
 import { useStore, type ReportState } from "../lib/store";
 import { FolderIcon, ReportIcon, StopIcon, TriangleIcon } from "./Icons";
 import { LatexPanel } from "./LatexPanel";
@@ -29,8 +29,14 @@ export function ReportPane() {
   const renderOnSave = useStore((state) => state.settings.renderOnSave);
   const platform = useStore((state) => state.info?.platform);
   const [showLog, setShowLog] = useState(false);
+  // A file changed or replaced while it was closed is caught when the
+  // report comes into view.
+  useEffect(() => {
+    checkReportOnDisk();
+  }, [report?.id]);
   if (!report) return null;
   const running = report.status === "running";
+  const stale = report.stale && !running;
   return (
     <section className="report-pane" aria-label="Report">
       <div className="pane-toolbar">
@@ -57,8 +63,9 @@ export function ReportPane() {
         </label>
       )}
       {running && <Progress report={report} />}
-      {report.status === "done" && <Finished report={report} platform={platform} />}
-      {(report.status === "failed" || report.status === "stopped") && report.failure && <Problem report={report} />}
+      {stale && <Stale report={report} />}
+      {!stale && report.status === "done" && <Finished report={report} platform={platform} />}
+      {!stale && (report.status === "failed" || report.status === "stopped") && report.failure && <Problem report={report} />}
       {report.log.length > 0 && (
         <div className="report-log">
           <button type="button" className="button small quiet" aria-expanded={showLog} onClick={() => setShowLog(!showLog)}>
@@ -72,6 +79,19 @@ export function ReportPane() {
         </div>
       )}
     </section>
+  );
+}
+
+/** In place of a render the file has moved on from, which would show
+ * something the file no longer says. */
+function Stale({ report }: { report: ReportState }) {
+  return (
+    <div className="report-stale" role="status">
+      <p>{baseName(report.file)} has changed since it was rendered, so the earlier render is no longer shown.</p>
+      <button type="button" className="button primary" onClick={() => renderReport(report.target, report.file)}>
+        Render
+      </button>
+    </div>
   );
 }
 

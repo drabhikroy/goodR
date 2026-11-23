@@ -20,7 +20,7 @@ import { scriptSteps } from "./lineage";
 import { compareResults } from "./resultDiff";
 import { checkExercise, initTeaching, makeExercise, saveExercises } from "./teaching";
 import { explainAtCursor, initEditing, openRename, refreshAllHints, tidyCode, updateHints } from "./editing";
-import { initReports, renderReport, stopRender } from "./report";
+import { checkReport, initReports, renderReport, stopRender } from "./report";
 import { checkShinyFile, initApps, openAppInBrowser, openShare, runApp, stopApp, stopAppClosedWith } from "./shiny";
 import { backend, type Backend } from "./backend";
 import * as editor from "./editor";
@@ -770,6 +770,7 @@ export async function openFile(path: string, activate = true) {
     // nothing, so the tab is added once.
     if (getState().tabs.some((tab) => tab.path === path)) return activate ? activateTab(path) : undefined;
     editor.openDocument(path, text);
+    checkReport(path, text);
     setState((state) => ({ tabs: [...state.tabs, { path, name: baseName(path), dirty: false, untitled: false, session: context.key }] }));
     restoreKeptFor(path);
   }
@@ -1325,6 +1326,7 @@ export async function saveFile(path: string | null = getState().active, saveAs =
  * PDF renders are slow and open in other apps, so only HTML follows.
  */
 function onSaved(path: string) {
+  checkReport(path, editor.getText(path));
   const { report, settings } = getState();
   if (!settings.renderOnSave || !report || report.file !== path || report.status === "running") return;
   if (report.target === "word" || report.target === "pdf" || report.outputs.some((output) => /\.(docx|pdf)$/i.test(output))) return;

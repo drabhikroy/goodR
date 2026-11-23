@@ -933,6 +933,11 @@ export function getText(path: string): string {
   return stateOf(path)?.doc.toString() ?? "";
 }
 
+/** A document's text as last saved, or null when it is not open. */
+export function savedText(path: string): string | null {
+  return saved.get(path)?.toString() ?? null;
+}
+
 /** Whether a document differs from what was last saved. */
 export function isDirty(path: string): boolean {
   const state = stateOf(path);

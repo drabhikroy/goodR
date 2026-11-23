@@ -5114,6 +5114,22 @@ legend {
   font-weight: 600;
 }
 
+.report-stale {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.report-stale p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
 .report-log {
   flex: none;
 }

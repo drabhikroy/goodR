@@ -177,6 +177,10 @@ export type ReportState = {
   failure: RenderFailure | null;
   started: number;
   finished: number;
+  /** The file's text as it was rendered, or null when it could not be read. */
+  source: string | null;
+  /** Whether the file has changed since, so this render no longer shows it. */
+  stale: boolean;
 };
 
 /** The latest Shiny app run: which file, where it answers, what it printed,

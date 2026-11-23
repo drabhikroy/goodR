@@ -111,6 +111,35 @@ test("a rendered report renders again after each save, opening at the section be
   await expect(page.locator('iframe[title="Preview of report.html"]')).toHaveAttribute("src", /#body-mass-by-species$/);
 });
 
+test("a render stays while the file is the same, and is taken down once the file changes", async ({ page }) => {
+  await openReport(page);
+  await page.getByRole("button", { name: "Render", exact: true }).click();
+  const pane = page.getByRole("region", { name: "Report" });
+  await expect(pane).toContainText("report.html, rendered in");
+  // Not rendering after each save, so a saved change leaves the old render behind.
+  await pane.getByRole("checkbox", { name: "Render again each time the file is saved" }).uncheck();
+  // Saving the same text keeps the render.
+  await page.locator(".editor-host .cm-content").click();
+  await page.keyboard.press("Control+s");
+  await expect(pane).toContainText("report.html, rendered in");
+  // A change, once saved, takes it down.
+  await page.keyboard.press("Control+End");
+  await page.keyboard.insertText("\nMore words.\n");
+  await page.keyboard.press("Control+s");
+  await expect(pane.getByRole("status")).toContainText("report.qmd has changed since it was rendered");
+  await expect(page.locator('iframe[title="Preview of report.html"]')).toHaveCount(0);
+  // Back to the text that was rendered, the render is shown again.
+  await page.keyboard.press("Control+z");
+  await page.keyboard.press("Control+s");
+  await expect(pane).toContainText("report.html, rendered in");
+  // And Render in the note renders the changed file.
+  await page.keyboard.press("Control+End");
+  await page.keyboard.insertText("\nMore words.\n");
+  await page.keyboard.press("Control+s");
+  await pane.getByRole("button", { name: "Render", exact: true }).click();
+  await expect(pane).toContainText("report.html, rendered in");
+});
+
 test("a PDF that needs LaTeX offers to install TinyTeX, then renders by itself", async ({ page }) => {
   page.on("dialog", (dialog) => dialog.accept());
   await openReport(page);

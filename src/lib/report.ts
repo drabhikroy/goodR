@@ -86,7 +86,10 @@ export async function renderReport(target: RenderTarget = "asWritten", file: str
   }
   editor.clearProblems(active);
   const id = crypto.randomUUID();
-  setState({ report: { id, file: active, target, status: "running", progress: null, log: [], outputs: [], failure: null, started: Date.now(), finished: 0 } });
+  // The text being rendered, so a later change to the file can be seen
+  // and the render it no longer matches taken down.
+  const source = editor.savedText(active) ?? (await api.readText(active).catch(() => null));
+  setState({ report: { id, file: active, target, status: "running", progress: null, log: [], outputs: [], failure: null, started: Date.now(), finished: 0, source, stale: false } });
   // A render the user asked for brings the report forward. One that
   // follows a save happens in the background, so whatever they are
   // looking at stays in front, and the Report button shows it working.
@@ -113,6 +116,28 @@ export async function renderReport(target: RenderTarget = "asWritten", file: str
   } else {
     announce("Rendering stopped.");
   }
+}
+
+/**
+ * Compares a report's file with the text that was rendered. The same text
+ * keeps the render, so nothing has to render again. Changed text means the
+ * render no longer shows the file, so it is taken down until the file is
+ * rendered again. Called when the file is saved or opened.
+ */
+export function checkReport(path: string, text: string) {
+  const { report } = getState();
+  if (!report || report.file !== path || report.status === "running" || report.source === null) return;
+  const stale = text !== report.source;
+  if (stale !== report.stale) patch(report.id, () => ({ stale }));
+}
+
+/** Checks the report's file on disk when it is not open, since it may
+ * have been changed or replaced elsewhere. */
+export async function checkReportOnDisk() {
+  const { report } = getState();
+  if (!report || report.status === "running" || editor.savedText(report.file) !== null) return;
+  const text = await api.readText(report.file).catch(() => null);
+  if (text !== null) checkReport(report.file, text);
 }
 
 /** Stops the render under way, along with the R it started. */

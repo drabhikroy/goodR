@@ -198,6 +198,12 @@ such as one that prints the page to PDF with Chrome, or to
 `pagedown::chrome_print`, gets the files that script makes. Choosing a format
 from the arrow still renders that format with rmarkdown.
 
+A render stays on show while the file is the same as when it was rendered, so
+reopening a file does not mean rendering it again. Once the file changes, and
+the change is saved or the file is changed elsewhere, the earlier render is
+taken down, with a Render button in its place, so the pane never shows a
+report the file no longer makes.
+
 A PDF is made with the LaTeX already on your computer when there is one, such
 as MacTeX or TinyTeX. Otherwise it is made with Typst, which comes with Quarto
 and needs nothing more. When a document needs LaTeX and you have none, one
