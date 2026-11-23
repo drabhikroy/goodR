@@ -192,6 +192,12 @@ finished HTML or PDF appears on the canvas beside the code, where you can
 read it while you edit. The arrow beside the button renders as HTML, Word, or
 PDF.
 
+An R Markdown file whose header has a `knit:` line renders the way that line
+says, as RStudio's Knit button does. A header that hands rendering to a script,
+such as one that prints the page to PDF with Chrome, or to
+`pagedown::chrome_print`, gets the files that script makes. Choosing a format
+from the arrow still renders that format with rmarkdown.
+
 A PDF is made with the LaTeX already on your computer when there is one, such
 as MacTeX or TinyTeX. Otherwise it is made with Typst, which comes with Quarto
 and needs nothing more. When a document needs LaTeX and you have none, one

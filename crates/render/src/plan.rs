@@ -2,7 +2,8 @@
 //!
 //! Quarto documents render with Quarto. R Markdown documents render with
 //! rmarkdown in a fresh Rscript, so their `output:` settings apply exactly
-//! as the author wrote them. Both use the R chosen in the app.
+//! as the author wrote them, and a `knit:` line in the header is honored
+//! as RStudio honors it. Both use the R chosen in the app.
 //!
 //! PDF is the one format handled differently. Quarto can make a PDF with
 //! Typst, a typesetting program it carries inside itself, so no LaTeX
@@ -65,9 +66,31 @@ pub struct Plan {
 /// as command line arguments rather than inside the code, so no path or
 /// name can change what the code does. Each file made is printed after a
 /// marker, so the app learns its full path without guessing.
+///
+/// A document rendered as written may name its own way of rendering in a
+/// `knit:` line in its header, such as a function that renders and then
+/// prints the result to PDF, or `pagedown::chrome_print`. RStudio's Knit
+/// button calls that function in place of rmarkdown::render, and so does
+/// this. Such a function may write its files anywhere and return nothing,
+/// so the files it made are found by comparing the document's folder
+/// before and after it runs. Running it runs
+/// nothing a render would not: the document's own code runs either way.
 const RMARKDOWN_CALL: &str = r#"args <- commandArgs(TRUE)
 format <- if (nzchar(args[2])) args[2] else NULL
-made <- rmarkdown::render(args[1], output_format = format, encoding = "UTF-8", envir = new.env())
+hook <- if (is.null(format)) rmarkdown::yaml_front_matter(args[1])$knit else NULL
+if (is.character(hook) && length(hook) == 1 && nzchar(trimws(hook))) {
+  input <- normalizePath(args[1])
+  listing <- function() { files <- list.files(dirname(input), full.names = TRUE); files <- files[!dir.exists(files) & files != input]; setNames(as.numeric(file.mtime(files)), files) }
+  before <- listing()
+  knit_with <- eval(parse(text = hook), envir = new.env())
+  returned <- knit_with(input, encoding = "UTF-8")
+  after <- listing()
+  changed <- names(after)[is.na(before[names(after)]) | after != before[names(after)]]
+  returned <- if (is.character(returned)) returned[file.exists(returned)] else character()
+  made <- unique(c(returned, changed[!grepl("\\.(knit|utf8)\\.md$|\\.log$", changed)]))
+} else {
+  made <- rmarkdown::render(args[1], output_format = format, encoding = "UTF-8", envir = new.env())
+}
 for (file in made) cat("\n@@goodr-output@@", normalizePath(file), "\n", sep = "")"#;
 
 /// Decides how to render `source` as `target`, or says why it cannot be

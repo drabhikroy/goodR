@@ -125,6 +125,27 @@ async fn an_r_markdown_document_renders_with_rmarkdown_and_reports_full_paths() 
 }
 
 #[tokio::test]
+async fn a_knit_line_in_the_header_renders_the_document_its_own_way() {
+    let Some(tools) = tools(false) else { return };
+    let dir = tempfile::tempdir().unwrap();
+    // The way RStudio's Knit button allows: a function in the header renders
+    // the document, here by running a script beside it that writes a file of
+    // its own and removes the HTML it made on the way.
+    write(dir.path(), "make.R", "rmarkdown::render('notes.Rmd', quiet = TRUE)\nwriteLines('printed', 'notes-printed.txt')\nunlink('notes.html')\n");
+    let source = write(dir.path(), "notes.Rmd", "---\ntitle: \"Notes\"\nknit: (function(input, ...) { old <- setwd(dirname(normalizePath(input))); on.exit(setwd(old)); source(\"make.R\") })\noutput: html_document\n---\n\nText.\n");
+    let (outcome, _) = render(&source, Target::AsWritten, &tools).await;
+    assert_eq!(outcome.finished, Finished::Done, "{}", outcome.lines.join("\n"));
+    let names: Vec<String> = outcome.outputs.iter().map(|p| p.file_name().unwrap().to_string_lossy().into_owned()).collect();
+    assert_eq!(names, vec!["notes-printed.txt"], "{}", outcome.lines.join("\n"));
+    assert!(!dir.path().join("notes.html").exists());
+
+    // Asking for a format by name still renders with rmarkdown, as before.
+    let (outcome, _) = render(&source, Target::Html, &tools).await;
+    assert_eq!(outcome.finished, Finished::Done, "{}", outcome.lines.join("\n"));
+    assert!(dir.path().join("notes.html").is_file());
+}
+
+#[tokio::test]
 async fn a_missing_package_in_r_markdown_is_reported_from_its_chunk() {
     let Some(tools) = tools(false) else { return };
     let dir = tempfile::tempdir().unwrap();
