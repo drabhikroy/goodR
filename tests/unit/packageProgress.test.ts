@@ -21,4 +21,17 @@ describe("packageProgress", () => {
     expect(progress.failed).toEqual(["sf"]);
     expect(progress.current).toBeNull();
   });
+
+  it("counts a package Update all finds still behind as not updated, though a Mac said nothing as it went", () => {
+    const output = [
+      "trying URL 'https://cloud.r-project.org/bin/macosx/big-sur-arm64/contrib/4.6/mvtnorm_1.5-0.tgz'",
+      "trying URL 'https://cloud.r-project.org/bin/macosx/big-sur-arm64/contrib/4.6/tm_0.7-20.tgz'",
+      "Warning: cannot remove prior installation of package ‘tm’",
+      "",
+      "Still behind after the update: tm 0.7-18, rjags 4-18 ",
+    ].join("\n");
+    const progress = packageProgress(output);
+    expect(progress.failed).toEqual(["tm", "rjags"]);
+    expect(progress.names).toEqual(["mvtnorm", "tm", "rjags"]);
+  });
 });

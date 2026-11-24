@@ -475,9 +475,14 @@ time or install automatically.
 
 The Packages sheet lists what is installed and attaches a package with a
 checkbox. Check for updates opens the Updates page, which lists the packages
-with newer versions on CRAN, and Update all updates them. While packages
-install or update, the result lists each by name with a progress bar and says
-which did not install. R's own log is one press away, or always on show if
+with newer versions on CRAN, and Update all updates them. Only the copy of a
+package that R loads counts, so an old copy hidden behind a newer one is
+never listed. A package whose folder cannot be replaced, often one that came
+with R or was installed with an administrator's password, gets its new
+version in the user's own library, which R reads first. While packages
+install or update, the result lists each by name with a progress bar. Once
+the update ends, the packages are checked again, and any still behind are
+named, so a failed install never passes for a finished one. R's own log is one press away, or always on show if
 you change a setting.
 
 History's second tab, Commands you typed, lists what was typed at the prompt

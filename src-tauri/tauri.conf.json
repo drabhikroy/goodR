@@ -103,7 +103,9 @@
       },
       {
         "ext": [
-          "Rproj"
+          "Rproj",
+          "RProj",
+          "rproj"
         ],
         "name": "R Project",
         "description": "R project",

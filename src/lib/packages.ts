@@ -106,10 +106,28 @@ export function packageProgress(output: string): PackageProgress {
       current = building[1];
       continue;
     }
-    const broken = new RegExp(`installation of package ${Q}([A-Za-z][A-Za-z0-9.]*)${Q} had non-zero exit status`).exec(line);
+    const broken =
+      new RegExp(`installation of package ${Q}([A-Za-z][A-Za-z0-9.]*)${Q} had non-zero exit status`).exec(line) ??
+      new RegExp(`cannot remove prior installation of package ${Q}([A-Za-z][A-Za-z0-9.]*)${Q}`).exec(line) ??
+      new RegExp(`restored ${Q}([A-Za-z][A-Za-z0-9.]*)${Q}`).exec(line);
     if (broken) {
       add(names, broken[1]);
       add(failed, broken[1]);
+      continue;
+    }
+    // Update all looks again once it is done and names any package still
+    // behind, which is the final word on what did not update, since a Mac
+    // says nothing as each ready-built package goes in.
+    const behind = /^Still behind after the update: (.*)$/.exec(line.trim());
+    if (behind) {
+      for (const part of behind[1].split(",")) {
+        const name = part.trim().split(" ")[0];
+        if (!/^[A-Za-z][A-Za-z0-9.]*$/.test(name)) continue;
+        add(names, name);
+        add(failed, name);
+        const at = done.indexOf(name);
+        if (at >= 0) done.splice(at, 1);
+      }
     }
   }
   const settled = (name: string) => done.includes(name) || failed.includes(name);

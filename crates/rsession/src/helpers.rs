@@ -554,33 +554,88 @@ local({
   # page, or why CRAN could not be asked. The CRAN mirror RStudio uses is
   # set only when R has none, as for Update all.
   #
+  # Only the copy of each package that R loads counts, which is the one in
+  # the first library on .libPaths() that has it. A package can sit in two
+  # libraries, such as the user's own and the one that came with R. An old
+  # copy behind a newer one is never loaded, and update.packages() will not
+  # touch it, so counting it would list the package as behind forever.
+  #
   # On a Mac or Windows, Update all installs CRAN's ready-built copies, which
   # trail a new release by a few days. So the updates it can make are read
   # from those, and a version out only as source code so far is listed on
   # its own: counted with the rest, Update all would seem to do nothing.
-  gf$.gf_outdated <- function() {
+  gf$.gf_repos <- function() {
     if (identical(unname(getOption("repos")["CRAN"]), "@CRAN@")) options(repos = c(CRAN = "https://cloud.r-project.org"))
+  }
+  gf$.gf_loaded_copies <- function() {
+    installed <- utils::installed.packages(lib.loc = .libPaths())
+    installed[!duplicated(installed[, "Package"]), , drop = FALSE]
+  }
+  gf$.gf_behind <- function(available) {
+    if (is.null(available) || nrow(available) == 0) return(NULL)
+    tryCatch(utils::old.packages(instPkgs = .gf_loaded_copies(), available = available, checkBuilt = TRUE), error = function(e) NULL)
+  }
+  gf$.gf_available <- function(type) suppressWarnings(tryCatch(utils::available.packages(type = type), error = function(e) NULL))
+
+  gf$.gf_outdated <- function() {
+    .gf_repos()
     built <- .Platform$pkgType != "source"
-    ask <- function(type) suppressWarnings(tryCatch(utils::available.packages(type = type), error = function(e) NULL))
-    source <- ask("source")
-    available <- if (built) ask(.Platform$pkgType) else source
+    source <- .gf_available("source")
+    available <- if (built) .gf_available(.Platform$pkgType) else source
     if (is.null(available) || nrow(available) == 0) {
       cat("{\"reached\":false,\"packages\":[],\"sourceOnly\":[]}", "\n")
       return(invisible(NULL))
     }
-    newer <- function(available) {
-      old <- tryCatch(utils::old.packages(available = available), error = function(e) NULL)
-      # A package installed in two libraries is listed once.
-      if (!is.null(old)) old <- old[!duplicated(old[, "Package"]), , drop = FALSE]
-      old
-    }
     rows <- function(old) if (is.null(old)) character(0) else vapply(seq_len(nrow(old)), function(i) {
       paste0("{\"name\":", .gf_str(old[i, "Package"]), ",\"installed\":", .gf_str(old[i, "Installed"]), ",\"available\":", .gf_str(old[i, "ReposVer"]), "}")
     }, "")
-    old <- newer(available)
-    later <- if (built && !is.null(source) && nrow(source) > 0) newer(source) else NULL
+    old <- .gf_behind(available)
+    later <- if (built && !is.null(source) && nrow(source) > 0) .gf_behind(source) else NULL
     if (!is.null(later) && !is.null(old)) later <- later[!later[, "Package"] %in% old[, "Package"], , drop = FALSE]
     cat(paste0("{\"reached\":true,\"packages\":", .gf_array(rows(old)), ",\"sourceOnly\":", .gf_array(rows(later)), "}"), "\n")
+  }
+
+  # Update all: installs the newer copy of every package the Updates page
+  # lists, then looks again and says plainly what is still behind, so a
+  # failed install never passes for a finished one. Each package goes where
+  # its loaded copy is when both that library and the package's own folder
+  # can be written to. Otherwise it goes into the user's own library, made
+  # if need be and put first, so the new copy is the one R loads. That is
+  # the usual case on a Mac for packages that came with R or were installed
+  # with an administrator's password, whose folders the user cannot replace.
+  gf$.gf_update_all <- function() {
+    .gf_repos()
+    type <- .Platform$pkgType
+    old <- .gf_behind(.gf_available(type))
+    if (is.null(old) || nrow(old) == 0) {
+      cat("Every installed package is up to date.\n")
+      return(invisible(NULL))
+    }
+    can_write <- function(lib, package) file.access(lib, 2) == 0 && file.access(file.path(lib, package), 2) == 0
+    own <- function() {
+      personal <- path.expand(Sys.getenv("R_LIBS_USER"))
+      if (!nzchar(personal)) return(NA_character_)
+      dir.create(personal, recursive = TRUE, showWarnings = FALSE)
+      if (file.access(personal, 2) != 0) return(NA_character_)
+      if (!normalizePath(personal) %in% normalizePath(.libPaths())) .libPaths(c(personal, .libPaths()))
+      normalizePath(personal)
+    }
+    into <- vapply(seq_len(nrow(old)), function(i) if (can_write(old[i, "LibPath"], old[i, "Package"])) old[i, "LibPath"] else own(), "")
+    if (anyNA(into)) cat("No library R can write to was found for", paste(old[is.na(into), "Package"], collapse = ", "), "\n")
+    old <- old[!is.na(into), , drop = FALSE]
+    into <- into[!is.na(into)]
+    for (lib in unique(into)) {
+      cat("Installing", paste(old[into == lib, "Package"], collapse = ", "), "into", lib, "\n")
+      utils::install.packages(old[into == lib, "Package"], lib = lib, type = type)
+    }
+    still <- .gf_behind(.gf_available(type))
+    if (is.null(still) || nrow(still) == 0) {
+      cat("\nEvery package listed is now up to date. Restart R to start using the new versions.\n")
+    } else {
+      cat("\nStill behind after the update:", paste0(still[, "Package"], " ", still[, "Installed"], collapse = ", "), "\n")
+      cat("The messages above say why. A package that needs a program R cannot find, or that could not be written, stays as it was.\n")
+    }
+    invisible(NULL)
   }
 
   gf$.gf_info <- function() {

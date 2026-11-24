@@ -604,7 +604,7 @@ const TOPICS: Topic[] = [
         </p>
         <p>
           Packages, in the tools down the right edge or in the Packages menu, lists what is installed. Check for updates opens the Updates page in Settings, which lists the packages with newer versions, and Update all
-          brings them up to date, with the progress on the stage. Restart R afterward so the new versions are the ones in use.
+          brings them up to date, with the progress on the stage. A package that came with R, or was installed with an administrator&#8217;s password, often cannot be replaced, so its new version goes into your own library, which R reads first. When the update ends, goodR checks again and names any package still behind, and Show what R printed says why. Restart R afterward so the new versions are the ones in use.
         </p>
       </>
     ),

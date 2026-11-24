@@ -730,7 +730,11 @@ async function openPaths(paths: string[]) {
   const projects = paths.filter((path) => /\.rproj$/i.test(path));
   for (const file of projects) {
     try {
-      await enterProject(await api.openHandedProject(file));
+      const info = await api.openHandedProject(file);
+      const open = Boolean(getState().sessions[projectKey(info.root)]?.project);
+      await enterProject(info);
+      // Opening it again from Finder still says where you are.
+      if (open) notify(`The ${info.name} project was already open, so you are back in it.`);
     } catch (error) {
       notify(String(error), "error");
     }
@@ -2842,10 +2846,9 @@ export async function updateAllPackages(): Promise<string | null> {
   if (!sure) return null;
   showPanel("canvas");
   notify("Updating packages. Progress is on the stage.");
-  return runInConsole(
-    `${LIBRARY_SETUP}\n${CRAN_SETUP}\nlocal({\n  old <- old.packages()\n  if (is.null(old)) cat("Every installed package is up to date.\\n") else update.packages(oldPkgs = rownames(old), ask = FALSE, checkBuilt = TRUE)\n})`,
-    "update",
-  );
+  // The same list the Updates page shows, so what it promises is what is
+  // installed, and it says at the end what is still behind.
+  return runInConsole(`${LIBRARY_SETUP}\n.gf_update_all()`, "update");
 }
 
 /** Forgets cached answers for what was just installed and checks again. */

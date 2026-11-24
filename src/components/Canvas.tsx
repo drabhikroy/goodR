@@ -979,6 +979,7 @@ function PackageCard({ input, out }: { input: ConsoleEntry; out: ConsoleEntry[] 
   // A Mac installs ready built packages without saying each is done, so
   // once the run is over, every package fetched that did not fail is in.
   const progress = running ? read : { ...read, done: read.names.filter((name) => !read.failed.includes(name)) };
+  const behind = progress.failed.length ? ` ${progress.failed.join(", ")} ${progress.failed.length === 1 ? "is" : "are"} still behind. Show what R printed says why.` : "";
   const settled = progress.done.length + progress.failed.length;
   const total = progress.names.length;
   const verb = input.task === "update" ? "Updating" : "Installing";
@@ -989,7 +990,7 @@ function PackageCard({ input, out }: { input: ConsoleEntry; out: ConsoleEntry[] 
         ? `${verb} ${settled + 1 > total ? total : settled + 1} of ${total}${progress.current ? `: ${progress.current}` : ""}`
         : "Checking which packages need it"
       : progress.failed.length
-        ? `${progress.done.length} of ${total} installed. ${progress.failed.length === 1 ? "One" : progress.failed.length} did not install.`
+        ? `${progress.done.length} of ${total} ${input.task === "update" ? "updated" : "installed"}.${behind}`
         : total
           ? `Done. ${total === 1 ? "One package" : `${total} packages`} ${input.task === "update" ? "updated" : "installed"}.${input.task === "update" ? " Restart R to start using the new versions." : ""}`
           : "Finished.";
