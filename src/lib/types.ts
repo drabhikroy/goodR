@@ -112,6 +112,9 @@ export type Settings = {
   autosave: boolean;
   /** Whether a report rendered once renders again each time it is saved. */
   renderOnSave: boolean;
+  /** Whether a running Shiny app opens in a window of its own, as in
+   * RStudio, rather than in the App sheet beside the script. */
+  appWindow: boolean;
   /** How Render as PDF makes a PDF: with LaTeX when there is one, which
    * is "auto", or always with Typst, or always with LaTeX. */
   pdfEngine: PdfEngine;

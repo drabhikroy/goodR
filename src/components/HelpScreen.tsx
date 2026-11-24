@@ -30,18 +30,17 @@ type Topic = {
   show?: GuideTarget[];
 };
 
-/** Buttons that take the reader straight to the parts a topic is about,
- * each marked on screen by an iris that dims the rest of the window. */
+/** One button that walks through the parts a topic is about, a step for
+ * each, in the order listed beside it. */
 function ShowMe({ targets }: { targets: GuideTarget[] }) {
+  const names = targets.map((target) => TARGETS[target].label);
   return (
-    <div className="show-me" role="group" aria-label="Show me in the app">
-      <span className="show-me-label">Show me</span>
-      {targets.map((target) => (
-        <button key={target} type="button" className="show-me-link" onClick={() => showMe(target)}>
-          <span className="show-me-dot" aria-hidden="true" />
-          {TARGETS[target].label}
-        </button>
-      ))}
+    <div className="show-me">
+      <button type="button" className="show-me-link" aria-description={`Walks through ${names.join(", ")} in the app`} onClick={() => showMe(targets)}>
+        <span className="show-me-dot" aria-hidden="true" />
+        Show me
+      </button>
+      <span className="show-me-parts">{names.length > 1 ? `${names.length} steps: ${names.join(", ")}` : names[0]}</span>
     </div>
   );
 }
@@ -91,7 +90,7 @@ function ExamplesButton() {
  * and points at that part, so finding something takes one press. */
 function WindowMap() {
   const part = (target: GuideTarget, className: string, text: string) => (
-    <button type="button" className={`map-part ${className}`} aria-label={TARGETS[target].label} onClick={() => showMe(target)}>
+    <button type="button" className={`map-part ${className}`} aria-label={TARGETS[target].label} onClick={() => showMe([target])}>
       <span className="show-me-dot" aria-hidden="true" />
       {text}
     </button>
@@ -372,7 +371,7 @@ const TOPICS: Topic[] = [
         </p>
         <p>
           The files are not shown down the left unless you ask: choose Keep the files open on the left in the same menu. Start screen, also in that menu, takes you back to the opening screen without closing
-          anything, and so does Home, near the foot of the tools. Continue working, or Escape, brings you right back. Help, the question mark just above Home, opens these pages
+          anything, and so does Home, near the foot of the tools. Inside a project, that menu says Project above its name, and opening one, from goodR or with Open With in Finder, tells you which project you are in. Continue working, or Escape, brings you right back. Help, the question mark just above Home, opens these pages
           from anywhere in the same way.
         </p>
       </>
@@ -485,7 +484,7 @@ const TOPICS: Topic[] = [
     body: () => (
       <>
         <p>
-          Open a Shiny app and Run app appears above the script. The app runs in its own R beside your code, so the prompt stays free, and saving a file reloads it. Share makes a web page that runs the app right
+          Open a Shiny app and Run app appears above the script. The app runs in its own R, so the prompt stays free, and opens in a window of its own, as in RStudio, with its address, Open in browser, and Reload along the top. Closing that window stops the app, and saving one of its files reloads it. To keep the app beside your code instead, choose Show it here instead in the App sheet, or turn off Open a running app in its own window in Settings, under Results. Share makes a web page that runs the app right
           in the browser, so anyone can open it without installing R.
         </p>
         <p>
@@ -570,7 +569,7 @@ const TOPICS: Topic[] = [
           script now on the right, in orchid with a solid edge. Lines that match fold away, so a long script with a few changes fits on one screen, and each change is named for the section it is in.
           Step through the changes with the arrows at the top, or <kbd>F7</kbd> and <kbd>⇧F7</kbd>, or click a mark on the thin strip down the right, which shows where every change sits in the
           whole file. Click a change to pick it, and the buttons at the foot of the card act on it: Put back this change, Copy, or Use this whole version. Each earlier version is a card, with older ones stacked behind it. Flip back a card with the left arrow and
-          forward with the right arrow, click the edge of a card behind, or move the slider at the foot. It has a dot for each version and a ✕ for any where a line did not run, with the times written underneath. Saves made in the same minute share one time. Last version that ran jumps to
+          forward with the right arrow, click the edge of a card behind, or move the slider at the foot. It has a dot for each version and a ✕ for any where a line did not run, with the times written underneath. Saves made in the same minute share one time, written under the first of them. Last version that ran jumps to
           the newest one that worked. Nothing is saved until you save, and Undo takes it back. The colors can be changed in Settings, under Accessibility.
         </p>
         <p>

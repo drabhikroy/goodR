@@ -173,6 +173,10 @@ declare global {
     /** Settings a test starts from in place of the stand-in's own, such as
      * the layout a first run gets. */
     goodforSettings?: Record<string, unknown>;
+    /** Hands files to the app as Finder or the command line would. */
+    goodforOpenFiles?: (paths: string[]) => void;
+    /** The title of the app's own window while it is open. */
+    goodforAppWindow?: string;
   }
 }
 
@@ -321,6 +325,9 @@ export function createMockBackend(): Backend {
     lastUpdateCheck: Date.now(),
     autosave: false,
     renderOnSave: true,
+    // The interface tests look at the app in its sheet. Its own window has
+    // tests of its own.
+    appWindow: false,
     pdfEngine: "auto",
     latexDir: "",
     hints: true,
@@ -590,6 +597,10 @@ export function createMockBackend(): Backend {
     chooseProject: async () => openProject(),
     reopenProject: async (file) => {
       if (file !== PROJECT_FILE) throw new Error(`${file} has been moved or deleted`);
+      return openProject();
+    },
+    openHandedProject: async (file) => {
+      if (file !== PROJECT_FILE) throw new Error(`${file} was not opened from outside the app`);
       return openProject();
     },
     // Listing again returns the same project, since nothing on disk moves.
@@ -966,7 +977,11 @@ export function createMockBackend(): Backend {
       return () => menuListeners.delete(listener);
     },
     // Drops and Finder opens only happen in the desktop app.
-    onOpenFiles: async () => () => {},
+    // Tests hand files over as Finder would, through this.
+    onOpenFiles: async (listener) => {
+      window.goodforOpenFiles = listener;
+      return () => {};
+    },
     onDropHover: async () => () => {},
     onDropSkipped: async () => () => {},
     // The assistant. A test can say an Ollama is already installed with
@@ -1131,6 +1146,14 @@ export function createMockBackend(): Backend {
     appOpen: async () => {
       if (!apps.running || !apps.url) throw new Error("No app is running.");
       apps.opened.push(apps.url);
+    },
+    // The stand-in has no second window, so it records what it was asked.
+    appWindow: async (title) => {
+      if (!apps.running || !apps.url) throw new Error("No app is running.");
+      window.goodforAppWindow = title;
+    },
+    appWindowClose: async () => {
+      window.goodforAppWindow = undefined;
     },
     onApp: async (listener) => {
       appListeners.add(listener);

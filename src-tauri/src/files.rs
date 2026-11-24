@@ -19,6 +19,12 @@ use std::process::Command;
 /// The kinds of file the editor opens: R scripts, R Markdown, and Quarto.
 pub const EXTENSIONS: &[&str] = &["R", "r", "Rmd", "rmd", "qmd"];
 
+/// True for an RStudio project file, which opens as a project rather than
+/// as a tab.
+pub fn is_project(path: &Path) -> bool {
+    path.extension().and_then(|ext| ext.to_str()).is_some_and(|ext| ext.eq_ignore_ascii_case("Rproj"))
+}
+
 /// True for a path whose extension marks it as something the editor opens.
 pub fn is_script(path: &Path) -> bool {
     path.extension().and_then(|ext| ext.to_str()).is_some_and(|ext| EXTENSIONS.contains(&ext))
@@ -431,6 +437,14 @@ mod tests {
         let project = create_project(dir.path(), "tracked", "report", true).unwrap();
         let root = project.parent().unwrap();
         assert!(root.join(".git").is_dir() && root.join(".gitignore").exists());
+    }
+
+    #[test]
+    fn project_files_are_recognized_by_extension() {
+        assert!(is_project(Path::new("/work/survey/survey.Rproj")));
+        assert!(is_project(Path::new("/work/survey/old.rproj")));
+        assert!(!is_project(Path::new("/work/survey/analysis.R")));
+        assert!(!is_project(Path::new("/work/survey/Rproj")));
     }
 
     #[test]

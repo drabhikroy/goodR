@@ -665,20 +665,23 @@ itself on the first run and from Help or the opening screen after that.
 Describing a part of the window still leaves people looking for it, so
 each step that names a part has Show me, and so does every Help topic.
 Show me sets the tour or Help aside, opens the examples first when
-nothing is open, and marks the part with an iris, as the Help in the
-person's other apps does: the rest of the window dims, a clear oval
-closes in from beyond the window's edges onto the part and settles, and
-a gold ring draws itself around it and glows twice before holding still,
-with the part's name in a label. Movement in the periphery is
-noticed faster than any change of color or size (Bartram, Ware, and
-Calvert 2003), so the closing motion draws the eye to wherever the part
-sits, and dimming the rest removes the competition for attention once it
-gets there. It clears on its own after a few seconds, or at the next
-click or key, so it never gets in the way. The gold is the same in every
-theme, since it always sits against the dimmed page. With motion reduced,
-the oval and ring are simply there. An earlier design used widening rings without dimming;
-it was replaced so goodR points at things the way the person's other
-apps do.
+nothing is open, and walks through the parts a topic is about, one step
+each, the way Show me works in the person's other apps. The rest of the window
+dims, a clear oval closes in from beyond the window's edges onto the
+first part, and blue rings draw themselves around it as they turn. A
+pointer glides there and presses it where it is a button, and a card
+beside it says what the part does, with the step
+count, Back, and Next or Done. Movement in the periphery is noticed
+faster than any change of color or size (Bartram, Ware, and Calvert
+2003), so the closing motion and the gliding pointer draw the eye to
+wherever the part sits, and dimming the rest removes the competition for
+attention once it gets there. The walk waits for
+Next, so each card can be read at the reader's own pace, and Escape ends
+it at any point. The blue is the same in every theme, since it always
+sits against the dimmed page. With motion reduced, the oval, one still
+ring, and the pointer are simply in place. An earlier design used
+widening rings without dimming; it was replaced so goodR points at
+things the way the person's other apps do.
 
 The help page itself is written around the questions people have while
 they work, how to run code, where results go, which R a script runs in,
@@ -832,9 +835,15 @@ person never has to choose between the two. An app that needs an object
 made only in the console fails here, and the explanation says why, in the
 same words a report uses.
 
-The app appears in an App pane beside the code, with the same room a
-report preview gets, rather than in a separate window that covers the
-script. Shiny watches the app's folder and reloads the app when a file in
+The app opens in a window of its own, titled with its folder, as RStudio
+opens it, so it has the room of a real browser window and can sit on a
+second screen while the code stays in view. The person the app is for
+asked for this after using it beside the code, since an app laid out for
+a full browser window is cramped in a sheet. The window carries only the
+app's address, Open in browser, and Reload, and closing it stops the
+app, as in RStudio. The App sheet stays behind as the place that
+explains errors inside the app and maps how it connects, and it can hold
+the app itself for anyone who prefers it there. Shiny watches the app's folder and reloads the app when a file in
 it is saved, so the loop is: change a line, save, look, without pressing
 anything else. Running the app saves its files first, including ui.R and
 server.R beside the app.R that was run, since the app reads them from
@@ -957,7 +966,7 @@ Settings; the soft grounds are worked out again so code still reads.
 The times under the slider come from the saves themselves. Several saves
 in one minute would print the same time side by side, and a busy afternoon
 would print more times than the slider has room for. So saves in the same
-minute share one label. Labels go down in order of importance, the version
+minute share one label, under the first of them. Labels go down in order of importance, the version
 being compared first, then the oldest and newest, then the rest, and any
 that would overlap one already on the slider is left out. Every version
 keeps its own dot on the slider, so none goes unseen.

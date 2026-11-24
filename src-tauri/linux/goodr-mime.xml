@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- R scripts, R Markdown, and Quarto documents, which the shared
+<!-- R scripts, R Markdown, Quarto documents, and R projects, which the shared
      freedesktop list of file types does not name. The names match the
      ones RStudio uses, so the two apps agree on a system that has both.
      Each is plain text underneath, so text editors still open them. -->
@@ -19,5 +19,10 @@
     <sub-class-of type="text/plain"/>
     <comment>Quarto document</comment>
     <glob pattern="*.qmd"/>
+  </mime-type>
+  <mime-type type="application/x-r-project">
+    <sub-class-of type="text/plain"/>
+    <comment>R project</comment>
+    <glob pattern="*.Rproj"/>
   </mime-type>
 </mime-info>

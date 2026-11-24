@@ -2,7 +2,7 @@
 //
 // Several saves in the same minute would print the same time side by side,
 // and a busy afternoon would print more times than the slider has room for.
-// So versions that share a minute get one label, centered over them.
+// So versions that share a minute get one label, under the first of them.
 // Labels go down in order of importance (the version being compared, then
 // the oldest and newest, then the rest from oldest to newest), and one that
 // would overlap a label already down is skipped. Every version still gets
@@ -34,7 +34,7 @@ export function sliderLabels(times: number[], textOf: (time: number) => string, 
     if (last && last.minute === minute) last.to = position;
     else groups.push({ from: position, to: position, text: textOf(time), minute });
   });
-  const at = (group: Group) => (count === 1 ? 0.5 : (group.from + group.to) / 2 / (count - 1));
+  const at = (group: Group) => (count === 1 ? 0.5 : group.from / (count - 1));
   const holds = (group: Group) => chosen >= group.from && chosen <= group.to;
   const order = [...groups].sort((a, b) => rank(a) - rank(b) || a.from - b.from);
   function rank(group: Group) {

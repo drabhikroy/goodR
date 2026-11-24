@@ -1,20 +1,20 @@
-// The tour, and the iris that points at parts of the app.
+// The tour, and Show me, which walks through parts of the app.
 //
 // The tour follows the walkthrough in Tessera: a card in the middle of the
 // window with one point per step, a small animated picture of what the
 // step is about, a row of dots for where it is, and Back and Next. Each
 // picture is drawn in the app's own colors, so it matches every appearance
 // and palette, and it stops moving when motion is reduced. Where the part
-// a step describes is on screen, Show me hides the card for a moment and
-// marks that part with an iris that dims the rest, then brings the card
-// back, so the step is seen in place rather than only described. The tour
+// a step describes is on screen, Show me sets the card aside and walks to
+// that part, dimming the rest, then brings the card back with Done, so the
+// step is seen in place rather than only described. The tour
 // opens by itself once, on the first run, and again from Help or the
 // opening screen whenever it is wanted.
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { openExamples, setTour, updateSettings } from "../lib/app";
 import { keyLabel } from "../lib/commands";
-import { findTarget, pointAt, stopPointing, TARGETS, type GuideTarget } from "../lib/guide";
+import { findTarget, startWalk, stopPointing, TARGETS, walkTo, type GuideTarget } from "../lib/guide";
 import { getState, useStore } from "../lib/store";
 import { ArrowIcon, CloseIcon } from "./Icons";
 import { trapTab } from "./focus";
@@ -305,7 +305,7 @@ export function Tour() {
             </button>
           )}
           {current.target && canShow && (
-            <button type="button" className="button" aria-description={`Points at ${TARGETS[current.target].label} on screen`} onClick={() => pointAt(current.target!, () => setTour(step))}>
+            <button type="button" className="button" aria-description={`Points at ${TARGETS[current.target].label} on screen`} onClick={() => startWalk([current.target!], () => setTour(step))}>
               Show me
             </button>
           )}
@@ -323,58 +323,134 @@ export function Tour() {
   );
 }
 
+/** The pointer that glides to each part, white with a dark edge so it reads
+ * on any page. */
+const POINTER = "M5 2l14 10-6.5 1.2 3.8 7.3-2.6 1.3-3.8-7.3L5 19z";
+
 /**
- * Show me: an iris. The page dims, and a clear oval closes in on the part
- * from the edges of the window and settles around it. A gold ring then
- * draws itself around the oval and glows briefly, and a label names the
- * part. Any click or key clears it early. With motion reduced, the oval
- * and ring are simply there.
+ * Show me: a walk through one or more parts of the app. On the first step
+ * the page dims and a clear oval closes in on the part from the edges of
+ * the window, ringed in blue rings that draw themselves as they turn. A
+ * pointer glides to the part, and presses it where the part is something
+ * to press, and a card beside it says what the part does, with the step
+ * count, Back, and Next or Done. Each later step glides the oval and the
+ * pointer to the next part. Escape or Done ends the walk. With motion
+ * reduced, everything is simply in place, with one still ring.
  */
 export function Beacon() {
-  const target = useStore((state) => state.ui.beacon);
+  const walk = useStore((state) => state.ui.beacon);
+  const target = walk ? walk.steps[walk.index] : null;
   const [box, setBox] = useState<DOMRect | null>(null);
-  // The iris starts wide open and closes once it has been placed, so the
-  // move from the window's edges to the part is seen.
+  // The iris starts wide open and closes once the first step is placed, so
+  // the move from the window's edges to the part is seen. Later steps glide.
   const [closed, setClosed] = useState(false);
+  const [card, setCard] = useState(false);
+  const [pressing, setPressing] = useState(false);
+  const [hand, setHand] = useState<{ x: number; y: number } | null>(null);
+  const tip = useRef<HTMLDivElement>(null);
+  const next = useRef<HTMLButtonElement>(null);
   useLayoutEffect(() => {
-    setClosed(false);
+    if (!walk) {
+      setClosed(false);
+      setHand(null);
+    }
+  }, [walk === null]);
+  useLayoutEffect(() => {
     if (!target) return setBox(null);
+    const reduce = document.documentElement.dataset.motion === "reduce";
     const measure = () => setBox(findTarget(target)?.getBoundingClientRect() ?? null);
     measure();
+    setCard(false);
+    setPressing(false);
+    // The pointer starts low in the middle of the window on the first step.
+    setHand((now) => now ?? { x: window.innerWidth / 2, y: window.innerHeight * 0.75 });
     const frame = requestAnimationFrame(() => requestAnimationFrame(() => setClosed(true)));
-    const timer = setInterval(measure, 250);
-    const clear = () => stopPointing();
+    const timers = [window.setTimeout(() => setCard(true), reduce ? 0 : 650)];
+    if (TARGETS[target].press && !reduce) timers.push(window.setTimeout(() => setPressing(true), 900));
+    const follow = window.setInterval(measure, 250);
     window.addEventListener("resize", measure);
-    document.addEventListener("pointerdown", clear, true);
-    document.addEventListener("keydown", clear, true);
     return () => {
       cancelAnimationFrame(frame);
-      clearInterval(timer);
+      timers.forEach((timer) => clearTimeout(timer));
+      clearInterval(follow);
       window.removeEventListener("resize", measure);
-      document.removeEventListener("pointerdown", clear, true);
-      document.removeEventListener("keydown", clear, true);
     };
-  }, [target]);
-  if (!target || !box) return null;
+  }, [target, walk?.index]);
+  // The pointer goes to the part once the part is measured.
+  useEffect(() => {
+    if (box) setHand({ x: box.left + Math.min(box.width * 0.5, 160), y: box.top + Math.min(box.height * 0.55, 60) });
+  }, [box?.left, box?.top, box?.width, box?.height]);
+  useEffect(() => {
+    if (card) next.current?.focus();
+  }, [card, walk?.index]);
+  useEffect(() => {
+    if (!walk) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (tip.current) trapTab(tip.current, event);
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        stopPointing();
+      }
+    };
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
+  }, [walk === null]);
+  if (!walk || !target || !box) return null;
   const cx = box.left + box.width / 2;
   const cy = box.top + box.height / 2;
-  // An oval a little larger than the part, so the whole of it sits inside
-  // with room to spare, never smaller than a fingertip.
-  const width = Math.max(72, box.width * 1.18 + 28);
-  const height = Math.max(72, box.height * 1.18 + 28);
+  // A circle, or an ellipse for wide parts, with generous room, never
+  // smaller than 96 pixels across, so even a small button is clear.
+  const width = Math.max(96, box.width * 1.18 + 28);
+  const height = Math.max(96, box.height * 1.35 + 28);
   const open = Math.hypot(window.innerWidth, window.innerHeight) * 2;
   const size = closed ? { width, height } : { width: open, height: open };
-  const below = cy + height / 2 + 56 < window.innerHeight;
+  const below = cy + height / 2 + 200 < window.innerHeight;
+  const count = walk.steps.length;
+  const last = walk.index === count - 1;
+  const part = TARGETS[target];
   return (
-    <div className="beacon" role="status" aria-live="polite">
+    <div className="beacon">
       <div className={`iris ${closed ? "is-closed" : ""}`} style={{ left: cx - size.width / 2, top: cy - size.height / 2, width: size.width, height: size.height }}>
-        <svg className="iris-ring" viewBox={`0 0 ${width + 8} ${height + 8}`} aria-hidden="true">
-          <ellipse cx={(width + 8) / 2} cy={(height + 8) / 2} rx={width / 2 + 2} ry={height / 2 + 2} pathLength={100} />
-        </svg>
+        {/* Rings after "circle_draw_rotate" by Gus Gonzalez,
+            https://codepen.io/gusgogus/pen/MwPgXB, as the Help in the
+            other apps uses them (styled in app.css). */}
+        <div className="walk-gyro" aria-hidden="true">
+          {[0, 1, 2, 3, 4].map((ring) => (
+            <svg key={ring} viewBox="0 0 100 100" preserveAspectRatio="none">
+              <ellipse cx="50" cy="50" rx="48" ry="48" pathLength={100} />
+            </svg>
+          ))}
+        </div>
       </div>
-      <span className="beacon-label" style={{ left: Math.min(Math.max(12, cx - 90), window.innerWidth - 192), top: below ? cy + height / 2 + 12 : cy - height / 2 - 46 }}>
-        {TARGETS[target].label}
-      </span>
+      {hand && (
+        <div className={`walk-hand ${pressing ? "is-pressing" : ""}`} style={{ left: hand.x, top: hand.y }} aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="42" height="42">
+            <path d={POINTER} />
+          </svg>
+          <span className="walk-press" />
+        </div>
+      )}
+      <div
+        ref={tip}
+        className={`walk-card ${card ? "is-on" : ""}`}
+        role="dialog"
+        aria-label={`Show me: ${part.label}`}
+        aria-live="polite"
+        style={{ left: Math.max(12, Math.min(window.innerWidth - 372, cx - 180)), top: below ? cy + height / 2 + 16 : Math.max(12, cy - height / 2 - 196) }}
+      >
+        {count > 1 && <p className="walk-count">Step {walk.index + 1} of {count}</p>}
+        <h2 className="walk-title">{part.label}</h2>
+        <p className="walk-text">{part.text}</p>
+        <div className="walk-buttons">
+          <button type="button" className="button quiet" style={{ visibility: walk.index ? "visible" : "hidden" }} onClick={() => walkTo(walk.index - 1)}>
+            <ArrowIcon direction="left" size={13} /> Back
+          </button>
+          <button type="button" className="button primary" ref={next} onClick={() => (last ? stopPointing() : walkTo(walk.index + 1))}>
+            {last ? "Done" : "Next"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

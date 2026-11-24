@@ -29,6 +29,8 @@ export interface Backend {
   /** Shows the Open dialog for a project file. Null when canceled. */
   chooseProject(): Promise<ProjectInfo | null>;
   reopenProject(file: string): Promise<ProjectInfo>;
+  /** Opens a project file that came from Finder, a drop, or the command line. */
+  openHandedProject(file: string): Promise<ProjectInfo>;
   refreshProject(root: string): Promise<ProjectInfo | null>;
   /** Closes a project and ends its R. */
   closeProject(root: string): Promise<void>;
@@ -181,6 +183,9 @@ export interface Backend {
   appStop(): Promise<void>;
   /** Opens the running app in the system's browser. */
   appOpen(): Promise<void>;
+  /** Shows the running app in a window of its own, or loads it again there. */
+  appWindow(title: string, mode: string): Promise<void>;
+  appWindowClose(): Promise<void>;
   onApp(listener: (event: AppEvent) => void): Promise<() => void>;
   /** The files exporting an app would put in its web page. */
   appBundleFiles(file: string): Promise<BundleList>;
@@ -219,6 +224,7 @@ async function tauriBackend(): Promise<Backend> {
     takePending: () => invoke("take_pending"),
     chooseProject: () => invoke("choose_project"),
     reopenProject: (file) => invoke("reopen_project", { file }),
+    openHandedProject: (file) => invoke("open_handed_project", { file }),
     refreshProject: (root) => invoke("refresh_project", { root }),
     closeProject: (root) => invoke("close_project", { root }),
     sessionFor: (file) => invoke("session_for", { file }),
@@ -309,6 +315,8 @@ async function tauriBackend(): Promise<Backend> {
     appStart: (id, file) => invoke("app_start", { id, file }),
     appStop: () => invoke("app_stop"),
     appOpen: () => invoke("app_open"),
+    appWindow: (title, mode) => invoke("app_window", { title, mode }),
+    appWindowClose: () => invoke("app_window_close"),
     onApp: (listener) => listen<AppEvent>("app-event", (message) => listener(message.payload)),
     appBundleFiles: (file) => invoke("app_bundle_files", { file }),
     appExport: (id, file) => invoke("app_export", { id, file }),

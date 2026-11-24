@@ -20,9 +20,14 @@ describe("the times under History's slider", () => {
     expect(labels).toHaveLength(2);
   });
 
-  it("centers a shared label over the saves it stands for", () => {
+  it("puts a shared label under the first save it stands for", () => {
     const labels = sliderLabels(at(0, 5, 5.5), minutes, 0, 800, 72);
-    expect(labels[1].at).toBeCloseTo(0.75);
+    expect(labels[1].at).toBeCloseTo(0.5);
+  });
+
+  it("marks a shared label as chosen for any of its saves", () => {
+    const labels = sliderLabels(at(0, 5, 5.5), minutes, 2, 800, 72);
+    expect(labels[1]).toMatchObject({ text: "5m", chosen: true });
   });
 
   it("skips labels that would overlap and keeps the one being compared", () => {

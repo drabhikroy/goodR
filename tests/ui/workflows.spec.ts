@@ -860,13 +860,16 @@ test("the tour steps through the workspace, and Show me points at each part in p
   await tour.getByRole("button", { name: "Next" }).click();
   const run = page.getByRole("dialog", { name: "Running a line" });
   await expect(run).toBeVisible();
-  // Show me sets the card aside, closes an iris on the Run button, then
+  // Show me sets the card aside and walks to the Run button, and Done
   // brings the card back.
   await run.getByRole("button", { name: "Show me" }).click();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(page.locator(".beacon")).toContainText("Run");
+  await expect(run).toHaveCount(0);
+  const walk = page.getByRole("dialog", { name: "Show me: Run" });
+  await expect(walk).toContainText("Run sends the line under the cursor");
   await expect(page.locator(".iris.is-closed")).toHaveCount(1);
-  await expect(run).toBeVisible({ timeout: 8000 });
+  await expect(walk.getByRole("button", { name: "Done" })).toBeFocused();
+  await walk.getByRole("button", { name: "Done" }).click();
+  await expect(run).toBeVisible();
   await expect(page.locator(".beacon")).toHaveCount(0);
   // The arrow keys move between steps, and the last one starts work.
   await page.keyboard.press("ArrowLeft");
@@ -878,16 +881,30 @@ test("the tour steps through the workspace, and Show me points at each part in p
   expect(await appState<boolean>(page, "state.settings.tourSeen")).toBe(true);
 });
 
-test("Show me in Help closes Help and rings the part of the app it names", async ({ page }) => {
+test("Show me in Help closes Help and walks through the parts a topic names, a step at a time", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Use this R" }).click();
   await page.getByRole("button", { name: "Help", exact: true }).click();
   // With nothing open, the examples open first so there is something to show.
   await page.getByRole("group", { name: "Show me in the app" }).first().getByRole("button", { name: "The R prompt" }).click();
   await expect(page.getByRole("heading", { name: "Start here" })).toHaveCount(0);
-  await expect(page.locator(".beacon")).toContainText("The R prompt");
-  // A click anywhere clears the iris early.
-  await page.mouse.click(5, 300);
+  await expect(page.getByRole("dialog", { name: "Show me: The R prompt" })).toBeVisible();
+  // Escape ends it.
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".beacon")).toHaveCount(0);
+  // A topic about two parts walks through both, with Back and Next.
+  await page.getByRole("navigation", { name: "Tools" }).getByRole("button", { name: "Help", exact: true }).click();
+  await page.getByRole("navigation", { name: "Help topics" }).getByRole("button", { name: /^Running code/ }).click();
+  await page.locator(".help-article").getByRole("button", { name: "Show me" }).click();
+  const first = page.getByRole("dialog", { name: "Show me: Run" });
+  await expect(first).toContainText("Step 1 of 2");
+  await first.getByRole("button", { name: "Next" }).click();
+  const second = page.getByRole("dialog", { name: "Show me: Run menu" });
+  await expect(second).toContainText("Step 2 of 2");
+  await second.getByRole("button", { name: "Back" }).click();
+  await expect(page.getByRole("dialog", { name: "Show me: Run" })).toContainText("Step 1 of 2");
+  await page.getByRole("dialog", { name: "Show me: Run" }).getByRole("button", { name: "Next" }).click();
+  await page.getByRole("dialog", { name: "Show me: Run menu" }).getByRole("button", { name: "Done" }).click();
   await expect(page.locator(".beacon")).toHaveCount(0);
 });
 

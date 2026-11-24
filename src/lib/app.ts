@@ -25,7 +25,7 @@ import { checkShinyFile, initApps, openAppInBrowser, openShare, runApp, stopApp,
 import { backend, type Backend } from "./backend";
 import * as editor from "./editor";
 import { describeProblem, explainError, type Explained } from "./errors";
-import { findTarget, pointAt, TARGETS, type GuideTarget } from "./guide";
+import { findTarget, startWalk, TARGETS, type GuideTarget } from "./guide";
 import { referencedPackages } from "./packages";
 import { isSupportedR, OLDEST_R } from "./rversion";
 import { chunkAt, chunksOf, codeOnly, inSwitchedOffChunk, documentFileName, hasSections, isDocument, newDocumentText, sectionAt, type DocumentFormat, type DocumentKind } from "./chunks";
@@ -447,7 +447,7 @@ export const SETTINGS_SECTIONS: Record<string, (keyof Settings)[]> = {
   appearance: ["appearance", "textSize", "compact", "readingWidth", "toolNames"],
   code: ["codeFont", "codeSize", "lineSpacing", "ligatures", "scriptItalics"],
   editor: ["lineNumbers", "highlightLine", "wrapLines", "closeBrackets", "rainbowBrackets", "autosave", "hints", "formatOnType", "tabWidth"],
-  results: ["outputLayout", "resultStyle", "copyResults", "keepResults", "plotStyle"],
+  results: ["outputLayout", "resultStyle", "copyResults", "keepResults", "plotStyle", "appWindow"],
   reports: ["pdfEngine", "latexDir", "renderOnSave"],
   accessibility: ["palette", "reduceMotion", "historyThen", "historyNow"],
   r: ["missingPackages", "undoRuns", "showPackageLog"],
@@ -667,22 +667,24 @@ export async function openExamples() {
 }
 
 /**
- * Points at a part of the app from Help: Help steps aside, the workspace
- * comes forward with the canvas showing, opening the examples first when
- * nothing is open, and the part is marked with the iris. A part that only
- * exists later, such as the timeline before anything has run, is
- * explained instead.
+ * Walks through parts of the app from Help: Help steps aside, the
+ * workspace comes forward with the canvas showing, opening the examples
+ * first when nothing is open, and each part gets a step of its own. A part
+ * that only exists later, such as All results before anything has run, is
+ * left out of the walk, and explained when it is the only one.
  */
-export async function showMe(target: GuideTarget) {
+export async function showMe(targets: GuideTarget[]) {
   hideHelpScreen();
   hideStartScreen();
   const { tabs, project } = getState();
   if (!tabs.length && !project) await openExamples();
   setState((state) => ({ ui: { ...state.ui, inspector: true, panel: "canvas", tour: null } }));
   setTimeout(() => {
-    if (findTarget(target)) pointAt(target);
-    else if (target === "timeline") notify("Earlier results appear under the stage once something has run. Run a line to see them.");
-    else if (target === "sidebar") notify("The project sidebar appears when a project is open.");
+    const shown = targets.filter((target) => findTarget(target));
+    if (shown.length) return startWalk(shown);
+    const [target] = targets;
+    if (target === "timeline") notify("Earlier results appear under the stage once something has run. Run a line to see them.");
+    else if (target === "sidebar") notify("The project sidebar appears when it is turned on, from the project menu.");
     else notify(`${TARGETS[target].label} is not on screen right now.`);
   }, 350);
 }
@@ -722,8 +724,18 @@ export async function chooseAndOpen() {
   await openPaths(paths);
 }
 
-/** Opens files that are already granted, activating the last one. */
+/** Opens files that are already granted, activating the last one. A
+ * project file opens its project instead, as RStudio does. */
 async function openPaths(paths: string[]) {
+  const projects = paths.filter((path) => /\.rproj$/i.test(path));
+  for (const file of projects) {
+    try {
+      await enterProject(await api.openHandedProject(file));
+    } catch (error) {
+      notify(String(error), "error");
+    }
+  }
+  paths = paths.filter((path) => !projects.includes(path));
   for (const path of paths) await openFile(path, false);
   const last = paths[paths.length - 1];
   if (last && getState().tabs.some((tab) => tab.path === last)) activateTab(last);
@@ -801,6 +813,7 @@ function projectKey(root: string) {
  */
 async function enterProject(info: ProjectInfo) {
   const key = projectKey(info.root);
+  const already = Boolean(getState().sessions[key]?.project);
   patchSession(key, { project: info });
   refreshRecents();
   // The project's main script opens, so there is something to work on.
@@ -815,6 +828,9 @@ async function enterProject(info: ProjectInfo) {
   }
   setState((state) => ({ ui: { ...state.ui, sidebar: state.settings.showSidebar } }));
   setTimeout(editor.requestMeasure, 50);
+  // Said once, as the project opens, so it is clear where the work now
+  // happens and why R starts in the project folder.
+  if (!already) notify(`You are in the ${info.name} project. Its scripts share one R, which starts in its folder.`);
 }
 
 /** Joins a project folder and a path inside it. */
@@ -1200,7 +1216,11 @@ export function activateTab(path: string) {
   editor.showDocument(path);
   lastScript = path;
   const tab = getState().tabs.find((item) => item.path === path);
-  api.setTitle(tab ? `${tab.name}, R: What Is It Good For?` : "R: What Is It Good For?").catch(() => {});
+  // The window's title names the project too, so the Window menu and the
+  // app switcher say which project a window holds.
+  const project = sessionOf(session).project?.name;
+  const name = tab ? (project ? `${tab.name} in ${project}` : tab.name) : null;
+  api.setTitle(name ? `${name}, R: What Is It Good For?` : "R: What Is It Good For?").catch(() => {});
   updateOutline(path);
   updateHints(path);
   checkPackages(path);

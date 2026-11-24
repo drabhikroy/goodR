@@ -174,6 +174,8 @@ manager, the Open dialog, or the recent list) and the app looks for a `.Rproj` i
 one, the script runs in that project's R, beside the project's other
 scripts. If not, the script gets an R of its own, started in its folder, so
 `"data.csv"` means the file beside it. Several projects can be open at once.
+The menu at the top left says Project above a project's name, the window's
+title names the project, and opening one says which project you are in.
 The canvas, objects, plots, history, and project sidebar follow the tab in
 front, so you do not have to keep track of which session a file landed in.
 The name of the project or script on show sits at the top left, with a count
@@ -268,6 +270,13 @@ As you write an app, its code is read for mistakes Shiny never points out:
 - an input read outside a render function or reactive
 - a render function that does not suit its output
 - an id used twice
+
+A running app opens in a window of its own, as in RStudio, titled with its
+folder, with its address, Open in browser, and Reload along the top. Closing
+the window stops the app, and saving one of its files reloads it. The App
+sheet says where the app is and explains any error inside it. To keep the
+app beside the code instead, choose Show it here instead in the App sheet,
+or turn off Open a running app in its own window in Settings, under Results.
 
 Each is underlined at its line and listed above the script with Go to line,
 and with a one press fix where the fix is clear. An app split into ui.R and
@@ -364,7 +373,7 @@ arrows at the top, or F7 and Shift F7, step through the changes, and a thin
 strip down the right marks where every change sits in the whole file. A
 slider along the foot moves to any earlier version. It has a dot for each
 version and a ✕ for any where a line did not run, with the times written
-underneath. Saves made in the same minute share one time, and a time that
+underneath. Saves made in the same minute share one time, under the first of them, and a time that
 would crowd another is left out. Last version that ran jumps to the
 newest one that worked. Put one change back, copy its old lines, or use the whole
 version, as an edit that Undo takes back. Clicking a change makes it the one
@@ -481,10 +490,13 @@ Topics are listed down the left, grouped by what you are trying to do, with a
 search box above them, and the one you pick fills the right. It opens on
 Start here, which has the tour, the examples, common questions, and a small
 map of the window where pressing any part points it out in the app. Each
-topic has a Show me button that takes you straight to the part of the app it
-names: the rest of the window dims, a clear oval closes in on the part from
-the edges of the window and settles, and a gold ring draws itself around it
-and glows briefly, with the part's name beside it.
+topic has a Show me button, with the parts it covers beside it, that walks
+you through those parts in the app one step at a time. The rest of the
+window dims, a clear oval closes in on the first part from the edges of the
+window, and blue rings draw themselves around it as they turn. A pointer
+glides there, pressing it where it is a button, and a card beside it says
+what the part does, with the step count, Back, and Next.
+Next glides to the next part, and Done or Escape ends the walk.
 
 The tour opens by itself the first time. It walks through the workspace in
 nine steps, each with a small animated picture, and its own Show me points at
@@ -566,7 +578,7 @@ download pages.
 
 ## Keyboard shortcuts and sessions
 
-R starts when the app opens. The opening screen lets you start a new project, open a project, or start or open a script, all in one row, and it lists the projects and scripts you used recently in one list, newest first, which can be narrowed to projects or scripts. Each names its folder, with the full path in its tooltip, so two files with one name are told apart. A line for newcomers offers the examples, the tour, and a first project, and can be put away; all three stay in the Help menu. You can also drop scripts on the window, or use Open With in Finder. The app shows up there for R, R Markdown, and Quarto files, but it does not make itself the default app for them.
+R starts when the app opens. The opening screen lets you start a new project, open a project, or start or open a script, all in one row, and it lists the projects and scripts you used recently in one list, newest first, which can be narrowed to projects or scripts. Each names its folder, with the full path in its tooltip, so two files with one name are told apart. A line for newcomers offers the examples, the tour, and a first project, and can be put away; all three stay in the Help menu. You can also drop scripts or a project's .Rproj file on the window, or use Open With in Finder. The app shows up there for R scripts, R Markdown, Quarto files, and R projects, but it does not make itself the default app for them, so RStudio stays the default if you have it. An .Rproj file opens its project, as it does in RStudio.
 
 These are the main keyboard shortcuts:
 

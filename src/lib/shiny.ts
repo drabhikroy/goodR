@@ -20,7 +20,7 @@
 import { explainApp as explainWith, explainProblem, type AppAction, type AppExplained } from "./appErrors";
 import type { Backend } from "./backend";
 import * as editor from "./editor";
-import { announce, baseName, folderOf, installPackages, notify, openDialog, openFile, saveFile, showPanel, togglePane } from "./app";
+import { announce, baseName, folderOf, installPackages, notify, openDialog, openFile, saveFile, showPanel, togglePane, updateSettings } from "./app";
 import { explainError } from "./errors";
 import { shinyGraph } from "./shinyGraph";
 import { checkShinyApp, closestName, tokenize, type ShinyFinding, type ShinyFix } from "./shinyCheck";
@@ -73,7 +73,10 @@ function onEvent(event: AppEvent) {
   switch (event.kind) {
     case "ready":
       patch(event.id, () => ({ status: "running", url: event.url }));
-      announce(`${baseName(run.file)} is running in the App pane.`);
+      if (getState().settings.appWindow) {
+        showAppWindow();
+        announce(`${baseName(run.file)} is running in its own window.`);
+      } else announce(`${baseName(run.file)} is running in the App pane.`);
       break;
     case "problem":
       patch(event.id, (current) => ({ problems: [...current.problems, { message: event.message, frames: [], complete: false }].slice(-PROBLEM_LIMIT) }));
@@ -97,6 +100,7 @@ function onEvent(event: AppEvent) {
     }
     case "ended":
       patch(event.id, () => ({ status: "ended", url: null, failure: event.failure }));
+      api.appWindowClose().catch(() => {});
       ended(run.file, event.failure);
       break;
   }
@@ -171,10 +175,34 @@ export function stopAppClosedWith(path: string) {
   }
 }
 
-/** Loads the app's page again, as the browser's own Reload would. */
+/** Loads the app's page again, as the browser's own Reload would, in its
+ * own window when it has one. */
 export function reloadApp() {
   const run = getState().shinyApp;
-  if (run) patch(run.id, (current) => ({ reloads: current.reloads + 1 }));
+  if (!run) return;
+  if (getState().settings.appWindow) showAppWindow();
+  else patch(run.id, (current) => ({ reloads: current.reloads + 1 }));
+}
+
+/**
+ * Shows the running app in a window of its own, as RStudio does, titled
+ * with its folder, or brings that window forward and loads the app again.
+ * Closing the window stops the app.
+ */
+export function showAppWindow() {
+  const run = getState().shinyApp;
+  if (!run || run.status !== "running") return;
+  const name = run.preview ? `Web version of ${baseName(run.file)}` : `${baseName(folderOf(run.file))}, Shiny app`;
+  const mode = document.documentElement.dataset.mode ?? "light";
+  api.appWindow(name, mode).catch((error) => notify(String(error).replace(/^Error: /, ""), "error"));
+}
+
+/** Chooses where a running app shows, its own window or the App sheet,
+ * and moves the app on show there at once. */
+export function setAppWindow(own: boolean) {
+  updateSettings({ appWindow: own });
+  if (own) showAppWindow();
+  else api.appWindowClose().catch(() => {});
 }
 
 /** The spot on a line that an error names, as columns, when the error's

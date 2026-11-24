@@ -26,7 +26,7 @@ mod updates;
 use rsession::{parse_helper_json, Event, RInstall, Session, SessionConfig};
 use serde::Serialize;
 use serde_json::Value;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex as StdMutex};
@@ -42,6 +42,10 @@ struct AppState {
     /// Files handed to the app before the interface was ready to open them,
     /// from the command line or from Finder at launch.
     pending: StdMutex<Vec<String>>,
+    /// Project files handed over the same ways, which the interface may
+    /// then open as projects. Only these can be opened without the Open
+    /// dialog or the recent list.
+    handed_projects: StdMutex<HashSet<PathBuf>>,
     /// The open projects' folders, each with its project file. A project's
     /// R starts in its folder and stays there.
     projects: StdMutex<HashMap<PathBuf, PathBuf>>,
@@ -168,14 +172,20 @@ fn update_menu(app: AppHandle, state: State<'_, AppState>, menu_state: menu::Men
 }
 
 /// Grants access to files the user chose outside the interface, from a
-/// drop, Finder, or the command line, and records them as recent. Anything
-/// that is not an existing script is skipped.
+/// drop, Finder, or the command line, and records them as recent. A project
+/// file is passed on as is, to be opened as a project. Anything else that
+/// is not an existing script is skipped.
 fn accept(state: &AppState, paths: impl IntoIterator<Item = PathBuf>) -> Vec<String> {
     let mut accepted = Vec::new();
     {
         let mut allowed = state.allowed.lock().unwrap();
         for path in paths {
-            if path.is_file() && files::is_script(&path) {
+            if path.is_file() && files::is_project(&path) {
+                if let Ok(resolved) = path.canonicalize() {
+                    state.handed_projects.lock().unwrap().insert(resolved.clone());
+                    accepted.push(resolved.to_string_lossy().to_string());
+                }
+            } else if path.is_file() && files::is_script(&path) {
                 if let Ok(resolved) = allowed.grant(&path) {
                     accepted.push(resolved.to_string_lossy().to_string());
                 }
@@ -184,7 +194,7 @@ fn accept(state: &AppState, paths: impl IntoIterator<Item = PathBuf>) -> Vec<Str
     }
     if !accepted.is_empty() {
         let mut settings = state.settings.lock().unwrap();
-        for path in &accepted {
+        for path in accepted.iter().filter(|path| !files::is_project(Path::new(path))) {
             settings.note_recent(path);
         }
     }
@@ -432,6 +442,17 @@ fn open_examples(state: State<'_, AppState>) -> CommandResult<files::ProjectInfo
     let folder = examples::default_folder().map_err(text_error)?;
     let file = examples::install(&folder).map_err(text_error)?;
     open_project_file(&state, &file)
+}
+
+/// Opens a project file that came from Finder, a drop, or the command line.
+/// Any other project goes through the Open dialog or the recent list.
+#[tauri::command]
+fn open_handed_project(state: State<'_, AppState>, file: String) -> CommandResult<files::ProjectInfo> {
+    let path = Path::new(&file).canonicalize().map_err(text_error)?;
+    if !state.handed_projects.lock().unwrap().contains(&path) {
+        return Err(format!("{file} was not opened from outside the app"));
+    }
+    open_project_file(&state, &path)
 }
 
 /// Files that arrived before the interface was listening, handed over once.
@@ -999,6 +1020,7 @@ pub fn run() {
             settings: StdMutex::new(loaded.clone()),
             allowed: StdMutex::new(files::Allowed::default()),
             pending: StdMutex::new(Vec::new()),
+            handed_projects: StdMutex::new(HashSet::new()),
             projects: StdMutex::new(HashMap::new()),
             chosen_folder: StdMutex::new(None),
             sessions: Mutex::new(HashMap::new()),
@@ -1021,8 +1043,8 @@ pub fn run() {
             let recent: Vec<String> = loaded.recent_files.iter().map(|recent| recent.path.clone()).collect();
             let projects: Vec<String> = loaded.recent_projects.iter().map(|recent| recent.path.clone()).collect();
             app.set_menu(menu::build(app.handle(), &state, &recent, &projects)?)?;
-            // Scripts named on the command line, which is how Windows and
-            // Linux pass a file that was double clicked.
+            // Scripts and project files named on the command line, which is
+            // how Windows and Linux pass a file that was double clicked.
             let arguments: Vec<PathBuf> = std::env::args().skip(1).map(PathBuf::from).collect();
             deliver(app.handle(), arguments);
             Ok(())
@@ -1032,43 +1054,55 @@ pub fn run() {
         .on_menu_event(|app, event| {
             let _ = app.emit("menu", event.id().0.clone());
         })
-        .on_window_event(|window, event| match event {
-            // Scripts dropped on the window open as tabs. Other files are
-            // ignored, and the interface says which were skipped.
-            tauri::WindowEvent::DragDrop(drop) => match drop {
-                tauri::DragDropEvent::Enter { paths, .. } => {
-                    let scripts = paths.iter().filter(|path| files::is_script(path)).count();
-                    let _ = window.emit("drop-hover", scripts);
+        .on_window_event(|window, event| {
+            // The app's own window: closing it stops the app, as in
+            // RStudio. Nothing else that happens to it concerns the rest.
+            if window.label() == shiny::APP_WINDOW {
+                if let tauri::WindowEvent::Destroyed = event {
+                    shiny::app_window_closed(window.app_handle());
                 }
-                tauri::DragDropEvent::Leave => {
-                    let _ = window.emit("drop-hover", -1);
-                }
-                tauri::DragDropEvent::Drop { paths, .. } => {
-                    let _ = window.emit("drop-hover", -1);
-                    let skipped = paths.iter().filter(|path| !files::is_script(path)).count();
-                    if skipped > 0 {
-                        let _ = window.emit("drop-skipped", skipped);
+                return;
+            }
+            match event {
+                // Scripts dropped on the window open as tabs, and a project file
+                // opens its project. Other files are ignored, and the interface
+                // says which were skipped.
+                tauri::WindowEvent::DragDrop(drop) => match drop {
+                    tauri::DragDropEvent::Enter { paths, .. } => {
+                        let scripts = paths.iter().filter(|path| files::is_script(path) || files::is_project(path)).count();
+                        let _ = window.emit("drop-hover", scripts);
                     }
-                    deliver(window.app_handle(), paths.clone());
+                    tauri::DragDropEvent::Leave => {
+                        let _ = window.emit("drop-hover", -1);
+                    }
+                    tauri::DragDropEvent::Drop { paths, .. } => {
+                        let _ = window.emit("drop-hover", -1);
+                        let skipped = paths.iter().filter(|path| !files::is_script(path) && !files::is_project(path)).count();
+                        if skipped > 0 {
+                            let _ = window.emit("drop-skipped", skipped);
+                        }
+                        deliver(window.app_handle(), paths.clone());
+                    }
+                    _ => {}
+                },
+                // R is ended along with the window so no stray process remains.
+                tauri::WindowEvent::Destroyed => {
+                    let state = window.app_handle().state::<AppState>();
+                    let slots: Vec<Slot> = state.sessions.try_lock().map(|mut sessions| sessions.drain().map(|(_, slot)| slot).collect()).unwrap_or_default();
+                    for slot in slots {
+                        tauri::async_runtime::block_on(slot.session.shutdown());
+                    }
+                    // An Ollama the app started goes with it too.
+                    window.app_handle().state::<assistant::AssistantState>().shutdown();
+                    // So does a report still rendering, with every R it started.
+                    render::shutdown(window.app_handle());
+                    window.app_handle().state::<latex::LatexState>().shutdown();
+                    // And a Shiny app still running, with its window.
+                    shiny::shutdown(window.app_handle());
+                    shiny::app_window_close(window.app_handle().clone());
                 }
                 _ => {}
-            },
-            // R is ended along with the window so no stray process remains.
-            tauri::WindowEvent::Destroyed => {
-                let state = window.app_handle().state::<AppState>();
-                let slots: Vec<Slot> = state.sessions.try_lock().map(|mut sessions| sessions.drain().map(|(_, slot)| slot).collect()).unwrap_or_default();
-                for slot in slots {
-                    tauri::async_runtime::block_on(slot.session.shutdown());
-                }
-                // An Ollama the app started goes with it too.
-                window.app_handle().state::<assistant::AssistantState>().shutdown();
-                // So does a report still rendering, with every R it started.
-                render::shutdown(window.app_handle());
-                window.app_handle().state::<latex::LatexState>().shutdown();
-                // And a Shiny app still running.
-                shiny::shutdown(window.app_handle());
             }
-            _ => {}
         })
         .invoke_handler(tauri::generate_handler![
             app_info,
@@ -1085,6 +1119,7 @@ pub fn run() {
             forget_recent,
             remember_session,
             take_pending,
+            open_handed_project,
             choose_project,
             reopen_project,
             refresh_project,
@@ -1161,6 +1196,8 @@ pub fn run() {
             shiny::app_export_stop,
             shiny::app_preview,
             shiny::app_reveal,
+            shiny::app_window,
+            shiny::app_window_close,
         ])
         .build(tauri::generate_context!())
         .expect("the app could not start");

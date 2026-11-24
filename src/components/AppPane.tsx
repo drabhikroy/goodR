@@ -1,18 +1,18 @@
-// The App pane, beside Plots, Help, Packages, and Report. It appears with
-// the first Shiny app run and follows the latest one: a short wait while R
-// starts, the live app once it answers, and a plain explanation with the
-// failing line when it will not start.
+// The App sheet, among the tools down the right edge. It appears with the
+// first Shiny app run and follows the latest one: a short wait while R
+// starts, then where the app is, and a plain explanation with the failing
+// line when it will not start.
 //
-// The app sits beside the code rather than in a window of its own, so a
-// person can change a line, save, and watch Shiny reload it in place.
-// Errors inside the running app, such as a plot that fails, are
-// listed above it without stopping it, since Shiny keeps the app running.
-// Open in browser gives the app a full window when the pane is too small.
+// A running app opens in a window of its own by default, as RStudio opens
+// it, and the sheet says so. Turned off in Settings, or with Show it here
+// instead, the app sits in the sheet beside the code. Either way, errors
+// inside the running app, such as a plot that fails, are listed in the
+// sheet without stopping it, since Shiny keeps the app running.
 
 import { useState } from "react";
 import { baseName } from "../lib/app";
 import * as editor from "../lib/editor";
-import { applyShinyFix, clearProblems, explainApp, explainProblem, goToAppLine, goToSpot, locateProblem, openAppInBrowser, openShare, reloadApp, runApp, runAppAction, stopApp } from "../lib/shiny";
+import { applyShinyFix, clearProblems, explainApp, explainProblem, goToAppLine, goToSpot, locateProblem, openAppInBrowser, openShare, reloadApp, runApp, runAppAction, setAppWindow, showAppWindow, stopApp } from "../lib/shiny";
 import { useStore, type AppProblem, type ShinyAppState } from "../lib/store";
 import { AppWindowIcon, RestartIcon, StopIcon, TriangleIcon } from "./Icons";
 import { ShinyMap } from "./ShinyMap";
@@ -23,6 +23,7 @@ export function AppPane() {
   const active = useStore((state) => state.active);
   const [showLog, setShowLog] = useState(false);
   const [view, setView] = useState<"app" | "map">("app");
+  const own = useStore((state) => state.settings.appWindow);
   // The map is for the app whose code is in front, and before an app has
   // run it is all the sheet shows, beside a way to run it.
   const graph = check && (!run || check.file === run.file || check.file === active) ? check.graph : null;
@@ -87,6 +88,11 @@ export function AppPane() {
             <button type="button" className="button small quiet" onClick={openAppInBrowser}>
               Open in browser
             </button>
+            {!own && (
+              <button type="button" className="button small quiet" onClick={() => setAppWindow(true)}>
+                Open in its own window
+              </button>
+            )}
             {!run.preview && (
               <button type="button" className="button small quiet" onClick={() => openShare(run.file)}>
                 Share
@@ -121,17 +127,34 @@ function Starting({ run }: { run: ShinyAppState }) {
     <div className="report-progress">
       <p role="status">Starting R and the app</p>
       <progress aria-label={`Starting ${baseName(run.file)}`} />
-      <p className="muted">The app runs in a separate copy of R, so you can keep using the console and your objects are left alone. Save any of the app's files and it reloads here.</p>
+      <p className="muted">The app runs in a separate copy of R, so you can keep using the console and your objects are left alone. Save any of the app's files and it reloads.</p>
     </div>
   );
 }
 
-/** The live app, with any errors inside it listed above. */
+/** The live app, with any errors inside it listed above. When the app has
+ * a window of its own, the sheet says so and keeps the errors. */
 function Running({ run }: { run: ShinyAppState }) {
+  const own = useStore((state) => state.settings.appWindow);
   return (
     <div className="report-done">
       {run.problems.length > 0 && <Problems problems={run.problems} />}
-      {run.url && (
+      {own && (
+        <div className="app-elsewhere">
+          <p>
+            <strong>{baseName(run.file)}</strong> is open in its own window. Closing that window stops the app. Errors inside it are explained here.
+          </p>
+          <div className="button-row">
+            <button type="button" className="button primary" onClick={showAppWindow}>
+              Bring its window forward
+            </button>
+            <button type="button" className="button quiet" onClick={() => setAppWindow(false)}>
+              Show it here instead
+            </button>
+          </div>
+        </div>
+      )}
+      {!own && run.url && (
         // The app is a page from its own R on this computer. It runs in a
         // sandbox at its own address, so its scripts and forms work but it
         // cannot reach the app around it.

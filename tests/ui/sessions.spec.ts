@@ -93,3 +93,21 @@ test("opening a project leaves other work open", async ({ page }) => {
   await expect(page.getByRole("tab", { name: /analysis\.R/ })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("tab", { name: /quick\.R/ })).toBeVisible();
 });
+
+test("a project file opened from Finder opens its project and says so", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Use this R" }).click();
+  await expect(page.getByRole("button", { name: /Open project/ }).first()).toBeVisible();
+  // Open With, a drop on the Dock, or a double click all arrive this way.
+  await page.evaluate((file) => window.goodforOpenFiles?.([file]), `${ROOT}/penguins.Rproj`);
+  await expect(page.getByRole("tab", { name: /analysis\.R/ })).toBeVisible();
+  await expectReady(page);
+  await expect(page.locator(".project-switch")).toContainText("Project");
+  await expect(page.locator(".project-switch")).toContainText("penguins");
+  await expect(page.locator(".notice")).toContainText("You are in the penguins project");
+  // The tools are all there.
+  const tools = page.getByRole("navigation", { name: "Tools" });
+  for (const name of ["Results", "Objects", "R help", "History", "Help", "Home", "Settings"]) {
+    await expect(tools.getByRole("button", { name, exact: true })).toBeVisible();
+  }
+});

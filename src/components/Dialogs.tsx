@@ -5,7 +5,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { isDefaultLayout, resetApp, resetLayout, resetSettings, openHelp, chooseDataFile, chooseProjectFolder, chooseR, createDocument, createProject, exportPlot, hasPackage, previewData, runImport, installPackages, openDialog, openUrl, runCommand, setOutputLayout, shortPath, togglePalette, updateSettings, baseName, insertSnippetById } from "../lib/app";
 import { documentFileName, type DocumentFormat, type DocumentKind } from "../lib/chunks";
-import { explainApp, exportApp, previewExport, revealExport, stopExport } from "../lib/shiny";
+import { explainApp, exportApp, previewExport, revealExport, setAppWindow, stopExport } from "../lib/shiny";
 import { COMMANDS, keyLabel, searchCommands, searchSnippets, visibleCommands } from "../lib/commands";
 import { SNIPPETS } from "../lib/snippets";
 import { isSupportedR, OLDEST_R } from "../lib/rversion";
@@ -521,6 +521,16 @@ function ResultsPane() {
             </span>
           </label>
         </div>
+      </fieldset>
+      <fieldset>
+        <legend>Shiny apps</legend>
+        <label className="check">
+          <input type="checkbox" checked={settings.appWindow} onChange={(event) => setAppWindow(event.target.checked)} />
+          <span>
+            Open a running app in its own window
+            <span className="hint">As RStudio does. Closing the window stops the app. Turned off, the app shows in the App sheet beside the script.</span>
+          </span>
+        </label>
       </fieldset>
     </>
   );

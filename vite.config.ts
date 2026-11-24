@@ -40,10 +40,17 @@ export default defineConfig({
   server: {
     port: 1420,
     strictPort: true,
-    watch: { ignored: ["**/src-tauri/**", "**/target/**", "**/crates/**", "**/docs/**", "**/design/**", "**/tests/**", "**/test-results/**", "**/vite.config.ts", "**/index.html", "**/scripts/**", "**/tsconfig.json", "**/package.json", "**/package-lock.json", "**/public/**", "**/dist/**", "**/.github/**", "**/*.md"] },
+    watch: { ignored: ["**/src-tauri/**", "**/target/**", "**/crates/**", "**/docs/**", "**/design/**", "**/tests/**", "**/test-results/**", "**/vite.config.ts", "**/index.html", "**/app-window.html", "**/scripts/**", "**/tsconfig.json", "**/package.json", "**/package-lock.json", "**/public/**", "**/dist/**", "**/.github/**", "**/*.md"] },
   },
   // The app loads from disk, not the network, so one larger bundle costs
   // nothing at startup and the size warning does not apply.
-  build: { target: "safari15", outDir: "dist", sourcemap: false, chunkSizeWarningLimit: 2000 },
+  // Two pages: the app, and the window a running Shiny app opens in.
+  build: {
+    target: "safari15",
+    outDir: "dist",
+    sourcemap: false,
+    chunkSizeWarningLimit: 2000,
+    rollupOptions: { input: { main: "index.html", app: "app-window.html" } },
+  },
   test: { include: ["tests/unit/**/*.test.ts"], environment: "node" },
 });

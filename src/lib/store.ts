@@ -6,7 +6,7 @@
 // objects change, not on every console line.
 
 import { useSyncExternalStore } from "react";
-import type { GuideTarget } from "./guide";
+import type { Walk } from "./guide";
 import type { ShinyFinding } from "./shinyCheck";
 import type { ShinyGraph } from "./shinyGraph";
 import type { Frame } from "./shinyTrace";
@@ -291,8 +291,8 @@ export type State = {
     stagePin: string | null;
     /** Whether the stage shows the code above each result. */
     stageCode: boolean;
-    /** The part of the app being pointed at with the iris, or null. */
-    beacon: GuideTarget | null;
+    /** The Show me walk in progress, or null. */
+    beacon: Walk | null;
     /** The template the New Project dialog starts on. */
     newProjectTemplate: ProjectTemplate;
     /** Shows the app's own help over everything, without closing anything. */
@@ -405,6 +405,7 @@ export const defaultSettings: Settings = {
   lastUpdateCheck: 0,
   autosave: false,
   renderOnSave: true,
+  appWindow: true,
   pdfEngine: "auto",
   latexDir: "",
   hints: true,

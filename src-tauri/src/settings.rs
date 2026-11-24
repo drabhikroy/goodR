@@ -109,6 +109,11 @@ pub struct Settings {
     pub autosave: bool,
     /// Whether a report rendered once renders again each time it is saved.
     pub render_on_save: bool,
+    /// Whether a running Shiny app opens in a window of its own, as in
+    /// RStudio, rather than in the App sheet beside the script.
+    pub app_window: bool,
+    /// What Run does by default, for scripts and for documents.
+    pub run_mode: RunMode,
     /// How Render as PDF makes a PDF: "auto", LaTeX when there is one and
     /// Typst otherwise, or "typst", or "latex".
     pub pdf_engine: String,
@@ -132,6 +137,21 @@ pub struct Settings {
     /// #RRGGBB. Empty uses the palette's own.
     pub history_then: String,
     pub history_now: String,
+}
+
+/// What Run does by default: "line", "chunk", or "file", one choice for
+/// scripts and one for documents.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(default)]
+pub struct RunMode {
+    pub script: String,
+    pub document: String,
+}
+
+impl Default for RunMode {
+    fn default() -> Self {
+        Self { script: "line".into(), document: "chunk".into() }
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
@@ -217,6 +237,8 @@ impl Default for Settings {
             last_update_check: 0,
             autosave: false,
             render_on_save: true,
+            app_window: true,
+            run_mode: RunMode::default(),
             pdf_engine: "auto".into(),
             latex_dir: String::new(),
             hints: true,

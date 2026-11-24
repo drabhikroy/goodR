@@ -21,7 +21,7 @@ use serde::Serialize;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex as StdMutex};
-use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::{AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_opener::OpenerExt;
 
@@ -343,6 +343,51 @@ pub fn app_reveal(app: AppHandle, apps: State<'_, ShinyState>, folder: String) -
 pub fn app_open(app: AppHandle, apps: State<'_, ShinyState>) -> CommandResult<()> {
     let url = apps.running.lock().unwrap().as_ref().and_then(|running| running.url.clone()).ok_or("No app is running.")?;
     app.opener().open_url(url, None::<&str>).map_err(|error| error.to_string())
+}
+
+/// The label of the window a running app opens in.
+pub const APP_WINDOW: &str = "app";
+
+/// Shows the running app in a window of its own, as RStudio does, or brings
+/// that window forward and loads the app again. The window holds a small
+/// page of this app's own, with the address, Reload, and Open in browser
+/// above the app. The address comes from the app's own R, never from the
+/// interface, so the window can show nothing else.
+#[tauri::command]
+pub fn app_window(app: AppHandle, apps: State<'_, ShinyState>, title: String, mode: String) -> CommandResult<()> {
+    let url = apps.running.lock().unwrap().as_ref().and_then(|running| running.url.clone()).ok_or("No app is running.")?;
+    if let Some(window) = app.get_webview_window(APP_WINDOW) {
+        let quoted = serde_json::to_string(&url).map_err(|error| error.to_string())?;
+        window.eval(format!("window.showApp && window.showApp({quoted})")).map_err(|error| error.to_string())?;
+        let _ = window.set_title(&title);
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+        return Ok(());
+    }
+    // The address and the appearance ride in the fragment, which the page
+    // reads and checks.
+    let mode = if ["light", "dark", "paper"].contains(&mode.as_str()) { mode } else { "light".into() };
+    let escaped = url.replace('%', "%25").replace('&', "%26").replace('#', "%23").replace('+', "%2B");
+    WebviewWindowBuilder::new(&app, APP_WINDOW, WebviewUrl::App(format!("app-window.html#mode={mode}&url={escaped}").into()))
+        .title(title)
+        .inner_size(1100.0, 820.0)
+        .min_inner_size(480.0, 360.0)
+        .build()
+        .map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+/// Closes the app's window, once the app has ended.
+#[tauri::command]
+pub fn app_window_close(app: AppHandle) {
+    if let Some(window) = app.get_webview_window(APP_WINDOW) {
+        let _ = window.destroy();
+    }
+}
+
+/// Stops the app when its window is closed, as RStudio does.
+pub fn app_window_closed(app: &AppHandle) {
+    app_stop(app.clone(), app.state::<ShinyState>());
 }
 
 /// Ends the app when the window closes, so no R is left running.

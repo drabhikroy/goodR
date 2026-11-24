@@ -1,0 +1,11 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "app-window",
+  "description": "The window a running Shiny app opens in. Its own page asks only to open the app in the browser, a command of the app's own that reads the address from the app's R. The app inside is a page from another address, which has no access at all.",
+  "windows": [
+    "app"
+  ],
+  "permissions": [
+    "core:event:default"
+  ]
+}

@@ -173,3 +173,26 @@ test("likely mistakes in an app are found as it is written, at their line, with 
   await expect(page.locator(".editor-host .cm-content")).toContainText("output$mass <- renderPlot");
   await expect(banner).toHaveCount(0);
 });
+
+test("a running app opens in its own window by default, as in RStudio, and can move back to the sheet", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.goodforSettings = { appWindow: true };
+  });
+  await openApp(page);
+  await page.getByRole("button", { name: "Run app" }).click();
+  const sheet = page.getByRole("region", { name: "App" });
+  await expect(sheet).toContainText("is open in its own window");
+  await expect.poll(() => page.evaluate(() => window.goodforAppWindow)).toBe("penguins, Shiny app");
+  await expect(sheet.locator("iframe")).toHaveCount(0);
+  // Show it here instead closes the window and puts the app in the sheet.
+  await sheet.getByRole("button", { name: "Show it here instead" }).click();
+  await expect(sheet.locator("iframe")).toHaveCount(1);
+  expect(await page.evaluate(() => window.goodforAppWindow)).toBeUndefined();
+  // And back again, from the sheet's own button.
+  await sheet.getByRole("button", { name: "Open in its own window" }).click();
+  await expect(sheet).toContainText("is open in its own window");
+  await expect.poll(() => page.evaluate(() => window.goodforAppWindow)).toBe("penguins, Shiny app");
+  // Stopping the app closes its window.
+  await sheet.getByRole("button", { name: "Stop", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.goodforAppWindow)).toBeUndefined();
+});

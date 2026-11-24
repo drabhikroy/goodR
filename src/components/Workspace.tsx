@@ -221,7 +221,12 @@ function ProjectSwitcher() {
         <span className="project-kind" aria-hidden="true">
           <SessionIcon session={active} />
         </span>
-        <span className="truncate">{sessionButtonLabel(active)}</span>
+        {/* A project says so above its name, so it is plain from the first
+            moment that the work is inside a project. */}
+        <span className="project-label">
+          {sessionKind(active) === "project" && <span className="project-eyebrow">Project</span>}
+          <span className="truncate">{sessionButtonLabel(active)}</span>
+        </span>
         {sessionKind(active) === "file" && <span className="visually-hidden">, {sessionLabel(active)} on its own</span>}
         {openKeys.length > 1 && (
           <>
