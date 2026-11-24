@@ -472,12 +472,12 @@ async fn r_cite(state: State<'_, AppState>, session: String, kind: String, query
 // Saving also keeps a version, which reads and lists files, so it runs off
 // the interface's thread.
 #[tauri::command(async)]
-fn write_text(state: State<'_, AppState>, path: String, contents: String) -> CommandResult<()> {
+fn write_text(state: State<'_, AppState>, path: String, contents: String, automatic: Option<bool>) -> CommandResult<()> {
     let path = state.allowed.lock().unwrap().check(Path::new(&path)).map_err(text_error)?;
     // A script keeps its earlier versions. A failure to keep one never
     // stops the save itself.
     if files::is_script(&path) {
-        let _ = history::keep(&history_root(&state), &path, &contents);
+        let _ = history::keep(&history_root(&state), &path, &contents, automatic.unwrap_or(false));
     }
     files::write_bytes(&path, contents.as_bytes()).map_err(text_error)
 }

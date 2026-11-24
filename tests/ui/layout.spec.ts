@@ -92,12 +92,18 @@ test("the tools name themselves after the pointer rests, or always when Settings
   for (const name of ["Results", "Objects", "R help", "Assistant", "Packages", "History", "Home", "Settings"]) {
     await expect(tools.getByRole("button", { name, exact: true })).toBeVisible();
   }
+  // A name shows a moment after the pointer rests, not as it sweeps past.
   await tools.getByRole("button", { name: "Packages", exact: true }).hover();
-  await page.waitForTimeout(1500);
   await expect(page.locator(".tool-tip")).toHaveCount(0);
-  await expect(page.locator(".tool-tip")).toHaveText("Packages", { timeout: 6000 });
+  await expect(page.locator(".tool-tip")).toHaveText("Packages", { timeout: 1500 });
   await page.mouse.move(0, 0);
   await expect(page.locator(".tool-tip")).toHaveCount(0);
+  // A right-click on the strip shows every name under a larger icon, and
+  // another hides them again.
+  await tools.click({ button: "right", position: { x: 20, y: 400 } });
+  await expect(tools.locator(".tool-name")).toHaveCount(8);
+  await tools.click({ button: "right", position: { x: 20, y: 400 } });
+  await expect(tools.locator(".tool-name")).toHaveCount(0);
   // With names on, each is written under its icon and none pops up.
   await tools.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("checkbox", { name: /Show names under the tool icons/ }).check();

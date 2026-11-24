@@ -44,7 +44,9 @@ export interface Backend {
    * deleted file and keeping changed ones, and opens it. */
   openExamples(): Promise<ProjectInfo>;
   readText(path: string): Promise<string>;
-  writeText(path: string, contents: string): Promise<void>;
+  /** Writes a file. An automatic save, from autosave, may fold into the
+   * version autosave kept a moment ago instead of keeping a new one. */
+  writeText(path: string, contents: string, automatic?: boolean): Promise<void>;
   /** The newest versions of the app, R, and Ollama. */
   latestVersions(): Promise<LatestVersions>;
   /** Installs the newest version of the app, returning it, or null when
@@ -225,7 +227,7 @@ async function tauriBackend(): Promise<Backend> {
     createProject: (parent, name, template, git) => invoke("create_project", { parent, name, template, git }),
     openExamples: () => invoke("open_examples"),
     readText: (path) => invoke("read_text", { path }),
-    writeText: (path, contents) => invoke("write_text", { path, contents }),
+    writeText: (path, contents, automatic = false) => invoke("write_text", { path, contents, automatic }),
     fileHistory: (path) => invoke("file_history", { path }),
     resetApp: (recent, history) => invoke("reset_app", { recent, history }),
     latestVersions: () => invoke("latest_versions"),

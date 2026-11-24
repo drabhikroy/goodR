@@ -1,4 +1,4 @@
-// The tour, and the rings that point at parts of the app.
+// The tour, and the iris that points at parts of the app.
 //
 // The tour follows the walkthrough in Tessera: a card in the middle of the
 // window with one point per step, a small animated picture of what the
@@ -6,7 +6,7 @@
 // picture is drawn in the app's own colors, so it matches every appearance
 // and palette, and it stops moving when motion is reduced. Where the part
 // a step describes is on screen, Show me hides the card for a moment and
-// marks that part with rings that widen out from it, then brings the card
+// marks that part with an iris that dims the rest, then brings the card
 // back, so the step is seen in place rather than only described. The tour
 // opens by itself once, on the first run, and again from Help or the
 // opening screen whenever it is wanted.
@@ -264,7 +264,7 @@ export function Tour() {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [step, beacon]);
-  // While the rings play, the card steps aside, then comes back.
+  // While the iris shows, the card steps aside, then comes back.
   if (step === null || beacon) return null;
   const current = STEPS[Math.min(step, STEPS.length - 1)];
   const last = step >= STEPS.length - 1;
@@ -324,24 +324,31 @@ export function Tour() {
 }
 
 /**
- * The rings: an outline around the part being pointed at, and circles
- * that widen out from its center and fade, three at a time, so the eye
- * finds it wherever it sits. A label names it. Any click or key clears
- * them early.
+ * Show me: an iris. The page dims, and a clear oval closes in on the part
+ * being pointed at from the edges of the window, then settles and holds
+ * still around it, ringed in the accent color, with a label naming it. The
+ * same pointing the app's other Help pages use. Any click or key clears it
+ * early. With motion reduced, the oval is simply there.
  */
 export function Beacon() {
   const target = useStore((state) => state.ui.beacon);
   const [box, setBox] = useState<DOMRect | null>(null);
+  // The iris starts wide open and closes once it has been placed, so the
+  // move from the window's edges to the part is seen.
+  const [closed, setClosed] = useState(false);
   useLayoutEffect(() => {
+    setClosed(false);
     if (!target) return setBox(null);
     const measure = () => setBox(findTarget(target)?.getBoundingClientRect() ?? null);
     measure();
+    const frame = requestAnimationFrame(() => requestAnimationFrame(() => setClosed(true)));
     const timer = setInterval(measure, 250);
     const clear = () => stopPointing();
     window.addEventListener("resize", measure);
     document.addEventListener("pointerdown", clear, true);
     document.addEventListener("keydown", clear, true);
     return () => {
+      cancelAnimationFrame(frame);
       clearInterval(timer);
       window.removeEventListener("resize", measure);
       document.removeEventListener("pointerdown", clear, true);
@@ -351,17 +358,17 @@ export function Beacon() {
   if (!target || !box) return null;
   const cx = box.left + box.width / 2;
   const cy = box.top + box.height / 2;
-  // The rings start a little larger than the part's shorter side, so a
-  // wide part such as the stage still gets rings that read as circles.
-  const size = Math.max(56, Math.min(box.width, box.height) + 24);
-  const below = box.bottom + 56 < window.innerHeight;
+  // An oval a little larger than the part, so the whole of it sits inside
+  // with room to spare, never smaller than a fingertip.
+  const width = Math.max(72, box.width * 1.18 + 28);
+  const height = Math.max(72, box.height * 1.18 + 28);
+  const open = Math.hypot(window.innerWidth, window.innerHeight) * 2;
+  const size = closed ? { width, height } : { width: open, height: open };
+  const below = cy + height / 2 + 56 < window.innerHeight;
   return (
     <div className="beacon" role="status" aria-live="polite">
-      <div className="beacon-outline" style={{ left: box.left - 6, top: box.top - 6, width: box.width + 12, height: box.height + 12 }} />
-      {[0, 1, 2].map((ring) => (
-        <span key={ring} className={`beacon-ring r${ring}`} style={{ left: cx - size / 2, top: cy - size / 2, width: size, height: size }} />
-      ))}
-      <span className="beacon-label" style={{ left: Math.min(Math.max(12, cx - 90), window.innerWidth - 192), top: below ? box.bottom + 14 : box.top - 46 }}>
+      <div className={`iris ${closed ? "is-closed" : ""}`} style={{ left: cx - size.width / 2, top: cy - size.height / 2, width: size.width, height: size.height }} />
+      <span className="beacon-label" style={{ left: Math.min(Math.max(12, cx - 90), window.innerWidth - 192), top: below ? cy + height / 2 + 12 : cy - height / 2 - 46 }}>
         {TARGETS[target].label}
       </span>
     </div>

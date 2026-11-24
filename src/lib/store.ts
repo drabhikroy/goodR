@@ -291,7 +291,7 @@ export type State = {
     stagePin: string | null;
     /** Whether the stage shows the code above each result. */
     stageCode: boolean;
-    /** The part of the app being pointed at with rings, or null. */
+    /** The part of the app being pointed at with the iris, or null. */
     beacon: GuideTarget | null;
     /** The template the New Project dialog starts on. */
     newProjectTemplate: ProjectTemplate;

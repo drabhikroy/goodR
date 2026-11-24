@@ -31,7 +31,7 @@ type Topic = {
 };
 
 /** Buttons that take the reader straight to the parts a topic is about,
- * each marked on screen with widening rings. */
+ * each marked on screen by an iris that dims the rest of the window. */
 function ShowMe({ targets }: { targets: GuideTarget[] }) {
   return (
     <div className="show-me" role="group" aria-label="Show me in the app">
@@ -318,7 +318,7 @@ const TOPICS: Topic[] = [
         <p>To see only your script and the result, press <kbd>{keyLabel("⌥⌘F")}</kbd> for focus mode. Leave focus, at the top right, brings everything back.</p>
         <p>
           The tools run down the right edge of the window as icons: Results, Objects, then App or Report when there is one, then R help, Assistant, Packages, and History, with Settings at the foot. The one on
-          show is marked. Rest the pointer on an icon for a few seconds and its name appears, or turn on Show names under the tool icons in Settings, under Appearance, to see every name all the time. Objects
+          show is marked. Rest the pointer on an icon for a moment and its name appears. To see every name all the time, with larger icons, right-click the tools, choose View, Show or Hide Names Under the Tools, or turn on Show names under the tool icons in Settings, under Appearance. Objects
           lists what you have made, with a few words about each; press a data frame to look through it.
         </p>
         <p>
@@ -564,11 +564,11 @@ const TOPICS: Topic[] = [
         </p>
         <p><kbd>{keyLabel("⌘Z")}</kbd> on its own undoes typing in the script, as anywhere else.</p>
         <p>
-          Each save keeps a version of the script, at most one every five minutes, and so does each run that works, saved or not. The last hundred are kept. History, in the tools down the right
-          or as History of this file in the project menu and the File menu, shows the script then and now side by side. The earlier version is on the left, in apricot with a dashed edge, and the
+          Each save you make keeps a version of the script, however soon after the last, and so does each run that works, saved or not. Only autosave's own saves fold together, one every five minutes. The last two hundred are kept. History, in the tools down the right
+          or as History of this file in the project menu and the File menu, opens at the full size of the window and shows the script then and now side by side. The earlier version is on the left, in apricot with a dashed edge, and the
           script now on the right, in orchid with a solid edge. Lines that match fold away, so a long script with a few changes fits on one screen, and each change is named for the section it is in.
           Step through the changes with the arrows at the top, or <kbd>F7</kbd> and <kbd>⇧F7</kbd>, or click a mark on the thin strip down the right, which shows where every change sits in the
-          whole file. Put one change back, copy the old lines, or use the whole version. Each earlier version is a card, with older ones stacked behind it. Flip back a card with the left arrow and
+          whole file. Click a change to pick it, and the buttons at the foot of the card act on it: Put back this change, Copy, or Use this whole version. Each earlier version is a card, with older ones stacked behind it. Flip back a card with the left arrow and
           forward with the right arrow, click the edge of a card behind, or move the slider at the foot, which marks with a ✕ any version where a line did not run. Last version that ran jumps to
           the newest one that worked. Nothing is saved until you save, and Undo takes it back. The colors can be changed in Settings, under Accessibility.
         </p>
@@ -674,7 +674,7 @@ const TOPICS: Topic[] = [
         </p>
         <p>
           Compact, under Appearance, tightens the space around panes for a small screen, and keeps every button just as easy to hit. Documents wrap at a comfortable line length unless you turn that off
-          there too. Show names under the tool icons, also there, writes the name of each tool down the right edge under its icon.
+          there too. Show names under the tool icons, also there, writes the name of each tool down the right edge under a larger icon. A right-click on the tools does the same.
         </p>
         <p>
           Menus can show the essentials, or everything. Everything adds a few commands for people who know what they want, such as Run to here, Restart R and run the file, and rendering straight to

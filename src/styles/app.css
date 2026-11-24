@@ -5986,8 +5986,8 @@ legend {
   margin-bottom: 1rem;
 }
 
-/* The rings that point at a part of the app: an outline around it, and
-   three circles that widen from its center and fade, one after another. */
+/* Pointing at a part of the app: a layer over the window for the iris
+   and the label that names the part. */
 .beacon {
   position: fixed;
   inset: 0;
@@ -5995,27 +5995,25 @@ legend {
   pointer-events: none;
 }
 
-.beacon-outline {
+/* Show me: the iris. Everything but the oval is dimmed by its own wide
+   outline, which follows the oval's curve. The oval glides in from beyond
+   the window's edges, then gives a small settle and holds still. */
+.iris {
   position: fixed;
-  border-radius: var(--radius-lg);
-  box-shadow: 0 0 0 3px var(--accent), 0 0 0 9px var(--accent-soft);
-  animation: beacon-outline 1.4s ease-in-out infinite;
-}
-
-.beacon-ring {
-  position: fixed;
+  border-radius: 50%;
   border: 3px solid var(--accent);
-  border-radius: 999px;
-  opacity: 0;
-  animation: beacon-ring 1.8s cubic-bezier(0.2, 0.7, 0.3, 1) infinite;
+  outline: 300vmax solid rgb(6 9 15 / 0.58);
+  box-shadow: 0 0 1.4rem 0.3rem var(--accent-soft);
+  transition: left 0.74s cubic-bezier(0.2, 0.8, 0.2, 1), top 0.74s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.74s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.74s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.beacon-ring.r1 {
-  animation-delay: 0.6s;
+.iris.is-closed {
+  animation: iris-settle 0.26s ease-out 0.74s;
 }
 
-.beacon-ring.r2 {
-  animation-delay: 1.2s;
+@keyframes iris-settle {
+  0% { transform: scale(1.035); }
+  100% { transform: scale(1); }
 }
 
 .beacon-label {
@@ -6031,20 +6029,10 @@ legend {
   box-shadow: var(--shadow);
 }
 
+/* A ring that widens from a point and fades, for the places that pulse. */
 @keyframes beacon-ring {
   0% { opacity: 0.85; transform: scale(0.4); }
   100% { opacity: 0; transform: scale(2.4); }
-}
-
-@keyframes beacon-outline {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.55; }
-}
-
-/* With motion reduced, the rings hold still as one steady circle. */
-[data-motion="reduce"] .beacon-ring.r0 {
-  opacity: 0.9;
-  transform: scale(1.4);
 }
 
 /* Show me: buttons that point at parts of the app from Help. */
@@ -7293,14 +7281,17 @@ legend {
    Then wears History's "then" color with a dashed edge and now its "now"
    color with a solid edge, so the two differ in shape as well as color.
    Matching lines fold away, and a thin ruler shows where changes are. */
+/* History takes the whole window, less a small margin, and grows and
+   shrinks with it, since two columns of code want all the room there is. */
 .overlay:has(> .history-view) {
-  padding-top: 3vh;
+  padding: 1rem;
 }
 
 .dialog.wide.history-view {
-  width: min(92rem, 100%);
-  height: min(58rem, 92vh);
-  max-height: 92vh;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
 }
 
 .history-tabs {
@@ -7529,6 +7520,24 @@ legend {
   font-size: 0.84rem;
 }
 
+.change-section {
+  color: var(--text-muted);
+}
+
+.tn-card-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.9rem;
+  border-top: 1px solid var(--border);
+  background: var(--raised);
+}
+
+.tn-card-foot-gap {
+  flex: 1;
+}
+
 .tn-pane-scroll {
   flex: 1;
   min-height: 0;
@@ -7541,6 +7550,10 @@ legend {
   width: 0.7rem;
   height: 0.7rem;
   border-radius: 0.2rem;
+}
+
+.history-key.is-then-solid {
+  background: var(--history-then);
 }
 
 .history-key.is-then {
@@ -7590,52 +7603,46 @@ legend {
 
 .tn-code.is-gap {
   min-height: 1.7em;
-  background: repeating-linear-gradient(135deg, transparent 0 6px, var(--sunken) 6px 12px);
 }
 
 .tn-change {
-  margin: 0.35rem 0;
-  border-radius: var(--radius-md);
+  position: relative;
+  cursor: pointer;
 }
 
-.tn-change.is-current {
-  box-shadow: inset 0 0 0 2px var(--focus);
+/* The change in hand: a bar in the line number margin, on both sides. */
+.tn-change.is-current::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0.3rem;
+  width: 0.25rem;
+  border-radius: 0.2rem;
+  background: var(--focus);
 }
 
-.tn-change-title {
-  margin: 0;
-  min-height: calc(var(--target) + 0.4rem);
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.2rem 0.6rem 0.2rem 0.9rem;
-  font-size: 0.82rem;
-  color: var(--text-muted);
-}
-
-.tn-change-name {
-  margin-right: auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
+/* A fold: a quiet line across the code, with how many lines it hides. */
 .fold-button {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 0.8rem;
   box-sizing: border-box;
   width: 100%;
   min-height: var(--target);
-  cursor: pointer;
+  padding: 0 1rem;
   border: none;
-  border-top: 1px dashed var(--border);
-  border-bottom: 1px dashed var(--border);
   background: transparent;
   color: var(--text-muted);
-  font-size: 0.86rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.fold-button::before,
+.fold-button::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--border);
 }
 
 .fold-button:hover {
@@ -7993,4 +8000,10 @@ legend {
 
 .pane-actions {
   flex-wrap: wrap;
+}
+
+/* The script now has no foot, so its lines get the same room below them
+   as the card's foot takes; the two panes then scroll exactly as far. */
+.tn-now .tn-pane-scroll {
+  padding-bottom: calc(var(--target) + 1.55rem);
 }

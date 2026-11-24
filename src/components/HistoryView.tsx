@@ -248,7 +248,7 @@ function Comparison({ found }: { found: Versions }) {
           </Fragment>
         );
       }
-      return <ChangeRows key={segment.key} segment={segment} side={side} count={changes.length} current={segment.index === at} onPutBack={() => undoChange(segment.piece)} />;
+      return <ChangeRows key={segment.key} segment={segment} side={side} count={changes.length} current={segment.index === at} onPick={() => setCurrent(segment.index)} />;
     });
 
   return (
@@ -262,6 +262,7 @@ function Comparison({ found }: { found: Versions }) {
             </button>
             <span className="change-count" aria-live="polite">
               Change {at + 1} of {changes.length}
+              {changes[at]?.section && <span className="change-section">, in {changes[at].section}</span>}
             </span>
             <button type="button" className="icon-button" aria-label="Next change" aria-keyshortcuts="F7" disabled={at >= changes.length - 1} onClick={() => go(at + 1)}>
               <span aria-hidden="true">↓</span>
@@ -291,7 +292,7 @@ function Comparison({ found }: { found: Versions }) {
             onAnimationEnd={() => setArriving(null)}
           >
             <header className="tn-card-head">
-              <span className="history-key is-then" aria-hidden="true" />
+              <span className="history-key is-then-solid" aria-hidden="true" />
               <span className="tn-card-when">Then, {whenWords(version.savedAt)}</span>
               {marks[chosen] && (
                 <span className={`tn-card-outcome ${marks[chosen] === "failed" ? "is-failed" : ""}`}>
@@ -304,6 +305,24 @@ function Comparison({ found }: { found: Versions }) {
             <div className="tn-pane-scroll" ref={scroller} tabIndex={0} aria-label="The script then, line by line" onScroll={() => follow(scroller.current, nowScroller.current)}>
               {rowsFor("then")}
             </div>
+            <footer className="tn-card-foot">
+              {changes[at] && (
+                <>
+                  <button type="button" className="button primary" aria-label={`${changes[at].piece.kind === "added" ? "Take out" : "Put back"} change ${at + 1}`} onClick={() => undoChange(changes[at].piece)}>
+                    {changes[at].piece.kind === "added" ? "Take out this change" : "Put back this change"}
+                  </button>
+                  {changes[at].piece.before.length > 0 && (
+                    <button type="button" className="button quiet" aria-label={`Copy then, change ${at + 1}`} onClick={() => copyLines(changes[at].piece.before.join("\n"))}>
+                      Copy
+                    </button>
+                  )}
+                </>
+              )}
+              <span className="tn-card-foot-gap" />
+              <button type="button" className="button quiet" disabled={!changes.length} onClick={() => restoreVersion(path, version.text)}>
+                Use this whole version
+              </button>
+            </footer>
           </section>
         </div>
         <section className="tn-now" aria-label="The script now">
@@ -327,9 +346,6 @@ function Comparison({ found }: { found: Versions }) {
           </button>
           <button type="button" className="button quiet" onClick={() => copyLines(version.text)}>
             Copy this version
-          </button>
-          <button type="button" className="button primary" disabled={!changes.length} onClick={() => restoreVersion(path, version.text)}>
-            Use this whole version
           </button>
         </div>
       </div>
@@ -361,10 +377,10 @@ function Code({ line, kind }: { line: Line | null; kind?: "then" | "now" }) {
   );
 }
 
-/** One side of a change. The left side is named for the change and holds
- * the ways to take it back; the right side shows the same change as it is
- * now, padded so the two stay level. */
-function ChangeRows({ segment, side, count, current, onPutBack }: { segment: Extract<Segment, { kind: "change" }>; side: "then" | "now"; count: number; current: boolean; onPutBack: () => void }) {
+/** One side of a change: its lines then, or its lines now, padded so the
+ * two sides stay level. The change in hand is marked on both sides, and
+ * the buttons at the foot of the card act on it; a click picks another. */
+function ChangeRows({ segment, side, count, current, onPick }: { segment: Extract<Segment, { kind: "change" }>; side: "then" | "now"; count: number; current: boolean; onPick: () => void }) {
   const { piece, then, now, index, section } = segment;
   const rows = Math.max(then.length, now.length);
   const kind = piece.kind === "added" ? "lines added" : piece.kind === "removed" ? "lines taken out" : "";
@@ -373,27 +389,13 @@ function ChangeRows({ segment, side, count, current, onPutBack }: { segment: Ext
   const body = Array.from({ length: rows }, (_, row) => <Code key={row} line={lines[row] ?? null} kind={side} />);
   if (side === "now") {
     return (
-      <div className={`tn-change ${current ? "is-current" : ""}`} role="group" aria-label={`${title}, now`}>
-        <p className="tn-change-title" aria-hidden="true">
-          {section ? `In ${section}` : `Change ${index + 1}`}
-        </p>
+      <div className={`tn-change ${current ? "is-current" : ""}`} role="group" aria-label={`${title}, now`} onClick={onPick}>
         {body}
       </div>
     );
   }
   return (
-    <section className={`tn-change ${current ? "is-current" : ""}`} data-change={index} aria-label={title}>
-      <div className="tn-change-title">
-        <span className="tn-change-name">{title}</span>
-        <button type="button" className="button small primary" aria-label={`${piece.kind === "added" ? "Take out" : "Put back"} change ${index + 1}`} onClick={onPutBack}>
-          {piece.kind === "added" ? "Take out" : "Put back"}
-        </button>
-        {piece.before.length > 0 && (
-          <button type="button" className="button small quiet" aria-label={`Copy then, change ${index + 1}`} onClick={() => copyLines(piece.before.join("\n"))}>
-            Copy
-          </button>
-        )}
-      </div>
+    <section className={`tn-change ${current ? "is-current" : ""}`} data-change={index} aria-label={title} onClick={onPick}>
       {body}
     </section>
   );

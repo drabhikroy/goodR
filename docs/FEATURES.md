@@ -57,9 +57,10 @@ Results, Objects, then App or Report when there is one, R help, Assistant,
 Packages, and History, with Home and Settings at the foot. History opens over
 the whole window, since then and now need two columns of code. The one on show is marked,
 and pressing Results while it is on show hides the canvas, giving the script
-the whole width. Resting the pointer on an icon for five seconds shows its
-name; Show names under the tool icons, in Settings under Appearance, writes
-every name under its icon instead. Screen readers hear each name at once.
+the whole width. Resting the pointer on an icon for a moment shows its name.
+To see every name all the time, with larger icons, right-click the tools,
+choose View, Show or Hide Names Under the Tools, or turn on Show names under
+the tool icons in Settings under Appearance. Screen readers hear each name at once.
 Objects lists the objects in R with a few words about each, with Import data
 and Clear all objects at the top. A data frame opens in the data viewer;
 anything else says what it is.
@@ -348,9 +349,11 @@ Unsaved changes are kept as you type and come back after a crash or a quit,
 with a note saying so. Saving automatically is a choice in Settings. If R
 stops, one press restarts it and runs the script again up to where you were.
 
-Each save also keeps a version of the script, at most one every five minutes,
-and so does each run that works, whether the script was saved or not. The
-last hundred are kept in the app's own folder. History, in the tools down the
+Each save you make keeps a version of the script, however soon after the last,
+and so does each run that works, whether the script was saved or not. Only
+autosave's own saves fold together, one version for each five minutes of steady
+typing. The last two hundred are kept in the app's own folder. History opens at
+the full size of the window and grows with it. History, in the tools down the
 right, shows the script then and now side by side: the earlier version on the
 left in apricot with a dashed edge, and the script now on the right in orchid
 with a solid edge, so the two differ in shape as well as color. Lines that
@@ -362,7 +365,10 @@ strip down the right marks where every change sits in the whole file. A
 slider along the foot moves to any earlier version, with a ✕ under those
 where a line did not run, and Last version that ran jumps to the newest one
 that worked. Put one change back, copy its old lines, or use the whole
-version, as an edit that Undo takes back.
+version, as an edit that Undo takes back. Clicking a change makes it the one
+in hand, marked by a bar in the margin, and the buttons at the foot of the
+card act on it: Put back this change (or Take out this change, for lines that
+are new), Copy, and Use this whole version.
 
 Each earlier version is a card. The one being compared is in front, older
 ones stack behind it to the left with a ✓ or ✕ on their edge, and the script
@@ -474,7 +480,9 @@ search box above them, and the one you pick fills the right. It opens on
 Start here, which has the tour, the examples, common questions, and a small
 map of the window where pressing any part points it out in the app. Each
 topic has a Show me button that takes you straight to the part of the app it
-names and marks it with rings that widen out from it.
+names: the rest of the window dims, and a clear oval closes in on the part
+from the edges of the window, settles, and holds still with its name beside
+it, as in the other apps' Help.
 
 The tour opens by itself the first time. It walks through the workspace in
 nine steps, each with a small animated picture, and its own Show me points at

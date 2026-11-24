@@ -667,7 +667,7 @@ export async function openExamples() {
 /**
  * Points at a part of the app from Help: Help steps aside, the workspace
  * comes forward with the canvas showing, opening the examples first when
- * nothing is open, and the part is marked with rings. A part that only
+ * nothing is open, and the part is marked with the iris. A part that only
  * exists later, such as the timeline before anything has run, is
  * explained instead.
  */
@@ -1294,7 +1294,7 @@ export async function saveFile(path: string | null = getState().active, saveAs =
     target = chosen;
   }
   try {
-    await api.writeText(target, editor.getText(path));
+    await api.writeText(target, editor.getText(path), automatic);
   } catch (error) {
     notify(`Could not save. ${String(error)}`, "error");
     return null;
@@ -2898,6 +2898,7 @@ export function runCommand(id: string) {
     "view.live": toggleLive,
     "view.inspector": () => togglePane("inspector"),
     "view.prompt": () => togglePart("showPrompt"),
+    "view.toolNames": () => updateSettings({ toolNames: !getState().settings.toolNames }),
     "view.timeline": () => togglePart("showTimeline"),
     "view.resetLayout": resetLayout,
     "view.startScreen": showStartScreen,

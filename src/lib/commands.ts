@@ -81,6 +81,7 @@ export const COMMANDS: Command[] = [
   { id: "view.inspector", title: "Show or hide the canvas", section: "View", keys: "⌥⌘0", combo: "Alt+Mod+0" },
   { id: "view.prompt", title: "Show or hide the R prompt", section: "View" },
   { id: "view.timeline", title: "Show or hide earlier results", section: "View" },
+  { id: "view.toolNames", title: "Show or hide names under the tools", section: "View" },
   { id: "view.resetLayout", title: "Reset the layout", section: "View" },
   { id: "view.startScreen", title: "Show the start screen", section: "View", keys: "⇧⌘H", combo: "Shift+Mod+h" },
   { id: "view.focus", title: "Focus on the script and the result", section: "View", keys: "⌥⌘F", combo: "Alt+Mod+f" },

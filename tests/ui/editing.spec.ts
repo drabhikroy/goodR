@@ -125,7 +125,7 @@ test("History shows a script then and now, folds what matches, and steps through
   const dialog = page.getByRole("dialog", { name: "History of analysis.R" });
   await expect(dialog.getByRole("tab", { name: "This script" })).toHaveAttribute("aria-selected", "true");
   await expect(dialog).toContainText("2 changes");
-  await expect(dialog.getByText("Change 1 of 2", { exact: true })).toBeVisible();
+  await expect(dialog.getByText(/^Change 1 of 2\b/)).toBeVisible();
   // The lines between the two changes fold away, and open on request.
   const fold = dialog.getByRole("button", { name: /unchanged lines/ });
   await expect(fold).toHaveCount(1);
@@ -133,13 +133,13 @@ test("History shows a script then and now, folds what matches, and steps through
   await expect(dialog.getByRole("button", { name: /^Fold these/ })).toHaveAttribute("aria-expanded", "true");
   // The arrows, or F7, move to the next change, named for its section.
   await dialog.getByRole("button", { name: "Next change" }).click();
-  await expect(dialog.getByText("Change 2 of 2", { exact: true })).toBeVisible();
+  await expect(dialog.getByText(/^Change 2 of 2\b/)).toBeVisible();
   await expect(dialog.getByRole("region", { name: "Change 2 of 2, in Flipper length model" })).toBeVisible();
   await page.keyboard.press("Shift+F7");
-  await expect(dialog.getByText("Change 1 of 2", { exact: true })).toBeVisible();
+  await expect(dialog.getByText(/^Change 1 of 2\b/)).toBeVisible();
   // Taking one change out edits the script, not the saved file.
   await dialog.getByRole("button", { name: "Take out change 1" }).click();
-  await expect(dialog.getByText("Change 1 of 1", { exact: true })).toBeVisible();
+  await expect(dialog.getByText(/^Change 1 of 1\b/)).toBeVisible();
   await expect(content).not.toContainText("brightest");
   await page.keyboard.press("Escape");
   await content.click();

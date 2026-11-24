@@ -442,7 +442,7 @@ test("History's then and now, with changes to step through, passes the same chec
   await page.keyboard.press("Control+s");
   await showTool(page, "History");
   const dialog = page.getByRole("dialog", { name: "History of analysis.R" });
-  await expect(dialog.getByText("Change 1 of 2", { exact: true })).toBeVisible();
+  await expect(dialog.getByText(/^Change 1 of 2\b/)).toBeVisible();
   await audit(page);
   expect(await smallTargets(page)).toEqual([]);
   await dialog.getByRole("tab", { name: "Commands you typed" }).click();

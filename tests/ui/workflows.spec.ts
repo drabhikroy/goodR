@@ -860,11 +860,12 @@ test("the tour steps through the workspace, and Show me points at each part in p
   await tour.getByRole("button", { name: "Next" }).click();
   const run = page.getByRole("dialog", { name: "Running a line" });
   await expect(run).toBeVisible();
-  // Show me sets the card aside, rings the Run button, then brings it back.
+  // Show me sets the card aside, closes an iris on the Run button, then
+  // brings the card back.
   await run.getByRole("button", { name: "Show me" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.locator(".beacon")).toContainText("Run");
-  await expect(page.locator(".beacon-ring")).toHaveCount(3);
+  await expect(page.locator(".iris.is-closed")).toHaveCount(1);
   await expect(run).toBeVisible({ timeout: 8000 });
   await expect(page.locator(".beacon")).toHaveCount(0);
   // The arrow keys move between steps, and the last one starts work.
@@ -885,7 +886,7 @@ test("Show me in Help closes Help and rings the part of the app it names", async
   await page.getByRole("group", { name: "Show me in the app" }).first().getByRole("button", { name: "The R prompt" }).click();
   await expect(page.getByRole("heading", { name: "Start here" })).toHaveCount(0);
   await expect(page.locator(".beacon")).toContainText("The R prompt");
-  // A click anywhere clears the rings early.
+  // A click anywhere clears the iris early.
   await page.mouse.click(5, 300);
   await expect(page.locator(".beacon")).toHaveCount(0);
 });

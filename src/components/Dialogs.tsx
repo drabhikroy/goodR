@@ -296,7 +296,7 @@ function AppearancePane() {
             <input type="checkbox" checked={settings.toolNames} onChange={(event) => updateSettings({ toolNames: event.target.checked })} />
             <span>
               Show names under the tool icons
-              <span className="hint">The tools down the right edge, such as Objects and Help. Otherwise a name appears after the pointer rests on an icon for five seconds.</span>
+              <span className="hint">The tools down the right edge, such as Objects and Help. Otherwise a name appears when the pointer rests on an icon. A right-click on the tools, or View, Show or Hide Names Under the Tools, does the same.</span>
             </span>
           </label>
         </div>

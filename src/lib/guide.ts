@@ -1,6 +1,6 @@
 // Pointing at parts of the app. Help and the tour can say "show me", and
-// the part they mean is marked on screen with rings that widen out from
-// its center, then fade, so the eye goes to it wherever it sits. The
+// the part they mean is marked on screen by an iris: the rest dims and a
+// clear oval closes in on the part, so the eye goes to it wherever it sits. The
 // parts are named here once, with how to find each on screen, so help
 // text and the tour never depend on how the interface is built.
 
@@ -24,10 +24,10 @@ export const TARGETS: Record<GuideTarget, { label: string; selector: string }> =
   canvasToggle: { label: "Show or hide the canvas", selector: ".tool-button[data-sheet='canvas']" },
 };
 
-// How long the rings play before they clear by themselves.
+// How long the iris shows before it clears by itself.
 const SHOW_MS = 4200;
 let timer: ReturnType<typeof setTimeout> | undefined;
-// What to do once the rings clear, such as bringing the tour back.
+// What to do once the iris clears, such as bringing the tour back.
 let after: (() => void) | undefined;
 
 /** The element for a part, when it is on screen. */
@@ -38,7 +38,7 @@ export function findTarget(target: GuideTarget): HTMLElement | null {
   return box.width > 0 && box.height > 0 ? element : null;
 }
 
-/** Marks a part on screen with the widening rings, for a few seconds. */
+/** Marks a part on screen with the iris, for a few seconds. */
 export function pointAt(target: GuideTarget, then?: () => void) {
   clearTimeout(timer);
   after = then;
@@ -47,7 +47,7 @@ export function pointAt(target: GuideTarget, then?: () => void) {
   timer = setTimeout(stopPointing, SHOW_MS);
 }
 
-/** Clears the rings, after their time or early, as any click or key does. */
+/** Clears the iris, after their time or early, as any click or key does. */
 export function stopPointing() {
   clearTimeout(timer);
   if (getState().ui.beacon) setState((state) => ({ ui: { ...state.ui, beacon: null } }));

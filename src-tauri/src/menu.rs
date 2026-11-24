@@ -140,6 +140,7 @@ pub fn build<R: Runtime>(app: &AppHandle<R>, state: &MenuState, recent: &[String
         .item(&MenuItemBuilder::with_id("view.inspector", "Show or Hide the Canvas").accelerator("CmdOrCtrl+Alt+0").build(app)?)
         .item(&MenuItemBuilder::with_id("view.prompt", "Show or Hide the R Prompt").build(app)?)
         .item(&MenuItemBuilder::with_id("view.timeline", "Show or Hide Earlier Results").build(app)?)
+        .item(&MenuItemBuilder::with_id("view.toolNames", "Show or Hide Names Under the Tools").build(app)?)
         .separator()
         .item(&MenuItemBuilder::with_id("view.resetLayout", "Reset the Layout").build(app)?)
         .separator()

@@ -32,6 +32,7 @@ import {
   togglePane,
   togglePart,
   updateSettings,
+  announce,
   viewData,
   viewPlot,
 } from "../lib/app";
@@ -110,10 +111,12 @@ export function Canvas() {
   );
 }
 
-// How long the pointer rests on a tool before its name shows. Long, so the
-// names stay out of the way of people who know the icons; Settings can
-// show every name all the time instead. Keyboard focus shows it at once.
-const NAME_DELAY = 5000;
+// How long the pointer rests on a tool before its name shows: long enough
+// that sweeping across the strip shows nothing, short enough that resting
+// on one icon to wonder what it is shows its name. Settings, the View
+// menu, or a right-click on the strip shows every name all the time
+// instead. Keyboard focus shows it at once.
+const NAME_DELAY = 600;
 
 /**
  * The tools, as one strip of icons down the right edge of the window:
@@ -129,7 +132,17 @@ export function ToolStrip() {
   const current = open ? (sheets.find((item) => item.id === chosen)?.id ?? "canvas") : null;
   const results: Sheet = { id: "canvas" as Sheet["id"], name: "Results", Icon: ChartIcon };
   return (
-    <nav className={`tool-strip ${names ? "has-names" : ""}`} aria-label="Tools">
+    <nav
+      className={`tool-strip ${names ? "has-names" : ""}`}
+      aria-label="Tools"
+      // A right-click on the strip shows or hides the names under the
+      // icons, the shortcut people reach for on a toolbar.
+      onContextMenu={(event) => {
+        event.preventDefault();
+        updateSettings({ toolNames: !names });
+        announce(names ? "Tool names hidden" : "Tool names shown");
+      }}
+    >
       {[results, ...sheets].map((item) => (
         <ToolButton key={item.id} sheet={item} on={current === item.id} names={names} />
       ))}
@@ -186,7 +199,7 @@ function ToolButton({ sheet, on, names, onPress }: { sheet: Sheet; on: boolean; 
         onFocus={(event) => setTip(!names && event.currentTarget.matches(":focus-visible"))}
         onBlur={hide}
       >
-        <Icon size={18} />
+        <Icon size={names ? 22 : 18} />
         {names && (
           <span className="tool-name" aria-hidden="true">
             {sheet.name}

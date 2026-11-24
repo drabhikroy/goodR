@@ -487,9 +487,12 @@ open over code rather than over the result and its buttons, and the canvas
 and the tools start at the top of the window. Icons without words are
 harder to learn than labeled ones (Wiedenbeck 1999), so each tool says its
 name to screen readers at once, shows it after the pointer rests on it, and
-can show it under its icon all the time from Settings. The delay before the
-name appears is five seconds, a choice made with the person the app is for,
-who wanted names out of the way once the icons are known. A settings file
+can show it under its icon all the time, from Settings, the View menu, or
+a right-click on the strip. The delay before the name appears was first
+five seconds, chosen to keep names out of the way once the icons are known,
+but in use that read as no name at all, so it is now a little over half a
+second: long enough that sweeping across the strip shows nothing, short
+enough that resting on an icon answers the question. A settings file
 from before the change moves to the new layout once, on its first launch;
 anything the person turns back on afterward stays as they set it.
 
@@ -656,15 +659,18 @@ itself on the first run and from Help or the opening screen after that.
 Describing a part of the window still leaves people looking for it, so
 each step that names a part has Show me, and so does every Help topic.
 Show me sets the tour or Help aside, opens the examples first when
-nothing is open, and marks the part with an outline and three rings that
-widen out from its center and fade, one after another, with its name in
-a label. Movement in the periphery is noticed faster than any change of
-color or size (Bartram, Ware, and Calvert 2003), which is why the rings
-move, and they stop on their own after a few seconds, or at the next
-click or key, so they never get in the way. With motion reduced, they
-hold still as one steady ring. A spotlight that dims the rest of the
-window was not used, since the rings find the part without hiding
-anything around it.
+nothing is open, and marks the part with an iris, as the Help in the
+person's other apps does: the rest of the window dims, and a clear oval
+closes in from beyond the window's edges onto the part, settles, and
+holds still, with its name in a label. Movement in the periphery is
+noticed faster than any change of color or size (Bartram, Ware, and
+Calvert 2003), so the closing motion draws the eye to wherever the part
+sits, and dimming the rest removes the competition for attention once it
+gets there. It clears on its own after a few seconds, or at the next
+click or key, so it never gets in the way. With motion reduced, the oval
+is simply there. An earlier design used widening rings without dimming;
+it was replaced so goodR points at things the way the person's other
+apps do.
 
 The help page itself is written around the questions people have while
 they work, how to run code, where results go, which R a script runs in,
