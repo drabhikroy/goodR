@@ -54,7 +54,8 @@ redraws that plot in place.
 
 The tools run down the right edge of the window as one column of icons:
 Results, Objects, then App or Report when there is one, R help, Assistant,
-Packages, and History, with Settings at the foot. The one on show is marked,
+Packages, and History, with Home and Settings at the foot. History opens over
+the whole window, since then and now need two columns of code. The one on show is marked,
 and pressing Results while it is on show hides the canvas, giving the script
 the whole width. Resting the pointer on an icon for five seconds shows its
 name; Show names under the tool icons, in Settings under Appearance, writes
@@ -348,12 +349,25 @@ with a note saying so. Saving automatically is a choice in Settings. If R
 stops, one press restarts it and runs the script again up to where you were.
 
 Each save also keeps a version of the script, at most one every five minutes,
-and the last hundred are kept in the app's own folder. The clock beside the
-file's folder lists them by when they were saved, each with a few words on
-what has changed since, such as "3 lines added and 1 changed". Choose one to
-see each change, with the old lines in red and the current lines in green.
-From there you can copy the old lines, put one part back, or use the whole
-version, as an edit that Undo takes back.
+and so does each run that works, whether the script was saved or not. The
+last hundred are kept in the app's own folder. History, in the tools down the
+right, shows the script then and now side by side: the earlier version on the
+left in apricot with a dashed edge, and the script now on the right in orchid
+with a solid edge, so the two differ in shape as well as color. Lines that
+match fold away, leaving two lines of context around each change, so a long
+script with a few changes spread through it fits on one screen. Each change
+is named for the section it is in, such as "Change 3 of 4, in Plots". The
+arrows at the top, or F7 and Shift F7, step through the changes, and a thin
+strip down the right marks where every change sits in the whole file. A
+slider along the foot moves to any earlier version, with a ✕ under those
+where a line did not run, and Last version that ran jumps to the newest one
+that worked. Put one change back, copy its old lines, or use the whole
+version, as an edit that Undo takes back. The two colors can be changed in
+Settings, under Accessibility, by typing a hex or RGB color or picking one.
+
+When a line fails that worked before, its result shows the line as it last
+ran without a problem beside the line now, and Put back the version that
+worked changes just those lines, as one edit that Undo takes back.
 
 ## Reading and writing code
 
@@ -440,8 +454,8 @@ install or update, the result lists each by name with a progress bar and says
 which did not install. R's own log is one press away, or always on show if
 you change a setting.
 
-The History sheet lists what was typed at the prompt and sends any of it back
-to the prompt or into the script.
+History's second tab, Commands you typed, lists what was typed at the prompt
+and sends any of it back to the prompt or into the script.
 
 ## Learning and teaching
 
@@ -558,7 +572,8 @@ These are the main keyboard shortcuts:
 | Show the assistant | ⌃9 |
 | Insert a pipe, an assignment, or a section | ⇧⌘M, ⌥−, ⇧⌘R |
 | R help for the name at the cursor | F1 |
-| Show R help, history, or packages over the canvas | ⌃3, ⌃4, ⌃7 |
+| Show R help or packages over the canvas, or the commands you typed | ⌃3, ⌃7, ⌃4 |
+| Next and previous change in History | F7, ⇧F7 |
 | Move to the canvas, or to the objects in R | ⌃6, ⌃8 |
 | Search for any command, or look a function up in R help | ⌘K |
 | Help for this app | ⇧⌘/ |

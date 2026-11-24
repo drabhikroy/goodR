@@ -13,6 +13,7 @@ import { askAssistantAboutError } from "../lib/assistant";
 import * as editor from "../lib/editor";
 import { explainError, userFrames } from "../lib/errors";
 import { openAskOnline } from "../lib/trace";
+import { applyRescue, openHistory, rescueFor, whenWords } from "../lib/fileHistory";
 import { usedBy } from "../lib/troubleshoot";
 import { isQuiet, SLOW_MS, useStore, type Block, type OutputItem } from "../lib/store";
 import type { Used } from "../lib/troubleshoot";
@@ -357,6 +358,49 @@ function Using({ used }: { used: Used[] }) {
   );
 }
 
+/** A failed line that worked before: how it last ran, then and now, with
+ * one press to put that back. Nothing shows when the line is new, or has
+ * been edited since it failed. */
+function Rescue({ blockId }: { blockId: string }) {
+  const block = useStore((state) => state.blocks[blockId]);
+  // Any run can bring an earlier version to light, so all of them count.
+  useStore((state) => state.blocks);
+  const [done, setDone] = useState(false);
+  if (done || !block) return null;
+  const rescue = rescueFor(blockId);
+  if (!rescue) return null;
+  return (
+    <section className="rescue" aria-label="How this line last worked">
+      <p className="rescue-title">This line worked {whenWords(rescue.at)}</p>
+      <div className="rescue-lines">
+        <span className="tn-code is-then">
+          <span className="tn-n">Then</span>
+          <span className="tn-text">{rescue.then}</span>
+        </span>
+        <span className="tn-code is-now">
+          <span className="tn-n">Now</span>
+          <span className="tn-text">{rescue.now}</span>
+        </span>
+      </div>
+      <div className="button-row">
+        <button
+          type="button"
+          className="button"
+          onClick={() => {
+            applyRescue(block.file, rescue);
+            setDone(true);
+          }}
+        >
+          Put back the version that worked
+        </button>
+        <button type="button" className="button quiet" onClick={() => void openHistory("script", block.file)}>
+          See every change
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function ErrorItem({ message, traceback, parsed, blockId }: { message: string; traceback: string[]; parsed: string; blockId: string }) {
   const objects = useStore((state) => state.objects);
   const block = useStore((state) => state.blocks[blockId]);
@@ -402,6 +446,7 @@ function ErrorItem({ message, traceback, parsed, blockId }: { message: string; t
         </p>
       )}
       {used.length > 0 && <Using used={used} />}
+      <Rescue blockId={blockId} />
       <div className="button-row">
         {fix?.kind === "replace" && (
           <button type="button" className="button primary" onClick={() => applyFix(blockId, fix.from, fix.to)}>

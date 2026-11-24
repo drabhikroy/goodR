@@ -37,6 +37,7 @@ import {
 } from "../lib/app";
 import { saveResultsAsReport } from "../lib/resultsTools";
 import { openTrace } from "../lib/trace";
+import { openHistory } from "../lib/fileHistory";
 import { keyLabel } from "../lib/commands";
 import * as editor from "../lib/editor";
 import { cleanHelp } from "../lib/helpHtml";
@@ -48,7 +49,6 @@ import { packageProgress } from "../lib/packages";
 import { AppWindowIcon, ArrowIcon, BroomIcon, ChartIcon, CodeIcon, CopyIcon, EyeIcon, GearIcon, GridIcon, HomeIcon, ObjectsIcon, PlayIcon, CloseIcon, FunctionIcon, HelpIcon, HistoryIcon, ImportIcon, ModelIcon, MoreIcon, PackageIcon, PinIcon, PlusIcon, ReportIcon, SaveIcon, SearchIcon, SparkIcon, StopIcon, TableIcon, TriangleIcon, UndoIcon, ValueIcon } from "./Icons";
 import { AssistantPane } from "./AssistantPane";
 import { AppPane } from "./AppPane";
-import { HistoryList } from "./Composer";
 import { DataViewer } from "./DataViewer";
 import { OutputCard, PlotFigure } from "./OutputCard";
 import { ReportPane } from "./ReportPane";
@@ -65,7 +65,6 @@ const SHEETS: Sheet[] = [
   { id: "help", name: "R help", Icon: HelpIcon },
   { id: "assistant", name: "Assistant", Icon: SparkIcon },
   { id: "packages", name: "Packages", Icon: PackageIcon },
-  { id: "history", name: "History", Icon: HistoryIcon },
 ];
 const REPORT: Sheet = { id: "report", name: "Report", Icon: ReportIcon };
 const APP: Sheet = { id: "app", name: "App", Icon: AppWindowIcon };
@@ -100,7 +99,6 @@ export function Canvas() {
           {sheet.id === "objects" && <ObjectCards />}
           {sheet.id === "help" && <HelpPane />}
           {sheet.id === "packages" && <PackagesPane />}
-          {sheet.id === "history" && <HistoryList />}
           {sheet.id === "report" && <ReportPane />}
           {sheet.id === "app" && <AppPane />}
           {sheet.id === "assistant" && <AssistantPane />}
@@ -135,6 +133,9 @@ export function ToolStrip() {
       {[results, ...sheets].map((item) => (
         <ToolButton key={item.id} sheet={item} on={current === item.id} names={names} />
       ))}
+      {/* History opens over the whole window, since then and now need
+          the width of two columns of code. */}
+      <ToolButton sheet={{ id: "history" as Sheet["id"], name: "History", Icon: HistoryIcon }} on={false} names={names} onPress={() => void openHistory()} />
       <span className="tool-strip-gap" />
       <ToolButton sheet={{ id: "home" as Sheet["id"], name: "Home", Icon: HomeIcon }} on={false} names={names} onPress={showStartScreen} />
       <ToolButton sheet={{ id: "settings" as Sheet["id"], name: "Settings", Icon: GearIcon }} on={false} names={names} onPress={() => openDialog("settings")} />

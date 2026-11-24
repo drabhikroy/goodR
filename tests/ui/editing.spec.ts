@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { newFileWith, openExample, openProjectMenu } from "./helpers";
+import { newFileWith, openExample, openProjectMenu, runLine } from "./helpers";
 
 // The editing tools that reach past one line: hints, explaining a line,
 // tidying, renaming everywhere, and finding in every file.
@@ -111,28 +111,68 @@ test("Fix problems lists retired code and habits, fixes the chosen ones in one s
   await expect(content).toContainText("ok <- T");
 });
 
-test("each save keeps a version, and an earlier one can be compared, taken back in part, or used whole", async ({ page }) => {
+test("History shows a script then and now, folds what matches, and steps through changes spread through it", async ({ page }) => {
   await openExample(page);
-  const content = page.locator(".editor-host .cm-content");
+  const content = editor(page);
   await content.click();
   await page.keyboard.press("Control+Home");
   await page.keyboard.insertText("brightest <- head(mass_by_species, 1)\n");
+  await page.keyboard.press("Control+End");
+  await page.keyboard.insertText("summary(fit)");
   await page.keyboard.press("Control+s");
   await expect(page.getByRole("tab", { name: /analysis\.R/ })).not.toContainText("edited");
-  await (await openProjectMenu(page)).getByRole("menuitem", { name: "Earlier versions of this file" }).click();
-  const dialog = page.getByRole("dialog", { name: "Earlier versions of analysis.R" });
-  const versions = dialog.getByRole("group", { name: "Saved versions" }).getByRole("button");
-  await expect(versions).toHaveCount(2);
-  await expect(versions.first()).toContainText("Same as now");
-  await versions.nth(1).click();
-  await expect(versions.nth(1)).toContainText("1 line added");
-  await expect(dialog.locator(".change-piece.is-added")).toContainText("brightest <- head(mass_by_species, 1)");
-  // Taking the added part out changes the script, not the saved file.
-  await dialog.getByRole("button", { name: "Take this out" }).click();
-  await expect(dialog).toContainText("The script is the same now as in this version.");
+  await page.getByRole("navigation", { name: "Tools" }).getByRole("button", { name: "History", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "History of analysis.R" });
+  await expect(dialog.getByRole("tab", { name: "This script" })).toHaveAttribute("aria-selected", "true");
+  await expect(dialog).toContainText("2 changes");
+  await expect(dialog.getByText("Change 1 of 2", { exact: true })).toBeVisible();
+  // The lines between the two changes fold away, and open on request.
+  const fold = dialog.getByRole("button", { name: /unchanged lines/ });
+  await expect(fold).toHaveCount(1);
+  await fold.click();
+  await expect(dialog.getByRole("button", { name: /^Fold these/ })).toHaveAttribute("aria-expanded", "true");
+  // The arrows, or F7, move to the next change, named for its section.
+  await dialog.getByRole("button", { name: "Next change" }).click();
+  await expect(dialog.getByText("Change 2 of 2", { exact: true })).toBeVisible();
+  await expect(dialog.getByRole("region", { name: "Change 2 of 2, in Flipper length model" })).toBeVisible();
+  await page.keyboard.press("Shift+F7");
+  await expect(dialog.getByText("Change 1 of 2", { exact: true })).toBeVisible();
+  // Taking one change out edits the script, not the saved file.
+  await dialog.getByRole("button", { name: "Take out change 1" }).click();
+  await expect(dialog.getByText("Change 1 of 1", { exact: true })).toBeVisible();
   await expect(content).not.toContainText("brightest");
   await page.keyboard.press("Escape");
   await content.click();
   await page.keyboard.press("Control+z");
   await expect(content).toContainText("brightest <- head(mass_by_species, 1)");
+  // The project menu opens the same History.
+  await (await openProjectMenu(page)).getByRole("menuitem", { name: "History of this file" }).click();
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("slider", { name: "Compare now with" })).toBeVisible();
+});
+
+test("a line that worked before offers itself back when it fails, as one edit Undo takes back", async ({ page }) => {
+  await openExample(page);
+  await newFileWith(page, "value <- 5\nvalue\n");
+  await runLine(page);
+  await runLine(page);
+  await expect(page.locator(".cm-gutter-check, .output-card").first()).toBeVisible();
+  // A slip in the second line, then run it again.
+  await page.keyboard.press("Control+Home");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("End");
+  await page.keyboard.press("Backspace");
+  await page.keyboard.press("Backspace");
+  await page.keyboard.insertText("eu");
+  await expect(page.locator(".editor-host .cm-line").nth(1)).toHaveText("valeu");
+  await page.keyboard.press("Control+Enter");
+  const rescue = page.getByRole("region", { name: "How this line last worked" }).first();
+  await expect(rescue).toContainText("This line worked today at");
+  await expect(rescue.locator(".tn-code.is-then")).toContainText("value");
+  await expect(rescue.locator(".tn-code.is-now")).toContainText("valeu");
+  await rescue.getByRole("button", { name: "Put back the version that worked" }).click();
+  await expect(page.locator(".editor-host .cm-line").nth(1)).toHaveText("value");
+  await editor(page).click();
+  await page.keyboard.press("Control+z");
+  await expect(page.locator(".editor-host .cm-line").nth(1)).toHaveText("valeu");
 });

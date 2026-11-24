@@ -85,7 +85,7 @@ pub fn build<R: Runtime>(app: &AppHandle<R>, state: &MenuState, recent: &[String
         .separator()
         .item(&MenuItemBuilder::with_id("file.save", "Save").accelerator("CmdOrCtrl+S").build(app)?)
         .item(&MenuItemBuilder::with_id("file.saveAs", "Save As...").accelerator("CmdOrCtrl+Shift+S").build(app)?)
-        .item(&MenuItemBuilder::with_id("file.history", "Earlier Versions of This File...").build(app)?)
+        .item(&MenuItemBuilder::with_id("file.history", "History of This File...").build(app)?)
         .item(&MenuItemBuilder::with_id("file.saveAll", "Save All").accelerator("CmdOrCtrl+Alt+S").build(app)?)
         .item(&MenuItemBuilder::with_id("file.exportPlot", "Export Plot...").accelerator("CmdOrCtrl+Shift+E").build(app)?)
         .item(&MenuItemBuilder::with_id("results.report", "Save Results as a Report").build(app)?)

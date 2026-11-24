@@ -308,7 +308,7 @@ function ProjectSwitcher() {
               <span className="menu-check" aria-hidden="true">
                 <HistoryIcon size={13} />
               </span>
-              Earlier versions of this file
+              History of this file
             </button>
           )}
           <button type="button" role="menuitem" onClick={() => pick(showStartScreen)}>

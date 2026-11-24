@@ -564,9 +564,16 @@ const TOPICS: Topic[] = [
         </p>
         <p><kbd>{keyLabel("⌘Z")}</kbd> on its own undoes typing in the script, as anywhere else.</p>
         <p>
-          Each save keeps a version of the script, at most one every five minutes, and the last hundred are kept. Earlier versions of this file, in the project menu at the top left or in the File menu,
-          lists them by when they were saved, with what has changed since each in a few words. Choose one to see each change: the old lines in red with a minus, the lines now in green with a
-          plus. Copy the old lines, put one part back, or use the whole version. Nothing is saved until you save, and Undo takes it back.
+          Each save keeps a version of the script, at most one every five minutes, and so does each run that works, saved or not. The last hundred are kept. History, in the tools down the right
+          or as History of this file in the project menu and the File menu, shows the script then and now side by side. The earlier version is on the left, in apricot with a dashed edge, and the
+          script now on the right, in orchid with a solid edge. Lines that match fold away, so a long script with a few changes fits on one screen, and each change is named for the section it is in.
+          Step through the changes with the arrows at the top, or <kbd>F7</kbd> and <kbd>⇧F7</kbd>, or click a mark on the thin strip down the right, which shows where every change sits in the
+          whole file. Put one change back, copy the old lines, or use the whole version. The slider at the foot moves to an earlier version, with a ✕ under any where a line did not run, and Last
+          version that ran jumps to the newest one that worked. Nothing is saved until you save, and Undo takes it back. The colors can be changed in Settings, under Accessibility.
+        </p>
+        <p>
+          When a line fails that worked before, its result shows the line as it last worked beside the line now. Put back the version that worked changes just those lines, as one edit Undo takes
+          back. History's second tab, Commands you typed, lists what you typed at the console, to send again or put into the script.
         </p>
         <p>
           Whatever you type is kept safe as you go, even before you save. If the app closes unexpectedly, your changes come back the next time it opens, with a note saying so. To save files by themselves

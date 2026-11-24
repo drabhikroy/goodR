@@ -156,12 +156,12 @@ export type Tab = {
 /** `displayId` names the plot inside R, so a later line that adds to it, such
  * as abline, can redraw this entry instead of adding a second one. */
 export type Plot = { png: string; label: string; code: string; displayId?: string };
-export type Dialog = null | "settings" | "about" | "chooseR" | "install" | "newProject" | "newDocument" | "shareApp" | "exportPlot" | "importData" | "assistantSetup" | "rename" | "findInFiles" | "cite" | "trace" | "askOnline" | "fixProblems" | "fileHistory" | "resetApp";
+export type Dialog = null | "settings" | "about" | "chooseR" | "install" | "newProject" | "newDocument" | "shareApp" | "exportPlot" | "importData" | "assistantSetup" | "rename" | "findInFiles" | "cite" | "trace" | "askOnline" | "fixProblems" | "history" | "resetApp";
 export type OutlineItem = { label: string; line: number; level: number };
 
 /** What the canvas on the right shows: its own feed of results, or one of
  * the sheets that slide over it for a while. */
-export type Panel = "canvas" | "objects" | "help" | "packages" | "history" | "report" | "app" | "assistant";
+export type Panel = "canvas" | "objects" | "help" | "packages" | "report" | "app" | "assistant";
 
 /** The latest report render: which file, how far it got, the lines it
  * printed, and what it made or why it stopped. `finished` is zero while it
@@ -414,6 +414,8 @@ export const defaultSettings: Settings = {
   plotStyle: false,
   compact: false,
   readingWidth: true,
+  historyThen: "",
+  historyNow: "",
 };
 
 const initial: State = {

@@ -137,6 +137,10 @@ export type Settings = {
   compact: boolean;
   /** Whether a document's text is kept to a comfortable line length. */
   readingWidth: boolean;
+  /** History's colors for an earlier version and for now, as #RRGGBB.
+   * Empty uses the palette's own, apricot and orchid. */
+  historyThen: string;
+  historyNow: string;
 };
 
 export type PdfEngine = "auto" | "typst" | "latex";
@@ -242,7 +246,9 @@ export type OutdatedPackages = {
 };
 
 /** One saved version of a file, by the time it was saved. */
-export type FileVersion = { id: string; savedAt: number };
+/** A kept version of a file. `ran` marks how the file stood when its code
+ * ran without a problem, kept whether or not it was saved. */
+export type FileVersion = { id: string; savedAt: number; ran?: boolean };
 
 export type Brief ={ found: boolean; package?: string; title?: string; usage?: string };
 

@@ -13,7 +13,7 @@ import { initCite, openCitation } from "./cite";
 import { startGuide } from "./firstProject";
 import { openTrace } from "./trace";
 import { openFixProblems } from "./fixProblems";
-import { openFileHistory } from "./fileHistory";
+import { openFileHistory, openHistory } from "./fileHistory";
 import { checkForUpdates, checkForUpdatesNow, openUpdates } from "./updates";
 import { writeCodeHere } from "./draftCode";
 import { scriptSteps } from "./lineage";
@@ -447,7 +447,7 @@ export const SETTINGS_SECTIONS: Record<string, (keyof Settings)[]> = {
   editor: ["lineNumbers", "highlightLine", "wrapLines", "closeBrackets", "rainbowBrackets", "autosave", "hints", "formatOnType", "tabWidth"],
   results: ["outputLayout", "resultStyle", "copyResults", "keepResults", "plotStyle"],
   reports: ["pdfEngine", "latexDir", "renderOnSave"],
-  accessibility: ["palette", "reduceMotion"],
+  accessibility: ["palette", "reduceMotion", "historyThen", "historyNow"],
   r: ["missingPackages", "undoRuns", "showPackageLog"],
   updates: ["updateChecks"],
   menus: ["layer"],
@@ -954,10 +954,10 @@ export function runImport(code: string, name: string, addToScript: boolean, view
 
 // The right column's panes.
 
-/** Opens the past commands over the canvas, with the search ready to type in. */
+/** Opens History on the commands typed at the console, with the search
+ * ready to type in. */
 export function showConsoleHistory() {
-  showPanel("history");
-  setTimeout(() => document.querySelector<HTMLElement>("#history-search")?.focus(), 30);
+  void openHistory("commands").then(() => setTimeout(() => document.querySelector<HTMLElement>("#history-search")?.focus(), 30));
 }
 
 /** Puts an output on the stage by its key, or null to follow the latest. */
@@ -1387,23 +1387,28 @@ function onDocumentChanged(path: string) {
 
 // Outline.
 
-/** Builds the section list from section comments, Quarto headings, and
- * function definitions. Plain text scanning keeps it instant. */
-function updateOutline(path: string) {
-  const lines = editor.getText(path).split("\n");
-  const markdown = /\.(qmd|Rmd|rmd|md)$/.test(path);
+/** The sections of a script or document: section comments, headings, and
+ * function definitions, with their zero based lines. Plain text scanning
+ * keeps it instant. */
+export function outlineOf(text: string, markdown: boolean) {
   const outline: { label: string; line: number; level: number }[] = [];
   let inChunk = false;
-  lines.forEach((text, line) => {
-    if (markdown && /^```/.test(text)) inChunk = !inChunk;
+  text.split("\n").forEach((row, line) => {
+    if (markdown && /^```/.test(row)) inChunk = !inChunk;
     // RStudio style sections: a comment ending in four or more - = or #.
-    const section = /^(#+)\s*(.+?)\s*(?:-{4,}|={4,}|#{4,})\s*$/.exec(text);
-    const heading = markdown && !inChunk ? /^(#{1,6})\s+(.+)$/.exec(text) : null;
-    const fn = /^([A-Za-z.][\w.]*)\s*(?:<-|=)\s*function\b/.exec(text);
+    const section = /^(#+)\s*(.+?)\s*(?:-{4,}|={4,}|#{4,})\s*$/.exec(row);
+    const heading = markdown && !inChunk ? /^(#{1,6})\s+(.+)$/.exec(row) : null;
+    const fn = /^([A-Za-z.][\w.]*)\s*(?:<-|=)\s*function\b/.exec(row);
     if (section && !markdown) outline.push({ label: section[2], line, level: section[1].length });
     else if (heading) outline.push({ label: heading[2], line, level: heading[1].length });
     else if (fn) outline.push({ label: `${fn[1]}()`, line, level: 3 });
   });
+  return outline;
+}
+
+/** Builds the section list of a file for the outline. */
+function updateOutline(path: string) {
+  const outline = outlineOf(editor.getText(path), /\.(qmd|Rmd|rmd|md)$/.test(path));
   if (getState().active === path) setState({ outline });
 }
 
@@ -1568,12 +1573,29 @@ function failQueued(session: string, status: "skipped" | "stopped") {
   editor.refreshGutter();
 }
 
+// The text of each saved script as it stood when a run of its code was
+// queued, by run. When every line of the run works, that text is kept as a
+// version that ran, for History and for error rescue.
+const runTexts = new Map<string, { file: string; text: string }>();
+
+/** Keeps the version a run worked on, once the whole run has finished
+ * without a problem. Any failure or stop drops it. */
+function keepRunText(batch: string) {
+  const kept = runTexts.get(batch);
+  runTexts.delete(batch);
+  if (!kept) return;
+  const ran = Object.values(getState().blocks).filter((block) => block.batch === batch);
+  if (!ran.length || ran.some((block) => block.status !== "ok")) return;
+  api.keepRunVersion(kept.file, kept.text).catch(() => {});
+}
+
 /** Adds work to its session's queue and starts it when that R is free. */
 function enqueue(jobs: Job[]) {
   if (!jobs.length) return;
   const session = jobs[0].session;
   const line = lineOf(session);
   for (const job of jobs) {
+    if (job.file && !runTexts.has(job.batch) && !job.file.startsWith("untitled:") && !job.file.startsWith("data:")) runTexts.set(job.batch, { file: job.file, text: editor.getText(job.file) });
     if (job.blockId) updateBlock(job.blockId, { batch: job.batch });
     line.totals.set(job.batch, (line.totals.get(job.batch) ?? 0) + 1);
   }
@@ -1913,7 +1935,10 @@ function finishRun(session: string, run: string, ok: boolean, stopped: boolean) 
     }
     if (job.console && !ok && !stopped) suggestFromConsoleError();
     // A run's count is needed only while its statements are waiting.
-    if (!line.queue.some((item) => item.batch === job.batch)) line.totals.delete(job.batch);
+    if (!line.queue.some((item) => item.batch === job.batch)) {
+      line.totals.delete(job.batch);
+      keepRunText(job.batch);
+    }
   }
   // The statement just finished was timed by R. Its time is summarized
   // before the next statement starts, or now, when nothing else waits.
@@ -2243,7 +2268,7 @@ function newBlock(file: string, code: string, fromLine: number, toLine: number, 
  * they are what the user is looking at while they work. */
 function revealFeed() {
   const { ui } = getState();
-  if (["help", "packages", "history", "assistant"].includes(ui.panel)) setState({ ui: { ...ui, panel: "canvas" } });
+  if (["help", "packages", "assistant"].includes(ui.panel)) setState({ ui: { ...ui, panel: "canvas" } });
 }
 
 /** Records code typed in the console, and in the history the up arrow

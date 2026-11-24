@@ -61,6 +61,8 @@ export interface Backend {
   fileHistory(path: string): Promise<FileVersion[]>;
   /** The text of one saved version of a file. */
   fileVersion(path: string, id: string): Promise<string>;
+  /** Keeps the text a script had when its code ran without a problem. */
+  keepRunVersion(path: string, contents: string): Promise<void>;
   savePlot(data: string, suggested: string): Promise<string | null>;
   // Every call to R below names the session it goes to, by key.
   exportPlot(session: string, options: PlotExport, suggested: string): Promise<string | null>;
@@ -232,6 +234,7 @@ async function tauriBackend(): Promise<Backend> {
     restartApp: () => invoke("restart_app"),
     outdated: (session) => invoke("r_outdated", { session }),
     fileVersion: (path, id) => invoke("file_version", { path, id }),
+    keepRunVersion: (path, contents) => invoke("keep_run_version", { path, contents }),
     savePlot: (data, suggested) => invoke("save_plot", { data, suggested }),
     exportPlot: (session, options, suggested) => invoke("export_plot", { ...options, session, suggested }),
     startSession: (rHome, session) => invoke("start_session", { rHome, session }),

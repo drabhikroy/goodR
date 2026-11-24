@@ -139,11 +139,20 @@ for (const [modeName, base] of Object.entries(tokens.modes)) for (const [palette
       needContrast(`${label} syntax ${role} on ${ground}`, mode[role], mode[ground], TEXT_MIN);
     }
   }
+  // History marks an earlier version and now with a bar beside each line,
+  // a graphic needing 3 to 1, over a soft ground that the code, its
+  // syntax colors, and muted notes must still read on.
+  for (const bar of ["historyThen", "historyNow"]) needContrast(`${label} ${bar} on codeBg`, mode[bar], mode.codeBg, NON_TEXT_MIN);
+  for (const ground of ["historyThenSoft", "historyNowSoft"]) {
+    for (const role of ["text", "textMuted", "keyword", "string", "comment", "function", "number"]) {
+      needContrast(`${label} ${role} on ${ground}`, mode[role], mode[ground], TEXT_MIN);
+    }
+  }
   // Monochrome relies on shape and lightness alone by design, so it has
   // no hue separation to check.
   if (paletteName === "monochrome") continue;
   const vision = paletteName === "standard" ? "normal" : paletteName;
-  const pairs = [["ok", "warn"], ["ok", "danger"], ["warn", "danger"]];
+  const pairs = [["ok", "warn"], ["ok", "danger"], ["warn", "danger"], ["historyThen", "historyNow"]];
   for (const [a, b] of pairs) {
     checks += 1;
     const distance = separation(mode[a], mode[b], vision);

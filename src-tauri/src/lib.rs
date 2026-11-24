@@ -515,6 +515,17 @@ fn file_history(state: State<'_, AppState>, path: String) -> CommandResult<Vec<h
     Ok(history::list(&history_root(&state), &path))
 }
 
+/// Keeps the text a script had when its code ran without a problem, as a
+/// version marked as one that ran. The file itself is not written.
+#[tauri::command(async)]
+fn keep_run_version(state: State<'_, AppState>, path: String, contents: String) -> CommandResult<()> {
+    let path = state.allowed.lock().unwrap().check(Path::new(&path)).map_err(text_error)?;
+    if !files::is_script(&path) {
+        return Ok(());
+    }
+    history::keep_ran(&history_root(&state), &path, &contents).map_err(text_error)
+}
+
 /// The text of one saved version of a file.
 #[tauri::command(async)]
 fn file_version(state: State<'_, AppState>, path: String, id: String) -> CommandResult<String> {
@@ -1110,6 +1121,7 @@ pub fn run() {
             file_history,
             reset_app,
             file_version,
+            keep_run_version,
             r_style,
             r_set_plot_size,
             r_set_palette,

@@ -6,6 +6,7 @@
 
 import tokens from "./tokens.json";
 import type { Appearance, CodeFont, LineSpacing, PaletteName, Settings } from "../lib/types";
+import { parseColor, READ_ON_SOFT, softGround } from "../lib/historyColors";
 
 type Mode = "light" | "dark" | "paper";
 
@@ -60,7 +61,7 @@ export const CODE_FONTS: Record<CodeFont, { label: string; stack: string; ligatu
 /** Line height for each spacing choice. */
 export const LINE_HEIGHTS: Record<LineSpacing, number> = { compact: 1.45, normal: 1.65, relaxed: 1.9 };
 
-type ThemeSettings = Pick<Settings, "appearance" | "palette" | "textSize" | "reduceMotion" | "codeFont" | "codeSize" | "lineSpacing" | "ligatures" | "resultStyle" | "compact" | "readingWidth" | "scriptItalics">;
+type ThemeSettings = Pick<Settings, "appearance" | "palette" | "textSize" | "reduceMotion" | "codeFont" | "codeSize" | "lineSpacing" | "ligatures" | "resultStyle" | "compact" | "readingWidth" | "scriptItalics" | "historyThen" | "historyNow">;
 
 export function applyTheme(settings: ThemeSettings) {
   const mode = resolveMode(settings.appearance);
@@ -69,6 +70,15 @@ export function applyTheme(settings: ThemeSettings) {
     ...tokens.modes[mode],
     ...paletteColors(settings.palette, mode),
   };
+  // History's colors, when the person has chosen their own. Each soft
+  // ground is worked out for this page, so code still reads on it.
+  const readers = READ_ON_SOFT.map((role) => (values as Record<string, string>)[role]).filter(Boolean);
+  for (const [key, chosen] of [["historyThen", settings.historyThen], ["historyNow", settings.historyNow]] as const) {
+    const bar = parseColor(chosen ?? "");
+    if (!bar) continue;
+    (values as Record<string, string>)[key] = bar;
+    (values as Record<string, string>)[`${key}Soft`] = softGround(bar, (values as Record<string, string>).codeBg, mode === "dark", readers);
+  }
   for (const [key, value] of Object.entries(values)) root.style.setProperty(cssName(key), value);
   root.dataset.mode = mode;
   root.dataset.palette = settings.palette;

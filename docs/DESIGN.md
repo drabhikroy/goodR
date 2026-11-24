@@ -906,6 +906,39 @@ Every color pairing passes WCAG 2.2 AA in all three appearances and all five
 color vision palettes, checked by `npm run audit:contrast`. Every pointer
 target is at least 44 pixels tall, above the 24 pixels WCAG 2.2 AA asks for.
 
+### History as then and now
+
+The first history design listed each save down the left and, for the one
+chosen, each change as a block of old lines in red with a minus over new
+lines in green with a plus. That is the notation of version control, and the
+people the app is for read red as an error and green as Git. Three designs
+were mocked up and compared with the person the app is for: a deck of cards, a
+map of changes like a branch graph, and the whole file then and now with a
+slider. The deck was confusing and the map too much like Git; then and now
+was the clearest. Working out what changed in code is something people do
+often, and they report that the usual tools leave gaps (Tao et al. 2012),
+so the view keeps every change in place in the file, beside its neighbors.
+
+Two problems had to be solved for it. A long script with a few changes
+spread through it is mostly lines that match, so matching lines fold away
+with two lines of context, each change names its section, and a thin ruler
+shows where every change sits in the whole file, with the arrows and F7 to
+step between them. And the colors had to leave red and green behind. Then
+is apricot and now is orchid, picked by searching hues for a pair that stays
+apart under simulated deuteranopia, protanopia, and tritanopia (Machado,
+Oliveira, and Fernandes 2009) and was pleasing to the person the app is
+for. The first pair tried ran together for tritanopia; making the orchid a
+little deeper fixed it by adding a difference in lightness, which every kind
+of color vision keeps. Then also has a dashed edge and now a solid one, so
+the two differ in shape. The contrast audit checks the pair under each
+palette's simulation, the edges at 3 to 1, and every syntax color on both
+soft grounds at 4.5 to 1. People who want other colors type or pick them in
+Settings; the soft grounds are worked out again so code still reads.
+
+The same versions power error rescue. Every run is kept with its code, so
+when a line fails that worked before, its result shows the line as it last
+worked beside the line now, and one press puts it back.
+
 ### Smaller additions
 
 These were added at the same time: warnings in plain
@@ -1152,14 +1185,14 @@ Brandt, J., Guo, P. J., Lewenstein, J., Dontcheva, M., and Klemmer, S. R.
 foraging, learning, and writing code. In *Proceedings of the SIGCHI
 Conference on Human Factors in Computing Systems* (pp. 1589-1598). ACM.
 
+Card, S. K., Mackinlay, J. D., and Shneiderman, B. (Eds.). (1999).
+*Readings in Information Visualization: Using Vision to Think*. Morgan
+Kaufmann.
+
 Card, S. K., Robertson, G. G., and Mackinlay, J. D. (1991). The
 information visualizer, an information workspace. In *Proceedings of the
 SIGCHI Conference on Human Factors in Computing Systems* (pp. 181-186).
 ACM.
-
-Card, S. K., Mackinlay, J. D., and Shneiderman, B. (Eds.). (1999).
-*Readings in Information Visualization: Using Vision to Think*. Morgan
-Kaufmann.
 
 Carroll, J. M., and Rosson, M. B. (1987). Paradox of the active user. In
 J. M. Carroll (Ed.), *Interfacing Thought: Cognitive Aspects of
@@ -1201,11 +1234,6 @@ Iyengar, S. S., and Lepper, M. R. (2000). When choice is demotivating: Can
 one desire too much of a good thing? *Journal of Personality and Social
 Psychology, 79*(6), 995-1006.
 
-Kazemitabaar, M., Chow, J., Ma, C. K. T., Ericson, B. J., Weintrop, D., and
-Grossman, T. (2023). Studying the effect of AI code generators on
-supporting novice learners in introductory programming. In *Proceedings of
-the 2023 CHI Conference on Human Factors in Computing Systems*. ACM.
-
 Kandel, S., Paepcke, A., Hellerstein, J., and Heer, J. (2011). Wrangler:
 Interactive visual specification of data transformation scripts. In
 *Proceedings of the SIGCHI Conference on Human Factors in Computing
@@ -1215,6 +1243,11 @@ Kandel, S., Parikh, R., Paepcke, A., Hellerstein, J. M., and Heer, J.
 (2012). Profiler: Integrated statistical analysis and visualization for data
 quality assessment. In *Proceedings of the International Working Conference
 on Advanced Visual Interfaces* (pp. 547-554). ACM.
+
+Kazemitabaar, M., Chow, J., Ma, C. K. T., Ericson, B. J., Weintrop, D., and
+Grossman, T. (2023). Studying the effect of AI code generators on
+supporting novice learners in introductory programming. In *Proceedings of
+the 2023 CHI Conference on Human Factors in Computing Systems*. ACM.
 
 Kery, M. B., Radensky, M., Arya, M., John, B. E., and Myers, B. A. (2018).
 The story in the notebook: Exploratory data science using a literate
@@ -1235,18 +1268,23 @@ Lederer, S., Hong, J. I., Dey, A. K., and Landay, J. A. (2004). Personal
 privacy through understanding and action: Five pitfalls for designers.
 *Personal and Ubiquitous Computing, 8*(6), 440-454.
 
+Legge, G. E., and Bigelow, C. A. (2011). Does print size matter for
+reading? A review of findings from vision science and typography.
+*Journal of Vision*, 11(5), 8.
+
 Leinonen, J., Hellas, A., Sarsa, S., Reeves, B., Denny, P., Prather, J., and
 Becker, B. A. (2023). Using large language models to enhance programming <!-- standards: title of a cited work -->
 error messages. In *Proceedings of the 54th ACM Technical Symposium on
 Computer Science Education*. ACM.
 
-Legge, G. E., and Bigelow, C. A. (2011). Does print size matter for
-reading? A review of findings from vision science and typography.
-*Journal of Vision*, 11(5), 8.
-
 Lindgaard, G., Fernandes, G., Dudek, C., and Brown, J. (2006). Attention web
 designers: You have 50 milliseconds to make a good first impression!
 *Behaviour and Information Technology, 25*(2), 115-126. <!-- standards: journal title -->
+
+Machado, G. M., Oliveira, M. M., and Fernandes, L. A. F. (2009). A
+physiologically-based model for simulation of color vision deficiency.
+*IEEE Transactions on Visualization and Computer Graphics, 15*(6),
+1291-1298.
 
 Marceau, G., Fisler, K., and Krishnamurthi, S. (2011). Measuring the
 effectiveness of error messages designed for novice programmers. In
@@ -1256,13 +1294,13 @@ Education* (pp. 499-504). ACM.
 Mayer, R. E. (2009). *Multimedia Learning* (2nd ed.). Cambridge University
 Press.
 
+McGrenere, J., and Moore, G. (2000). Are we all in the same "bloat"? In
+*Proceedings of Graphics Interface 2000* (pp. 187-196).
+
 McGrenere, J., Baecker, R. M., and Booth, K. S. (2002). An evaluation of a
 multiple interface design solution for bloated software. In *Proceedings of
 the SIGCHI Conference on Human Factors in Computing Systems* (pp. 164-170).
 ACM.
-
-McGrenere, J., and Moore, G. (2000). Are we all in the same "bloat"? In
-*Proceedings of Graphics Interface 2000* (pp. 187-196).
 
 Nielsen, J. (1994). Enhancing the explanatory power of usability <!-- standards: title of a cited work -->
 heuristics. In *Proceedings of the SIGCHI Conference on Human Factors in
@@ -1329,6 +1367,11 @@ learning. *Cognitive Science, 12*(2), 257-285.
 Tanimoto, S. L. (2013). A perspective on the evolution of live programming.
 In *Proceedings of the 1st International Workshop on Live Programming
 (LIVE)* (pp. 31-34). IEEE.
+
+Tao, Y., Dang, Y., Xie, T., Zhang, D., and Kim, S. (2012). How do software
+engineers understand code changes? An exploratory study in industry. In
+*Proceedings of the ACM SIGSOFT 20th International Symposium on the
+Foundations of Software Engineering* (Article 51). ACM.
 
 Tractinsky, N., Katz, A. S., and Ikar, D. (2000). What is beautiful is
 usable. *Interacting with Computers, 13*(2), 127-145.

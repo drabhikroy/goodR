@@ -73,8 +73,9 @@ function Question({ prompt }: { prompt: string }) {
 
 /** What was typed in the console, newest first, with a way to send each
  * command back to the console or into the script, as RStudio's History
- * pane does. It opens as a sheet over the canvas. */
-export function HistoryList() {
+ * pane does. It is the second tab of History, which closes once a command
+ * is sent, so the command is seen where it went. */
+export function HistoryList({ onSent }: { onSent?: () => void }) {
   const history = useStore((state) => state.history);
   const [query, setQuery] = useState("");
   const shown = [...history].reverse().filter((code) => code.toLowerCase().includes(query.trim().toLowerCase()));
@@ -93,10 +94,16 @@ export function HistoryList() {
           <li key={code} className="history-row">
             <pre className="history-code">{code}</pre>
             <div className="history-actions">
-              <button type="button" className="button small quiet" onClick={() => historyToConsole(code)}>
+              <button type="button" className="button small quiet" onClick={() => {
+                  historyToConsole(code);
+                  onSent?.();
+                }}>
                 To console
               </button>
-              <button type="button" className="button small quiet" onClick={() => historyToScript(code)}>
+              <button type="button" className="button small quiet" onClick={() => {
+                  historyToScript(code);
+                  onSent?.();
+                }}>
                 To script
               </button>
             </div>

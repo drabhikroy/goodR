@@ -2798,13 +2798,6 @@ body.is-resizing-columns * {
   flex: 0 1 auto;
 }
 
-/* The past commands, as a sheet. */
-.history-pane .history-list {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-}
-
 .plot-large-bar {
   align-self: stretch;
   display: flex;
@@ -7296,121 +7289,448 @@ legend {
   font-weight: 600;
 }
 
-/* Earlier versions: the saves down the left, what changed since the one
-   chosen on the right, each change with the old lines in red marked with
-   a minus and the lines now in green marked with a plus. */
-.history-dialog {
-  width: min(64rem, 100%);
+/* History: a script then and now, side by side over most of the window.
+   Then wears History's "then" color with a dashed edge and now its "now"
+   color with a solid edge, so the two differ in shape as well as color.
+   Matching lines fold away, and a thin ruler shows where changes are. */
+.overlay:has(> .history-view) {
+  padding-top: 3vh;
 }
 
-.file-history {
-  display: grid;
-  grid-template-columns: 15rem 1fr;
-  gap: 1rem;
-  min-height: 24rem;
+.dialog.wide.history-view {
+  width: min(92rem, 100%);
+  height: min(58rem, 92vh);
+  max-height: 92vh;
 }
 
-.version-list {
-  display: grid;
-  align-content: start;
+.history-tabs {
+  display: flex;
   gap: 0.25rem;
-  max-height: 60vh;
-  overflow-y: auto;
-  padding-right: 0.25rem;
-  border-right: 1px solid var(--border);
+  padding: 0 1.6rem;
+  border-bottom: 1px solid var(--border);
 }
 
-.version-item {
-  display: grid;
-  gap: 0.1rem;
-  border: 1px solid transparent;
-  background: transparent;
+.history-tab {
   min-height: var(--target);
-  padding: 0.45rem 0.7rem;
-  border-radius: var(--radius-md);
-  text-align: left;
-}
-
-.version-item:hover {
-  background: var(--hover);
-}
-
-.version-item.is-chosen {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
-.version-when {
+  padding: 0 0.9rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
   font-weight: 600;
 }
 
-.version-summary {
-  font-size: 0.85rem;
-  color: var(--text-muted);
+.history-tab:hover {
+  color: var(--text);
 }
 
-.version-changes {
-  max-height: 60vh;
+.history-tab.is-on {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.history-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-commands {
+  padding: 0.8rem 1.6rem 1.2rem;
   overflow-y: auto;
 }
 
-.version-lead {
-  margin: 0 0 0.75rem;
+.history-empty {
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  text-align: center;
+  color: var(--text-muted);
 }
 
-.change-list {
-  list-style: none;
+.then-now {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.7rem 1.6rem 1rem;
+}
+
+.then-now-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.then-now-summary {
   margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.75rem;
+  color: var(--text-muted);
+  margin-right: auto;
 }
 
-.change-piece {
-  padding: 0.6rem 0.75rem;
+.change-steps {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.1rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
 }
 
-.change-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin: 0 0 0.4rem;
+.change-count {
+  min-width: 8.5rem;
+  text-align: center;
+  font-size: 0.92rem;
 }
 
-.change-old,
-.change-new {
-  margin: 0 0 0.35rem;
-  padding: 0.35rem 0.6rem;
-  border-radius: var(--radius-sm);
-  font-family: var(--code-font);
+.then-now-same {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  border-radius: var(--radius-lg);
+  background: var(--code-bg);
+}
+
+.then-now-frame {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.then-now-scroll {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  border-radius: var(--radius-lg);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+}
+
+.then-now-head,
+.tn-row,
+.tn-change-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 9.5rem minmax(0, 1fr);
+}
+
+.then-now-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--raised);
+  border-bottom: 1px solid var(--border);
   font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.then-now-col {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.9rem;
+}
+
+.history-key {
+  flex: none;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 0.2rem;
+}
+
+.history-key.is-then {
+  border: 2px dashed var(--history-then);
+}
+
+.history-key.is-now {
+  background: var(--history-now);
+}
+
+.tn-code {
+  display: flex;
+  min-width: 0;
+  font-family: var(--code-font);
+  font-size: 0.86rem;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.tn-n {
+  flex: none;
+  width: 3rem;
+  padding-right: 0.7rem;
+  text-align: right;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.tn-text {
+  min-width: 0;
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 0.6rem;
+}
+
+.tn-code.is-then {
+  background:
+    repeating-linear-gradient(to bottom, var(--history-then) 0 5px, transparent 5px 8px) left top / 3px 100% no-repeat,
+    var(--history-then-soft);
+}
+
+.tn-code.is-now {
+  background: var(--history-now-soft);
+  box-shadow: inset 3px 0 0 var(--history-now);
+}
+
+.tn-code.is-gap {
+  min-height: 1.7em;
+  background: repeating-linear-gradient(135deg, transparent 0 6px, var(--sunken) 6px 12px);
+}
+
+.tn-change {
+  margin: 0.35rem 0;
+  border-radius: var(--radius-md);
+}
+
+.tn-change.is-current {
+  box-shadow: inset 0 0 0 2px var(--focus);
+}
+
+.tn-change-title {
+  margin: 0;
+  padding: 0.35rem 0.9rem 0.15rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.tn-side {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tn-gutter {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.5rem;
+}
+
+.fold-button {
+  width: 100%;
+  min-height: var(--target);
+  border: none;
+  border-top: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.fold-button:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.then-now-ruler {
+  position: relative;
+  flex: none;
+  width: 0.9rem;
+  border-radius: var(--radius-sm);
+  background: var(--sunken);
+}
+
+.ruler-mark {
+  position: absolute;
+  left: 0.15rem;
+  right: 0.15rem;
+  border-radius: 0.15rem;
+  background: var(--history-now);
+  opacity: 0.75;
+  cursor: pointer;
+}
+
+.ruler-mark.is-current {
+  background: var(--focus);
+  opacity: 1;
+}
+
+.then-now-foot {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.then-now-actions {
+  margin-left: auto;
+}
+
+.then-now-only {
+  margin: 0;
+  flex: 1;
+  color: var(--text-muted);
+}
+
+.version-slider {
+  flex: 1;
+  min-width: 18rem;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.version-slider-label {
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.version-slider-track {
+  flex: 1;
+  position: relative;
+  padding-bottom: 1.4rem;
+}
+
+.version-slider-track input {
+  width: 100%;
+  min-height: var(--target);
+  accent-color: var(--accent);
+}
+
+.version-ticks {
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: 0;
+  height: 1.3rem;
+}
+
+.version-tick {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.version-tick.is-chosen {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.version-fail {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+@media (max-width: 820px) {
+  .then-now-head,
+  .tn-row,
+  .tn-change-body {
+    grid-template-columns: minmax(0, 1fr) 7rem minmax(0, 1fr);
+  }
+}
+
+/* Error rescue: on a line that failed, the way it last worked, then and
+   now in History's colors, with one press to put it back. */
+.rescue {
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.rescue-title {
+  margin: 0 0 0.4rem;
+  font-weight: 600;
+}
+
+.rescue-lines {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0 0 0.5rem;
+}
+
+.rescue-lines .tn-code {
+  border-radius: var(--radius-sm);
+  padding-left: 0.6rem;
+}
+
+.rescue-lines .tn-text {
   white-space: pre-wrap;
 }
 
-.change-old {
-  background: var(--danger-soft);
-  color: var(--text);
-  box-shadow: inset 3px 0 0 var(--danger);
+.rescue-lines .tn-n {
+  width: auto;
+  min-width: 2.6rem;
+  text-align: left;
 }
 
-.change-new {
-  background: var(--ok-soft);
-  color: var(--text);
-  box-shadow: inset 3px 0 0 var(--ok);
+/* History's colors in Settings: a swatch to pick with beside a field to
+   type hex or RGB into, and a sample of History in them. */
+.history-colors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.8rem 1.2rem;
 }
 
-@media (max-width: 720px) {
-  .file-history {
-    grid-template-columns: 1fr;
-  }
+.color-field {
+  display: grid;
+  gap: 0.3rem;
+}
 
-  .version-list {
-    max-height: 12rem;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
+.color-field label {
+  font-weight: 600;
+}
+
+.color-field .hint {
+  margin: 0;
+}
+
+.color-field-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.color-field-row input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--code-font);
+}
+
+.color-swatch {
+  flex: none;
+  width: var(--target);
+  height: var(--target);
+  padding: 0.2rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.history-sample {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0.8rem 0;
+  padding: 0.5rem;
+  border-radius: var(--radius-md);
+  background: var(--code-bg);
+}
+
+.history-sample .tn-n {
+  width: auto;
+  min-width: 3rem;
+  padding-left: 0.6rem;
+  text-align: left;
 }
 
 /* Layout in Settings: the window shown small, each part a switch in its

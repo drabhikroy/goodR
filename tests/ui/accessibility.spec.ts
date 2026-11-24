@@ -84,7 +84,9 @@ for (const appearance of ["Light", "Dark", "Paper"]) {
     await page.getByRole("button", { name: "Packages", exact: true }).click();
     await expect(page.locator(".package-row").first()).toBeVisible();
     await page.getByRole("button", { name: "History", exact: true }).click();
+    await expect(page.getByRole("dialog", { name: /^History/ })).toBeVisible();
     await audit(page);
+    await page.keyboard.press("Escape");
     await showObjects(page);
     await page.getByRole("button", { name: "Import data" }).click();
     await page.getByRole("dialog", { name: "Import data" }).getByRole("button", { name: "Choose" }).click();
@@ -172,10 +174,14 @@ test("every pointer target is at least 44 pixels tall", async ({ page }) => {
   await page.locator(".stage .plot-figure").last().getByRole("button", { name: "Full size", exact: true }).click();
   expect(await smallTargets(page)).toEqual([]);
   await page.keyboard.press("Escape");
-  for (const sheet of ["R help", "Packages", "History", "Assistant"]) {
+  for (const sheet of ["R help", "Packages", "Assistant"]) {
     await showTool(page, sheet);
     expect(await smallTargets(page)).toEqual([]);
   }
+  await showTool(page, "History");
+  await expect(page.getByRole("dialog", { name: /^History/ })).toBeVisible();
+  expect(await smallTargets(page)).toEqual([]);
+  await page.keyboard.press("Escape");
   await showObjects(page);
   await page.getByRole("button", { name: "Import data" }).click();
   await page.getByRole("dialog", { name: "Import data" }).getByRole("button", { name: "Choose" }).click();
@@ -423,4 +429,22 @@ test("a menu gives focus back to the button that opened it", async ({ page }) =>
   await page.keyboard.press("Tab");
   await expect(page.getByRole("menu")).toHaveCount(0);
   await expect(arrow).toBeFocused();
+});
+
+test("History's then and now, with changes to step through, passes the same checks", async ({ page }) => {
+  await openExample(page);
+  const content = page.locator(".editor-host .cm-content");
+  await content.click();
+  await page.keyboard.press("Control+Home");
+  await page.keyboard.insertText("brightest <- head(mass_by_species, 1)\n");
+  await page.keyboard.press("Control+End");
+  await page.keyboard.insertText("summary(fit)");
+  await page.keyboard.press("Control+s");
+  await showTool(page, "History");
+  const dialog = page.getByRole("dialog", { name: "History of analysis.R" });
+  await expect(dialog.getByText("Change 1 of 2", { exact: true })).toBeVisible();
+  await audit(page);
+  expect(await smallTargets(page)).toEqual([]);
+  await dialog.getByRole("tab", { name: "Commands you typed" }).click();
+  await audit(page);
 });

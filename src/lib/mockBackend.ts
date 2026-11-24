@@ -256,7 +256,7 @@ const MOCK_ARGS: Record<string, string[]> = { mean: ["x", "trim", "na.rm"], lm: 
 const updateListeners = new Set<(progress: { done: number; total: number | null }) => void>();
 
 // Saved versions of each file, newest first, for the history dialog.
-const VERSIONS: Record<string, { id: string; savedAt: number; text: string }[]> = {};
+const VERSIONS: Record<string, { id: string; savedAt: number; text: string; ran?: boolean }[]> = {};
 
 export function createMockBackend(): Backend {
   // Settings start with recent files so the opening screen has something
@@ -330,6 +330,8 @@ export function createMockBackend(): Backend {
     plotStyle: false,
     compact: false,
     readingWidth: true,
+    historyThen: "",
+    historyNow: "",
   };
     // Listeners for R events and menu clicks, as the real backend has.
   const listeners = new Set<(session: string, generation: number, event: REvent) => void>();
@@ -679,7 +681,14 @@ export function createMockBackend(): Backend {
       }
       if (history) for (const path of Object.keys(VERSIONS)) delete VERSIONS[path];
     },
-    fileHistory: async (path) => (VERSIONS[path] ?? []).map(({ id, savedAt }) => ({ id, savedAt })),
+    fileHistory: async (path) => (VERSIONS[path] ?? []).map(({ id, savedAt, ran }) => ({ id, savedAt, ran: Boolean(ran) })),
+    // As the real store does: text that ran marks the latest version when
+    // it is the same, and is kept as a new one when it is not.
+    keepRunVersion: async (path, contents) => {
+      const kept = (VERSIONS[path] ??= []);
+      if (kept[0]?.text === contents) kept[0].ran = true;
+      else kept.unshift({ id: `${Date.now()}-ran`, savedAt: Date.now(), text: contents, ran: true });
+    },
     fileVersion: async (path, id) => VERSIONS[path]?.find((version) => version.id === id)?.text ?? "",
     savePlot: async (_data, suggested) => `/Users/demo/Pictures/${suggested}`,
     // The browser preview has no R to draw with, so it reports the file

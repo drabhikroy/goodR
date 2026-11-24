@@ -2,7 +2,7 @@
 // moves focus in when it opens, keeps Tab inside it, closes on Escape, and
 // returns focus to where it was.
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { isDefaultLayout, resetApp, resetLayout, resetSettings, openHelp, chooseDataFile, chooseProjectFolder, chooseR, createDocument, createProject, exportPlot, hasPackage, previewData, runImport, installPackages, openDialog, openUrl, runCommand, setOutputLayout, shortPath, togglePalette, updateSettings, baseName, insertSnippetById } from "../lib/app";
 import { documentFileName, type DocumentFormat, type DocumentKind } from "../lib/chunks";
 import { explainApp, exportApp, previewExport, revealExport, stopExport } from "../lib/shiny";
@@ -12,13 +12,15 @@ import { isSupportedR, OLDEST_R } from "../lib/rversion";
 import { getState, setState, useStore } from "../lib/store";
 import { FORMAT_NAMES, FORMAT_PACKAGE, firstLinesCode, formatOf, guessLayout, importCode, isValidName, objectName, pathForCode, previewCode, sheetsCode, type ImportOptions } from "../lib/importData";
 import type { Appearance, PdfEngine, CodeFont, DataPreview, LineSpacing, OutputLayout, PaletteName, PlotFormat, ProjectTemplate } from "../lib/types";
-import { CODE_FONTS, resolveMode } from "../theme/theme";
+import { CODE_FONTS, paletteColors, resolveMode } from "../theme/theme";
+import { barNote, parseColor, rgbText } from "../lib/historyColors";
 import tokens from "../theme/tokens.json";
 import { AssistantSetupDialog } from "./AssistantSetup";
 import { LatexPanel } from "./LatexPanel";
 import { UpdatesPane } from "./UpdatesPane";
 import { trapTab } from "./focus";
-import { AskOnlineDialog, FileHistoryDialog, FixProblemsDialog, CiteDialog, FindInFilesDialog, RenameDialog, TraceDialog } from "./EditingDialogs";
+import { HistoryView } from "./HistoryView";
+import { AskOnlineDialog, FixProblemsDialog, CiteDialog, FindInFilesDialog, RenameDialog, TraceDialog } from "./EditingDialogs";
 import { AppWindowIcon, ChartIcon, CheckIcon, CloseIcon, FolderIcon, ReportIcon, SearchIcon, TriangleIcon, WarnIcon } from "./Icons";
 
 export function Modal({ title, onClose, children, wide = false, labelledBy, className = "" }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean; labelledBy?: string; className?: string }) {
@@ -89,7 +91,7 @@ export function Dialogs() {
       {dialog === "trace" && <TraceDialog />}
       {dialog === "askOnline" && <AskOnlineDialog />}
       {dialog === "fixProblems" && <FixProblemsDialog />}
-      {dialog === "fileHistory" && <FileHistoryDialog />}
+      {dialog === "history" && <HistoryView />}
       {dialog === "resetApp" && <ResetAppDialog />}
       {palette && <CommandPalette />}
     </>
@@ -577,6 +579,7 @@ function AccessibilityPane() {
           </pre>
         </div>
       </fieldset>
+      <HistoryColors />
       <fieldset>
         <legend>Motion</legend>
         <label className="check">
@@ -585,6 +588,90 @@ function AccessibilityPane() {
         </label>
       </fieldset>
     </>
+  );
+}
+
+/** History's two colors. The palette's own are used until a person types
+ * or picks another, as hex or RGB. */
+function HistoryColors() {
+  const custom = useStore((state) => Boolean(state.settings.historyThen || state.settings.historyNow));
+  return (
+    <fieldset>
+      <legend>History colors</legend>
+      <p className="hint">
+        History shows an earlier version of a script in one color, with a dashed edge, and the script now in another, with a solid edge. The defaults, apricot and orchid, stay apart for every kind of color vision. To use your own, type a color as hex, such as #FEB98B, or as RGB, such as 254, 185, 139.
+      </p>
+      <div className="history-colors">
+        <ColorField label="Then, an earlier version" setting="historyThen" />
+        <ColorField label="Now" setting="historyNow" />
+      </div>
+      <div className="history-sample" role="group" aria-label="How History looks with these colors">
+        <span className="tn-code is-then">
+          <span className="tn-n">Then</span>
+          <span className="tn-text">geom_smooth(method = "lm")</span>
+        </span>
+        <span className="tn-code is-now">
+          <span className="tn-n">Now</span>
+          <span className="tn-text">geom_smooth(method = "lm", se = FALSE)</span>
+        </span>
+      </div>
+      <div>
+        <button type="button" className="button quiet" disabled={!custom} onClick={() => updateSettings({ historyThen: "", historyNow: "" })}>
+          Use the default colors
+        </button>
+      </div>
+    </fieldset>
+  );
+}
+
+/** One of History's colors: typed as hex or RGB, or picked. */
+function ColorField({ label, setting }: { label: string; setting: "historyThen" | "historyNow" }) {
+  const saved = useStore((state) => state.settings[setting]);
+  const palette = useStore((state) => state.settings.palette);
+  const appearance = useStore((state) => state.settings.appearance);
+  const mode = resolveMode(appearance);
+  const fallback = (paletteColors(palette, mode) as Record<string, string>)[setting];
+  const [draft, setDraft] = useState(saved);
+  const id = useId();
+  // Reset to the defaults from elsewhere clears the field here too.
+  useEffect(() => setDraft(saved), [saved]);
+  const parsed = parseColor(draft);
+  const color = parseColor(saved) ?? fallback;
+  const wrong = draft.trim() !== "" && !parsed;
+  const note = barNote(color, tokens.modes[mode].codeBg);
+  const change = (text: string) => {
+    setDraft(text);
+    const next = parseColor(text);
+    if (next) updateSettings({ [setting]: next });
+    else if (!text.trim()) updateSettings({ [setting]: "" });
+  };
+  return (
+    <div className="color-field">
+      <label htmlFor={`${id}-text`}>{label}</label>
+      <div className="color-field-row">
+        <input
+          type="color"
+          className="color-swatch"
+          aria-label={`${label}, pick a color`}
+          value={color.toLowerCase()}
+          onChange={(event) => change(event.target.value.toUpperCase())}
+        />
+        <input
+          id={`${id}-text`}
+          type="text"
+          spellCheck={false}
+          autoComplete="off"
+          placeholder={`${fallback}, the default`}
+          value={draft}
+          aria-invalid={wrong}
+          aria-describedby={`${id}-note`}
+          onChange={(event) => change(event.target.value)}
+        />
+      </div>
+      <p className="hint" id={`${id}-note`} role={wrong ? "alert" : undefined}>
+        {wrong ? "Not a color yet. Try #FEB98B, or 254, 185, 139." : note ?? `${color}, ${rgbText(color)}`}
+      </p>
+    </div>
   );
 }
 

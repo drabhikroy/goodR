@@ -128,6 +128,10 @@ pub struct Settings {
     pub compact: bool,
     /// Whether document text keeps to a comfortable line length.
     pub reading_width: bool,
+    /// The colors History uses for an earlier version and for now, as
+    /// #RRGGBB. Empty uses the palette's own.
+    pub history_then: String,
+    pub history_now: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
@@ -222,6 +226,8 @@ impl Default for Settings {
             plot_style: false,
             compact: false,
             reading_width: true,
+            history_then: String::new(),
+            history_now: String::new(),
         }
     }
 }

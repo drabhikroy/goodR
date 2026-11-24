@@ -6,7 +6,7 @@
 // every other dialog.
 
 import { useEffect, useMemo, useState } from "react";
-import { announce, notify, openDialog, openUrl } from "../lib/app";
+import { notify, openDialog, openUrl } from "../lib/app";
 import { applyRename, currentRenameTarget, findInFiles, openMatch, renamePreview, searchableFiles, type FileMatches } from "../lib/editing";
 import { isPlainName } from "../lib/rename";
 import { citeDoi, doiIn, searchWorks, type Work } from "../lib/cite";
@@ -15,8 +15,6 @@ import { currentQuestion, currentTrace, goToStep, rerunAfter, traceInput, traceO
 import { questionText } from "../lib/question";
 import { applyProblemFixes, currentProblems, type Problem } from "../lib/fixProblems";
 import * as editor from "../lib/editor";
-import { copyLines, currentVersions, putBack, restoreVersion, savedWhen } from "../lib/fileHistory";
-import { changeSummary, lineDiff, type Piece } from "../lib/lineDiff";
 import { Modal } from "./Dialogs";
 
 const close = () => openDialog(null);
@@ -491,120 +489,6 @@ export function FixProblemsDialog() {
             {picked.length === 1 ? "Fix 1 problem" : `Fix ${picked.length} problems`}
           </button>
         )}
-      </div>
-    </Modal>
-  );
-}
-
-/** One changed part: the lines as they were and as they are, marked, with
- * a way to copy the old lines or put them back. */
-function ChangePiece({ piece, onPutBack }: { piece: Exclude<Piece, { kind: "same" }>; onPutBack: () => void }) {
-  const where = piece.after.length ? `Line ${piece.newFrom + 1}${piece.after.length > 1 ? ` to ${piece.newFrom + piece.after.length}` : ""} now` : `Before line ${piece.newFrom + 1} now`;
-  const label = { added: "Added since", removed: "Taken out since", changed: "Changed since" }[piece.kind];
-  return (
-    <li className={`change-piece is-${piece.kind}`}>
-      <p className="change-head">
-        <strong>{label}</strong>
-        <span className="muted">{where}</span>
-      </p>
-      {piece.before.length > 0 && (
-        <pre className="change-old" aria-label="Then">
-          {piece.before.map((line, index) => (
-            <div key={index}>
-              <span aria-hidden="true">{"\u2212 "}</span>
-              {line || " "}
-            </div>
-          ))}
-        </pre>
-      )}
-      {piece.after.length > 0 && (
-        <pre className="change-new" aria-label="Now">
-          {piece.after.map((line, index) => (
-            <div key={index}>
-              <span aria-hidden="true">{"+ "}</span>
-              {line || " "}
-            </div>
-          ))}
-        </pre>
-      )}
-      <div className="button-row">
-        {piece.before.length > 0 && (
-          <button type="button" className="button small quiet" onClick={() => copyLines(piece.before.join("\n"))}>
-            Copy the old {piece.before.length === 1 ? "line" : "lines"}
-          </button>
-        )}
-        <button type="button" className="button small quiet" onClick={onPutBack}>
-          {piece.kind === "added" ? "Take this out" : piece.kind === "removed" ? "Put this back" : "Put the old lines back"}
-        </button>
-      </div>
-    </li>
-  );
-}
-
-/** Earlier versions of a file: each save on the left, and on the right what
- * has changed since the one chosen, part by part. */
-export function FileHistoryDialog() {
-  const found = currentVersions();
-  const [chosen, setChosen] = useState(0);
-  // Bumped after a part is put back, so the comparison is made again.
-  const [, setEdits] = useState(0);
-  if (!found) return null;
-  const now = editor.getText(found.path);
-  const version = found.versions[chosen];
-  const pieces = lineDiff(version.text, now);
-  const changes = pieces.filter((piece): piece is Exclude<Piece, { kind: "same" }> => piece.kind !== "same");
-  const file = found.path.split(/[\\/]/).pop();
-  return (
-    <Modal title={`Earlier versions of ${file}`} onClose={close} wide className="history-dialog">
-      <div className="dialog-body file-history">
-        <div className="version-list" role="group" aria-label="Saved versions">
-          {found.versions.map((item, index) => {
-            const summary = changeSummary(lineDiff(item.text, now));
-            return (
-              <button key={item.id} type="button" aria-pressed={index === chosen} className={`version-item${index === chosen ? " is-chosen" : ""}`} onClick={() => setChosen(index)}>
-                <span className="version-when">{savedWhen(item.savedAt)}</span>
-                <span className="version-summary">{summary === "No changes" ? "Same as now" : summary}</span>
-              </button>
-            );
-          })}
-        </div>
-        <div className="version-changes">
-          <p className="version-lead">
-            {changes.length ? (
-              <>
-                Compared with the version from <strong>{savedWhen(version.savedAt)}</strong>: {changeSummary(pieces).toLowerCase()}.
-              </>
-            ) : (
-              "The script is the same now as in this version."
-            )}
-          </p>
-          {changes.length > 0 && (
-            <ul className="change-list">
-              {changes.map((piece) => (
-                <ChangePiece
-                  key={`${piece.oldFrom}-${piece.newFrom}`}
-                  piece={piece}
-                  onPutBack={() => {
-                    putBack(found.path, piece);
-                    setEdits((count) => count + 1);
-                    announce(piece.kind === "added" ? "Taken out of the script." : "Put back in the script.");
-                  }}
-                />
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-      <div className="dialog-foot">
-        <button type="button" className="button quiet" onClick={() => copyLines(version.text)}>
-          Copy this version
-        </button>
-        <button type="button" className="button" onClick={close}>
-          Close
-        </button>
-        <button type="button" className="button primary" disabled={!changes.length} onClick={() => restoreVersion(found.path, version.text)}>
-          Use this version
-        </button>
       </div>
     </Modal>
   );

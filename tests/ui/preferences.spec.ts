@@ -184,3 +184,22 @@ test("Reset the app puts every setting back and, when asked, clears the recent l
   await expect.poll(() => appState<number>(page, "state.settings.recentFiles.length")).toBe(0);
   expect(await appState<boolean>(page, "state.settings.tourSeen")).toBe(false);
 });
+
+test("History's colors can be typed as hex or RGB, change the window at once, and go back to the defaults", async ({ page }) => {
+  await openExample(page);
+  const dialog = await openSettings(page, "Accessibility");
+  const then = dialog.getByRole("textbox", { name: "Then, an earlier version", exact: true });
+  const now = dialog.getByRole("textbox", { name: "Now", exact: true });
+  const variable = (name: string) => page.evaluate((key) => getComputedStyle(document.documentElement).getPropertyValue(key).trim().toUpperCase(), name);
+  const before = await variable("--history-then");
+  await then.fill("12, 120, 200");
+  await expect.poll(() => variable("--history-then")).toBe("#0C78C8");
+  await now.fill("#c3a");
+  await expect.poll(() => variable("--history-now")).toBe("#CC33AA");
+  await now.fill("not a color");
+  await expect(dialog.getByRole("alert")).toContainText("Not a color yet");
+  await expect.poll(() => variable("--history-now")).toBe("#CC33AA");
+  await dialog.getByRole("button", { name: "Use the default colors" }).click();
+  await expect.poll(() => variable("--history-then")).toBe(before);
+  await expect(then).toHaveValue("");
+});

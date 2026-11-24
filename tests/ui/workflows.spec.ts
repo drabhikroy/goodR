@@ -388,6 +388,10 @@ test("a new project is created from a template and opened", async ({ page }) => 
 test("the data viewer shows columns, sorts, and pages through rows", async ({ page }) => {
   await openExample(page);
   await page.keyboard.press("Shift+Control+Enter");
+  // The run's plot brings the results forward when it arrives, so the
+  // objects are opened once the run is over.
+  await expect(page.locator(".output-card.status-error")).toBeVisible();
+  await expectReady(page);
   await (await showObjects(page)).getByRole("button", { name: /^penguins data frame/ }).click();
   const viewer = page.getByRole("region", { name: "Data viewer, penguins" });
   await expect(viewer.getByRole("columnheader", { name: /body_mass/ })).toContainText("2 missing");
@@ -616,11 +620,16 @@ test("history sends commands back to the console or into the script", async ({ p
   await page.keyboard.type("1 + 1");
   await page.keyboard.press("Enter");
   await page.getByRole("button", { name: "History", exact: true }).click();
+  await page.getByRole("dialog", { name: "History of analysis.R" }).getByRole("tab", { name: "Commands you typed" }).click();
   const history = page.getByRole("region", { name: "Console history" });
   await expect(history.locator(".history-code")).toHaveText(["1 + 1"]);
+  // Sending a command closes History, so it is seen where it went.
   await history.getByRole("button", { name: "To console" }).click();
+  await expect(history).toBeHidden();
   await expect(input).toHaveText("1 + 1");
   await newFileWith(page, "");
+  await page.keyboard.press("Control+Shift+y");
+  await expect(page.getByRole("tab", { name: "Commands you typed" })).toHaveAttribute("aria-selected", "true");
   await history.getByRole("button", { name: "To script" }).click();
   await expect(page.locator(".editor-host .cm-content")).toContainText("1 + 1");
 });

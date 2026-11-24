@@ -56,7 +56,7 @@ export const COMMANDS: Command[] = [
   { id: "project.close", title: "Close project", section: "File" },
   { id: "file.save", title: "Save", section: "File", keys: "⌘S", combo: "Mod+s" },
   { id: "file.saveAs", title: "Save as", section: "File", keys: "⇧⌘S", combo: "Shift+Mod+s" },
-  { id: "file.history", title: "Earlier versions of this file", section: "File" },
+  { id: "file.history", title: "History of this file", section: "File" },
   { id: "file.saveAll", title: "Save all", section: "File", keys: "⌥⌘S", combo: "Alt+Mod+s" },
   { id: "file.exportPlot", title: "Export plot", section: "File", keys: "⇧⌘E", combo: "Shift+Mod+e" },
   { id: "file.saveExercises", title: "Save as exercises for students", section: "File" },
