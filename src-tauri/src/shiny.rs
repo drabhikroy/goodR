@@ -205,6 +205,15 @@ pub struct BundleList {
     more: bool,
 }
 
+/// The code of the app a file the user opened belongs to, read so the
+/// interface can check ids across all of its files. Only .R and .js files
+/// inside that app's own folder are returned.
+#[tauri::command]
+pub async fn app_code(state: State<'_, AppState>, file: String) -> CommandResult<Vec<shiny::CodeFile>> {
+    let source = state.allowed.lock().unwrap().check(Path::new(&file)).map_err(|error| error.to_string())?;
+    tauri::async_runtime::spawn_blocking(move || shiny::app_code(&source)).await.map_err(|error| error.to_string())
+}
+
 #[tauri::command]
 pub fn app_bundle_files(state: State<'_, AppState>, file: String) -> CommandResult<BundleList> {
     let source = state.allowed.lock().unwrap().check(Path::new(&file)).map_err(|error| error.to_string())?;

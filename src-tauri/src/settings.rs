@@ -112,6 +112,9 @@ pub struct Settings {
     /// Whether a running Shiny app opens in a window of its own, as in
     /// RStudio, rather than in the App sheet beside the script.
     pub app_window: bool,
+    /// Whether a Shiny app's code is read for likely mistakes, which are
+    /// listed above the script and underlined.
+    pub shiny_check: bool,
     /// What Run does by default, for scripts and for documents.
     pub run_mode: RunMode,
     /// How Render as PDF makes a PDF: "auto", LaTeX when there is one and
@@ -238,6 +241,7 @@ impl Default for Settings {
             autosave: false,
             render_on_save: true,
             app_window: true,
+            shiny_check: true,
             run_mode: RunMode::default(),
             pdf_engine: "auto".into(),
             latex_dir: String::new(),

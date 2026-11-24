@@ -115,6 +115,9 @@ export type Settings = {
   /** Whether a running Shiny app opens in a window of its own, as in
    * RStudio, rather than in the App sheet beside the script. */
   appWindow: boolean;
+  /** Whether a Shiny app's code is read for likely mistakes, which are
+   * listed above the script and underlined. */
+  shinyCheck: boolean;
   /** How Render as PDF makes a PDF: with LaTeX when there is one, which
    * is "auto", or always with Typst, or always with LaTeX. */
   pdfEngine: PdfEngine;

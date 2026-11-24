@@ -328,6 +328,7 @@ export function createMockBackend(): Backend {
     // The interface tests look at the app in its sheet. Its own window has
     // tests of its own.
     appWindow: false,
+    shinyCheck: true,
     pdfEngine: "auto",
     latexDir: "",
     hints: true,
@@ -1146,6 +1147,17 @@ export function createMockBackend(): Backend {
     appOpen: async () => {
       if (!apps.running || !apps.url) throw new Error("No app is running.");
       apps.opened.push(apps.url);
+    },
+    // The app's other code files, as the desktop app finds them: the
+    // folder of app.R, ui.R, or server.R, and its R/ and www/ folders.
+    appCode: async (file) => {
+      check(file);
+      const folder = file.slice(0, file.lastIndexOf("/"));
+      const root = /\/R$/.test(folder) && ["app.R", "ui.R", "server.R"].some((name) => FILES[`${folder.slice(0, -2)}${name}`] !== undefined) ? folder.slice(0, -2) : `${folder}/`;
+      if (!["app.R", "ui.R", "server.R"].some((name) => FILES[`${root}${name}`] !== undefined)) return [];
+      return Object.entries(FILES)
+        .filter(([path]) => path.startsWith(root) && /\.(R|r|js)$/.test(path) && !path.slice(root.length).includes("tests/"))
+        .map(([path, text]) => ({ path, text }));
     },
     // The stand-in has no second window, so it records what it was asked.
     appWindow: async (title) => {

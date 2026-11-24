@@ -365,7 +365,8 @@ const TOPICS: Topic[] = [
           too, starting in the script&#8217;s folder. That way, code does not run in the wrong folder by accident.
         </p>
         <p>
-          The name at the top left is the project or script on show. Its menu says which R is running and in which folder, lists the project&#8217;s scripts and data files, and lists everything open, with a
+          The name at the top left is the project or script on show. A project shows the lettered tile from the top of its sidebar there, so you can tell which project is open with the sidebar closed. When the
+          script is narrow, the words on the buttons beside it give way to their pictures, which keep their names when you point at them. Its menu says which R is running and in which folder, lists the project&#8217;s scripts and data files, and lists everything open, with a
           number when there is more than one, switching between them and bringing each one&#8217;s objects and results along. It also opens recent projects. While R is busy or has stopped, a dot beside the
           name says so. Restart R is in the Run menu, and the version of R is chosen in Settings, under R and packages.
         </p>
@@ -489,8 +490,11 @@ const TOPICS: Topic[] = [
         </p>
         <p>
           As you type, the app is checked for mistakes that Shiny does not warn you about: an id spelled differently in the UI and the server, a reactive written as <code>data</code> instead of{" "}
-          <code>data()</code>, an input read outside a render function, a render function that does not match its output, and an id used twice. Each one is underlined and listed above the script, with Go to line,
-          and a one click fix when the fix is clear.
+          <code>data()</code>, an input read outside a render function, a render function that does not match its output, and an id used twice. The whole app is read, its R folder and the scripts in www
+          included, so an id made in a helper or set from the page counts. The check speaks up only when it is sure: an id is called a typo only when it is a letter or two from one the app really has. Each
+          mistake is underlined, and a single line above the script counts them. Press it to see each one with Go to line and, when the fix is clear, a one click fix. Hide puts the line away until a new kind of
+          mistake turns up. To turn the check off, use Point out likely mistakes in an app&#8217;s code in Settings, under Results. A helper in an app&#8217;s R folder is checked with the rest of its app, and an R
+          Markdown or Quarto document that runs Shiny has its chunks checked. Other scripts are not checked.
         </p>
         <p>
           When something breaks while the app is running, Shiny&#8217;s message often points at the wrong place. The App sheet reads Shiny&#8217;s trace for you and tells you where it really went wrong: the line,

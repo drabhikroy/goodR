@@ -191,7 +191,10 @@ Start a project from a template (an analysis, a Quarto report, or a Shiny
 app), or turn a folder you already have into one. Git history and renv
 package records are a checkbox each. Projects use the standard `.Rproj`
 file, so they also open in RStudio. A sidebar lists the project's scripts and
-its data files.
+its data files. The chip at the top left shows the project's lettered tile
+and name, so which project is open reads at a glance with the sidebar closed.
+When the script column is narrow, the run buttons drop their words for their
+pictures, and the tab of the script on show stays in view.
 
 ## R Markdown, Quarto, and reports
 
@@ -278,9 +281,17 @@ sheet says where the app is and explains any error inside it. To keep the
 app beside the code instead, choose Show it here instead in the App sheet,
 or turn off Open a running app in its own window in Settings, under Results.
 
-Each is underlined at its line and listed above the script with Go to line,
-and with a one press fix where the fix is clear. An app split into ui.R and
-server.R is read as one. The App sheet maps how the app connects, from inputs
+Each is underlined at its line. A single line above the script counts them,
+and pressing it lists each one with Go to line and a one press fix where the
+fix is clear. Hide puts the line away until a new kind of mistake turns up,
+and Settings, under Results, turns the check off. The whole app is read,
+including its R/ helpers and the JavaScript in www/, so an id made by a
+helper or set from the page with `Shiny.setInputValue()` counts as made. The
+check speaks up only when it is sure: two ids count as a typo only when they
+share their words and one word is a letter or two off. An app split into
+ui.R and server.R is read as one, a helper in an app's R/ folder is checked
+with its app, and an R Markdown or Quarto document with `runtime: shiny`
+has its chunks checked. Other scripts are not checked. The App sheet maps how the app connects, from inputs
 to reactives to outputs, so an output that reads nothing (often a mistake)
 stands out.
 

@@ -121,6 +121,23 @@ bar and the command palette.
 | Status pill, working folder in the console header, status bar | One R button that opens the working folder, Restart R, and Choose R version |
 | Console always showing everything run | A console drawer that records only what was typed there, resizable by drag or arrow keys |
 
+### Keeping the project and the controls in view
+
+The project chip at the top left carries the same lettered tile as the
+head of the project's sidebar, so the two read as one thing and which
+project is open shows with the sidebar closed, in a space the chip
+already had. The person this app is for found the word Project above the
+name easy to miss, and a banner saying so would cost a row of the script
+for something that rarely changes.
+
+The bar above the script measures its own column rather than the
+window. When the column is narrow, the words on Run app, Run, and Render
+give way to their pictures, whose names stay for screen readers and in
+tooltips, and the tab of the script on show scrolls into view. The
+column also keeps a minimum width that the canvas gives way to, so no
+control can end up under the canvas, as one did when the script was
+dragged narrow.
+
 ### Labels instead of bare icons
 
 The three output layout icons were the least clear controls in the first
@@ -606,11 +623,38 @@ parentheses; inputs read outside a render function, reactive, or
 observer; render functions that cannot fill the output they are paired
 with; and ids used twice. Each is underlined where it is, quieter than a
 real error, and listed above the script with Go to line and a fix where
-one is clear. An app split into ui.R and server.R is read as one. The
-reader stays quiet about apps built from modules or ids made with
-paste(), where it cannot be sure. Catching problems where they are made,
-rather than when their effects appear, is what makes them cheap to fix
-(Becker et al. 2019 on error messages that point at the cause).
+one is clear. An app split into ui.R and server.R is read as one.
+Catching problems where they are made, rather than when their effects
+appear, is what makes them cheap to fix (Becker et al. 2019 on error
+messages that point at the cause).
+
+A check like this is only worth having if it is right when it speaks.
+Warnings that are usually false teach people to ignore all of them,
+true ones included (Johnson et al. 2013 on why developers stop using
+static analysis tools; Sadowski et al. 2018 on keeping false positives
+low enough that people act on what is reported). Measured on nine real
+apps that run without a fault, a first version reported 390 mistakes,
+116 of them in one app, because it read app.R alone and took every id
+made in R/, in a helper, or from the page's JavaScript for a missing
+one. It now reads the whole app, follows helpers that pass an id on to
+an input or an output, and counts an id named in any string as made. An
+id is called a typo only when it shares its words with one the app has
+and one word is a letter or two off, so go_games and dl_games are two
+ids, not a slip. A reactive is reported only where its value is used,
+before $ or [, beside an operator, or in a call such as nrow(), and only
+in the function that made it, so a reactive handed to another function,
+or a name reused for something else, is left alone. An id made twice is
+reported only when both are on the page at once, not in two branches of
+an if or in a dialog. On the same nine apps it now reports nothing, and
+of 258 typos planted in them it finds 232, along with all 58 reactives
+planted without their parentheses and all 9 inputs planted outside a
+reactive.
+
+Even when the list is right, it should not crowd the code. It starts as
+one line with the count, which opens into the list, and Hide puts it
+away until a new kind of mistake appears. The underlines stay, as a
+quiet mark at the place. A setting turns the check off for anyone who
+would rather not have it.
 
 Second, when something fails inside a running app, the stack trace Shiny
 prints after the error is read for the place. Shiny marks each call in
@@ -1270,6 +1314,11 @@ Iyengar, S. S., and Lepper, M. R. (2000). When choice is demotivating: Can
 one desire too much of a good thing? *Journal of Personality and Social
 Psychology, 79*(6), 995-1006.
 
+Johnson, B., Song, Y., Murphy-Hill, E., and Bowdidge, R. (2013). Why don’t
+software developers use static analysis tools to find bugs? In *Proceedings
+of the 35th International Conference on Software Engineering*, 672-681.
+IEEE.
+
 Kandel, S., Paepcke, A., Hellerstein, J., and Heer, J. (2011). Wrangler:
 Interactive visual specification of data transformation scripts. In
 *Proceedings of the SIGCHI Conference on Human Factors in Computing
@@ -1378,6 +1427,10 @@ Rosenholtz, R., Li, Y., and Nakano, L. (2007). Measuring visual clutter.
 Rule, A., Tabard, A., and Hollan, J. D. (2018). Exploration and explanation
 in computational notebooks. In *Proceedings of the 2018 CHI Conference on
 Human Factors in Computing Systems*. ACM.
+
+Sadowski, C., Aftandilian, E., Eagle, A., Miller-Cushon, L., and Jaspan, C.
+(2018). Lessons from building static analysis tools at Google.
+*Communications of the ACM, 61*(4), 58-66.
 
 Saltzer, J. H., and Schroeder, M. D. (1975). The protection of information
 in computer systems. *Proceedings of the IEEE, 63*(9), 1278-1308.

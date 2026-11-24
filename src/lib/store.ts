@@ -330,7 +330,10 @@ export type State = {
   /** The latest Shiny app, running or not, or null before the first. */
   shinyApp: ShinyAppState | null;
   /** Likely mistakes in the Shiny app in front, read from its code. */
-  shinyCheck: { file: string; findings: ShinyFinding[]; graph: ShinyGraph } | null;
+  shinyCheck: { file: string; kind: "app" | "part" | "document"; findings: ShinyFinding[]; graph: ShinyGraph } | null;
+  /** Likely mistakes put out of sight with Hide, by file, as their titles.
+   * The list comes back when a finding not among these appears. */
+  shinyCheckHidden: Record<string, string[]>;
   /** Exporting an app as a web page, while the Share dialog is open. */
   share: ShareState | null;
   /** Every R session's own record, by key. The active session's record is
@@ -406,6 +409,7 @@ export const defaultSettings: Settings = {
   autosave: false,
   renderOnSave: true,
   appWindow: true,
+  shinyCheck: true,
   pdfEngine: "auto",
   latexDir: "",
   hints: true,
@@ -455,6 +459,7 @@ const initial: State = {
   report: null,
   shinyApp: null,
   shinyCheck: null,
+  shinyCheckHidden: {},
   share: null,
   sessions: {},
   activeSession: SCRATCH,

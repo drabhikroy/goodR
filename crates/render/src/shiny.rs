@@ -193,6 +193,79 @@ pub fn bundled_files(source: &Path) -> (Vec<String>, bool) {
     (found, false)
 }
 
+/// One file of an app's code, by its full path, with its text.
+#[derive(Debug, Serialize)]
+pub struct CodeFile {
+    pub path: String,
+    pub text: String,
+}
+
+// Folders that hold tests, installed packages, or documentation rather
+// than the app's own code.
+const SKIPPED_FOLDERS: &[&str] = &["tests", "testthat", "renv", "packrat", "node_modules", "revdep", "rsconnect", "docs", "man"];
+const MAX_CODE_FILES: usize = 300;
+const MAX_CODE_FILE_BYTES: u64 = 1024 * 1024;
+const MAX_CODE_BYTES: u64 = 16 * 1024 * 1024;
+
+/// The folder an app lives in, for a file that is part of it: the folder
+/// of app.R, ui.R, server.R, or global.R, and the app folder above an R/
+/// folder of helpers, which Shiny loads by itself. None for a script that
+/// does not sit in an app's folder.
+pub fn app_folder(source: &Path) -> Option<std::path::PathBuf> {
+    let has_app = |folder: &Path| ["app.R", "ui.R", "server.R"].iter().any(|name| folder.join(name).is_file());
+    let folder = source.parent()?;
+    if has_app(folder) {
+        return Some(folder.to_path_buf());
+    }
+    let above = folder.parent()?;
+    (folder.file_name()? == "R" && has_app(above)).then(|| above.to_path_buf())
+}
+
+/// The R and JavaScript files of the app that `source` belongs to, so a
+/// check of one file can see ids made in the others: helpers in R/,
+/// shared code the app sources, and scripts in www/ that set inputs from
+/// the page. Only files inside the app's folder are read, links are not
+/// followed, and the number and size of files are capped, so a folder
+/// that is not really an app cannot make this slow.
+pub fn app_code(source: &Path) -> Vec<CodeFile> {
+    let Some(root) = app_folder(source) else { return Vec::new() };
+    let Ok(root) = root.canonicalize() else { return Vec::new() };
+    let mut found = Vec::new();
+    let mut total = 0;
+    let mut stack = vec![(root.clone(), 0)];
+    while let Some((dir, depth)) = stack.pop() {
+        let Ok(entries) = std::fs::read_dir(&dir) else { continue };
+        let mut entries: Vec<_> = entries.flatten().collect();
+        entries.sort_by_key(|entry| entry.file_name());
+        for entry in entries {
+            let name = entry.file_name().to_string_lossy().to_string();
+            let Ok(kind) = entry.file_type() else { continue };
+            if name.starts_with('.') || kind.is_symlink() {
+                continue;
+            }
+            let path = entry.path();
+            if kind.is_dir() {
+                if depth < 3 && !SKIPPED_FOLDERS.contains(&name.as_str()) {
+                    stack.push((path, depth + 1));
+                }
+                continue;
+            }
+            let code = path.extension().and_then(|ext| ext.to_str()).is_some_and(|ext| matches!(ext, "R" | "r" | "js"));
+            let size = entry.metadata().map(|meta| meta.len()).unwrap_or(u64::MAX);
+            if !code || size > MAX_CODE_FILE_BYTES || total + size > MAX_CODE_BYTES {
+                continue;
+            }
+            let Ok(text) = std::fs::read_to_string(&path) else { continue };
+            total += size;
+            found.push(CodeFile { path: path.to_string_lossy().to_string(), text });
+            if found.len() >= MAX_CODE_FILES {
+                return found;
+            }
+        }
+    }
+    found
+}
+
 /// Works out why an export failed, from the lines its R printed.
 pub fn diagnose_export(lines: &[String]) -> AppFailure {
     if lines.iter().any(|line| line.trim() == NO_SHINYLIVE_MARKER) {
@@ -302,6 +375,34 @@ fn parse_spot(line: &str) -> Option<AppFailure> {
 mod tests {
     use super::*;
     use std::path::PathBuf;
+
+    #[test]
+    fn app_code_reads_the_whole_app_but_nothing_outside_it() {
+        let dir = tempfile::tempdir().unwrap();
+        let app = dir.path().join("app");
+        for folder in ["R", "www", "tests", ".git", "kit/R"] {
+            std::fs::create_dir_all(app.join(folder)).unwrap();
+        }
+        std::fs::write(app.join("app.R"), "shinyApp(ui, server)").unwrap();
+        std::fs::write(app.join("R/screens.R"), "screen <- function() uiOutput('x')").unwrap();
+        std::fs::write(app.join("kit/R/shell.R"), "shell <- 1").unwrap();
+        std::fs::write(app.join("www/app.js"), "Shiny.setInputValue('go', 1)").unwrap();
+        std::fs::write(app.join("www/style.css"), "body {}").unwrap();
+        std::fs::write(app.join("tests/test.R"), "x").unwrap();
+        std::fs::write(app.join(".git/hook.R"), "x").unwrap();
+        std::fs::write(dir.path().join("other.R"), "x").unwrap();
+        let names = |source: &Path| {
+            let mut names: Vec<String> = app_code(source).into_iter().map(|file| file.path.rsplit(['/', '\\']).take(2).collect::<Vec<_>>().into_iter().rev().collect::<Vec<_>>().join("/")).collect();
+            names.sort();
+            names
+        };
+        let expected = vec!["R/screens.R", "R/shell.R", "app/app.R", "www/app.js"];
+        assert_eq!(names(&app.join("app.R")), expected);
+        // A helper in R/ belongs to the same app.
+        assert_eq!(names(&app.join("R/screens.R")), expected);
+        // A script outside any app's folder has no app to read.
+        assert!(app_code(&dir.path().join("other.R")).is_empty());
+    }
 
     fn rscript(dir: &Path) -> PathBuf {
         let path = dir.join("Rscript");

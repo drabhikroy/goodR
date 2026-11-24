@@ -1196,6 +1196,7 @@ pub fn run() {
             shiny::app_export_stop,
             shiny::app_preview,
             shiny::app_reveal,
+            shiny::app_code,
             shiny::app_window,
             shiny::app_window_close,
         ])

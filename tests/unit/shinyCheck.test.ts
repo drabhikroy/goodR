@@ -80,6 +80,54 @@ describe("checkShinyApp", () => {
     expect(findings.map((finding) => [finding.file, finding.title])).toEqual([["server.R", "The UI has no input called m"]]);
   });
 
+  // Each of these comes from a real app that runs without a fault, where
+  // an earlier version of the check reported a mistake.
+  it("counts ids made in the app's other files, by helpers, and from the page", () => {
+    const server = GOOD.replace("  data <- reactive(faithful$waiting)", "  observeEvent(input$go_games, NULL)\n  observeEvent(input$team_pick, NULL)\n  output$record_plot <- renderPlot(NULL)\n  data <- reactive(faithful$waiting)");
+    const context = [
+      { file: "R/screens.R", text: 'panel_chart <- function(id, h) div(plotOutput(id, height = h))\nscreen <- function() panel_chart("record_plot", 300)' },
+      { file: "www/app.js", text: 'document.querySelector("#go").onclick = () => Shiny.setInputValue("go_games", 1);' },
+      { file: "R/teams.R", text: 'team_ui <- function() selectInput("team_pick", "Team", c("a", "b"))' },
+    ];
+    expect(checkShinyApp([{ file: "app.R", text: server }], context)).toEqual([]);
+    // With the helper gone, record_plot is still named in a string, so the
+    // check cannot be sure it has no place, and stays quiet.
+    expect(checkShinyApp([{ file: "app.R", text: server }], context.slice(1))).toEqual([]);
+  });
+
+  it("calls two ids a typo only when they share their words", () => {
+    const code = GOOD.replace('sliderInput("bins", "Bins", 5, 50, 20),', 'sliderInput("bins", "Bins", 5, 50, 20),\n  downloadButton("dl_games"),').replace("  data <- reactive(faithful$waiting)", "  observeEvent(input$go_games, NULL)\n  data <- reactive(faithful$waiting)");
+    expect(app(code)).toEqual([]);
+  });
+
+  it("does not take updateSelectInput for a second input with the same id", () => {
+    expect(app(GOOD.replace("  data <- reactive(faithful$waiting)", '  observe(updateSliderInput(session, "bins", value = 9))\n  data <- reactive(faithful$waiting)'))).toEqual([]);
+  });
+
+  it("leaves a reactive given to a function, or a name reused in another function, alone", () => {
+    const code = GOOD.replace("  data <- reactive(faithful$waiting)", "  data <- reactive(faithful$waiting)\n  show_tour <- tour_server(input, session, data)").replace("shinyApp(ui, server)", "summarize <- function(data) nrow(data)\nshinyApp(ui, server)");
+    expect(app(code)).toEqual([]);
+    const local = GOOD.replace("    hist(data(), breaks = input$bins)", "    data <- faithful$eruptions\n    hist(data, breaks = input$bins)");
+    expect(app(local)).toEqual([]);
+  });
+
+  it("leaves an id made in two branches of an if alone, since only one shows", () => {
+    const code = GOOD.replace('  plotOutput("plot")', '  plotOutput("plot"),\n  if (TRUE) actionButton("go", "Go") else actionButton("go", "Go again")');
+    expect(app(code)).toEqual([]);
+  });
+
+  it("leaves inputs read in a helper that takes input but is not a server alone", () => {
+    const code = GOOD.replace("shinyApp(ui, server)", "share_params <- function(input, choice) list(n = input$bins,\n  choice = choice)\nshinyApp(ui, server)");
+    expect(app(code)).toEqual([]);
+    const multiline = GOOD.replace("  data <- reactive(faithful$waiting)", "  specs <- function() list(\n    n = input$bins)\n  data <- reactive(faithful$waiting)");
+    expect(app(multiline)).toEqual([]);
+  });
+
+  it("accepts a reactive or NULL put into an output, as apps do for conditionalPanel", () => {
+    const code = GOOD.replace("  data <- reactive(faithful$waiting)", '  output$has_data <- reactive(TRUE)\n  outputOptions(output, "has_data", suspendWhenHidden = FALSE)\n  output$old <- NULL\n  data <- reactive(faithful$waiting)');
+    expect(app(code)).toEqual([]);
+  });
+
   it("stays quiet about ids it cannot read, as in modules", () => {
     expect(app(GOOD.replace("output$plot", "output$plt").replace("library(shiny)", 'library(shiny)\nns <- NS("a")'))).toEqual([]);
   });

@@ -9,7 +9,7 @@ import * as editor from "../lib/editor";
 import { isReport, renderReport, stopRender } from "../lib/report";
 import { isShinyApp, openShare, runApp, stopApp } from "../lib/shiny";
 import { useStore } from "../lib/store";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { OutputLayout, ResultStyle, RunScope } from "../lib/types";
 import { Canvas, elapsedWords, PlotViewer, ToolStrip, useElapsed } from "./Canvas";
 import { Composer } from "./Composer";
@@ -136,12 +136,18 @@ function Tabs() {
   // Two scripts can share a name, such as analysis.R in two projects. Those
   // tabs also show their folder, so the names never look identical.
   const shared = new Set(tabs.map((tab) => tab.name).filter((name, index, names) => names.indexOf(name) !== index));
+  // When the tabs do not all fit, the one on show is scrolled into view,
+  // so the name of the script being edited is never out of sight.
+  const list = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    list.current?.querySelector<HTMLElement>(".tab.is-active")?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [active, tabs.length]);
   return (
     <div className="tab-strip" data-tauri-drag-region>
       {/* The tab list holds only tabs, as screen readers expect. Each close
           button is for pointers. Keyboard users close a tab with Command W
           or File, Close Tab, so the button stays out of the Tab order. */}
-      <div role="tablist" aria-label="Open scripts" className="tabs">
+      <div role="tablist" aria-label="Open scripts" className="tabs" ref={list}>
         {tabs.map((tab) => (
           <div key={tab.path} role="presentation" className={`tab ${tab.path === active ? "is-active" : ""}`}>
             <button
@@ -218,9 +224,18 @@ function ProjectSwitcher() {
         onClick={() => setOpen(!open)}
       >
         {status !== "ready" && status !== "none" && <span className={`r-dot tone-${status === "busy" || status === "starting" ? "busy" : "danger"}`} title={R_WORDS[status]} aria-hidden="true" />}
-        <span className="project-kind" aria-hidden="true">
-          <SessionIcon session={active} />
-        </span>
+        {/* A project shows the same lettered tile as the head of its
+            sidebar, so which project is open reads at a glance even with
+            the sidebar closed and the name cut short. */}
+        {sessionKind(active) === "project" ? (
+          <span className="project-mark is-small" aria-hidden="true">
+            {sessionButtonLabel(active).slice(0, 1).toUpperCase()}
+          </span>
+        ) : (
+          <span className="project-kind" aria-hidden="true">
+            <SessionIcon session={active} />
+          </span>
+        )}
         {/* A project says so above its name, so it is plain from the first
             moment that the work is inside a project. */}
         <span className="project-label">
@@ -403,15 +418,15 @@ function RenderButton() {
   if (!isReport(active)) return null;
   if (rendering) {
     return (
-      <button type="button" className="button quiet" onClick={stopRender}>
-        <StopIcon size={12} /> Stop rendering
+      <button type="button" className="button quiet" onClick={stopRender} title="Stop rendering">
+        <StopIcon size={12} /> <span className="action-label">Stop rendering</span>
       </button>
     );
   }
   return (
     <div className="popover-anchor split-button" ref={box}>
       <button type="button" className="button" onClick={() => renderReport()} title={`Render the report, ${keyLabel("⇧⌘K")}`}>
-        <ReportIcon size={14} /> Render
+        <ReportIcon size={14} /> <span className="action-label">Render</span>
       </button>
       <button type="button" className="button split-arrow" aria-label="Render in another format" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
         <ChevronIcon size={12} open />
@@ -451,15 +466,15 @@ function RunAppButton() {
   if (!active || !isShinyApp(active, editor.getText(active))) return null;
   if (running === active) {
     return (
-      <button type="button" className="button quiet" onClick={stopApp}>
-        <StopIcon size={12} /> Stop app
+      <button type="button" className="button quiet" onClick={stopApp} title="Stop app">
+        <StopIcon size={12} /> <span className="action-label">Stop app</span>
       </button>
     );
   }
   return (
     <div className="popover-anchor split-button" ref={box}>
-      <button type="button" className="button primary" onClick={() => runApp(active)} title="Run the app in the App pane">
-        <AppWindowIcon size={14} /> Run app
+      <button type="button" className="button primary" onClick={() => runApp(active)} title="Run app">
+        <AppWindowIcon size={14} /> <span className="action-label">Run app</span>
       </button>
       <button type="button" className="button primary split-arrow" aria-label="More for this app" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
         <ChevronIcon size={12} open />
@@ -520,7 +535,7 @@ function RunButton() {
   if (busy) {
     return (
       <button type="button" className="button run-button is-stop" onClick={stop} title={`Stop, ${keyLabel("⌘.")}`}>
-        <StopIcon size={12} /> Stop
+        <StopIcon size={12} /> <span className="action-label">Stop</span>
         {/* With the canvas hidden, its progress bar is too, so the time
             so far shows here instead. */}
         {!canvasOpen && elapsed !== null && elapsed >= 1000 && <span className="run-elapsed">{elapsedWords(elapsed)}</span>}
@@ -535,7 +550,7 @@ function RunButton() {
   return (
     <div className="popover-anchor split-button run-split" ref={box}>
       <button type="button" className={`button ${tone} run-button`} onClick={runDefault} title={`${scopeName(scope, file)}, ${keyLabel(keys)}`}>
-        <PlayIcon size={12} /> {scopeName(scope, file)}
+        <PlayIcon size={12} /> <span className="action-label">{scopeName(scope, file)}</span>
         {/* Live output is a mode, so it shows on the button it changes. */}
         {live && <span className="badge on-run">Live</span>}
       </button>

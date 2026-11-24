@@ -5,7 +5,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { isDefaultLayout, resetApp, resetLayout, resetSettings, openHelp, chooseDataFile, chooseProjectFolder, chooseR, createDocument, createProject, exportPlot, hasPackage, previewData, runImport, installPackages, openDialog, openUrl, runCommand, setOutputLayout, shortPath, togglePalette, updateSettings, baseName, insertSnippetById } from "../lib/app";
 import { documentFileName, type DocumentFormat, type DocumentKind } from "../lib/chunks";
-import { explainApp, exportApp, previewExport, revealExport, setAppWindow, stopExport } from "../lib/shiny";
+import { explainApp, exportApp, previewExport, revealExport, setAppWindow, setShinyCheck, stopExport } from "../lib/shiny";
 import { COMMANDS, keyLabel, searchCommands, searchSnippets, visibleCommands } from "../lib/commands";
 import { SNIPPETS } from "../lib/snippets";
 import { isSupportedR, OLDEST_R } from "../lib/rversion";
@@ -529,6 +529,13 @@ function ResultsPane() {
           <span>
             Open a running app in its own window
             <span className="hint">As RStudio does. Closing the window stops the app. Turned off, the app shows in the App sheet beside the script.</span>
+          </span>
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={settings.shinyCheck} onChange={(event) => setShinyCheck(event.target.checked)} />
+          <span>
+            Point out likely mistakes in an app's code
+            <span className="hint">Reads the whole app, its R folder and the scripts in www included, for a typo in an id, a reactive read without its (), or an input read outside a reactive. It speaks up only when it is sure.</span>
           </span>
         </label>
       </fieldset>

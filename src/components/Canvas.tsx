@@ -76,7 +76,7 @@ function useSheets(): Sheet[] {
   const hasReport = useStore((state) => state.report !== null);
   // The App sheet appears once an app has run, and also whenever a Shiny
   // app's code is in front, for the map of how it connects.
-  const hasApp = useStore((state) => state.shinyApp !== null || (state.shinyCheck !== null && state.shinyCheck.file === state.active));
+  const hasApp = useStore((state) => state.shinyApp !== null || (state.shinyCheck !== null && state.shinyCheck.kind === "app" && state.shinyCheck.file === state.active));
   return [OBJECTS, ...(hasApp ? [APP] : []), ...(hasReport ? [REPORT] : []), ...SHEETS];
 }
 

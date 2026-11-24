@@ -199,6 +199,13 @@ export function showAppWindow() {
 
 /** Chooses where a running app shows, its own window or the App sheet,
  * and moves the app on show there at once. */
+/** Turns the check of an app's code on or off, and checks the file in
+ * front again so the list and underlines follow at once. */
+export function setShinyCheck(on: boolean) {
+  updateSettings({ shinyCheck: on });
+  checkShinyFile(getState().active);
+}
+
 export function setAppWindow(own: boolean) {
   updateSettings({ appWindow: own });
   if (own) showAppWindow();
@@ -274,30 +281,100 @@ const SPLIT_FILES = ["ui.R", "server.R", "global.R"];
 let checkCount = 0;
 
 /**
+ * What kind of file the Shiny check reads `path` as, since each is read
+ * differently: an app, a helper in an app's R/ folder, an R Markdown or
+ * Quarto document that runs Shiny, or none of these, which is not checked.
+ */
+export function shinyCheckKind(path: string | null | undefined, text: string): "app" | "part" | "document" | null {
+  if (!path || path.startsWith("untitled:") || path.startsWith("data:")) return null;
+  if (isShinyApp(path, text)) return "app";
+  if (/[\\/]R[\\/][^\\/]+\.[Rr]$/.test(path) && /\b(input|output)\$|\w(Input|Output)\s*\(/.test(text)) return "part";
+  if (/\.(Rmd|rmd|qmd)$/.test(path)) {
+    const header = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text)?.[1] ?? "";
+    if (/^\s*(runtime|server):\s*["']?shiny/m.test(header)) return "document";
+  }
+  return null;
+}
+
+/** A document's R chunks with every other line left blank, so line
+ * numbers still match the document. */
+function chunkCode(text: string): string {
+  let inside = false;
+  return text
+    .split("\n")
+    .map((line) => {
+      if (!inside && /^\s*```+\s*\{r\b/.test(line)) {
+        inside = true;
+        return "";
+      }
+      if (inside && /^\s*```+\s*$/.test(line)) {
+        inside = false;
+        return "";
+      }
+      return inside ? line : "";
+    })
+    .join("\n");
+}
+
+// The rest of an app's code, read from disk for each file checked, kept
+// for a short while so a check after each pause in typing stays quick.
+const appCodeCache = new Map<string, { at: number; files: { path: string; text: string }[] }>();
+const APP_CODE_FRESH_MS = 20_000;
+
+async function appCodeOf(path: string): Promise<{ path: string; text: string }[]> {
+  const kept = appCodeCache.get(path);
+  if (kept && Date.now() - kept.at < APP_CODE_FRESH_MS) return kept.files;
+  const files = await api.appCode(path).catch(() => []);
+  appCodeCache.set(path, { at: Date.now(), files });
+  return files;
+}
+
+/**
  * Reads a Shiny app's code for likely mistakes and underlines them, for
  * the file in front and the files beside it that make up the same app.
- * Files that are not open are read from disk. Anything that is not a
- * Shiny app clears what was found before.
+ * The rest of the app's code, its R/ helpers and the JavaScript in www/,
+ * is read too, so an id made there is not taken for a missing one. Files
+ * that are not open are read from disk. Anything that is not part of a
+ * Shiny app clears what was found before, as does turning the check off.
  */
 export async function checkShinyFile(path: string | null) {
-  if (!path || !isShinyApp(path, editor.getText(path))) {
+  const kind = path ? shinyCheckKind(path, editor.getText(path)) : null;
+  if (!path || !kind || !getState().settings.shinyCheck) {
     if (getState().shinyCheck) setState({ shinyCheck: null });
+    if (path) editor.setLintMarks(path, []);
     return;
   }
   const check = (checkCount += 1);
   const name = baseName(path);
   const folder = folderOf(path);
-  const paths = SPLIT_FILES.includes(name) ? SPLIT_FILES.map((file) => `${folder}/${file}`) : [path];
+  const textOf = (file: string, fallback?: string) => (getState().tabs.some((tab) => tab.path === file) ? editor.getText(file) : fallback);
   const files: { file: string; text: string }[] = [];
-  for (const file of paths) {
-    const open = getState().tabs.some((tab) => tab.path === file);
-    const text = open ? editor.getText(file) : await api.readText(file).catch(() => null);
-    if (text !== null && text !== undefined) files.push({ file, text });
+  let context: { file: string; text: string }[] = [];
+  if (kind === "document") {
+    files.push({ file: path, text: chunkCode(editor.getText(path)) });
+  } else {
+    const code = await appCodeOf(path);
+    const disk = new Map(code.map((item) => [item.path, item.text]));
+    // appCode gives the files' full paths, which can differ from the tab's
+    // spelling of the same folder, so files are matched by their place in
+    // the app as well.
+    const same = (a: string, b: string) => a === b || (a.endsWith(`/${baseName(b)}`) && folderOf(a).endsWith(baseName(folderOf(b))));
+    const mainPaths = SPLIT_FILES.includes(name) ? SPLIT_FILES.map((file) => `${folder}/${file}`) : [path];
+    for (const file of mainPaths) {
+      const onDisk = [...disk.entries()].find(([item]) => same(item, file))?.[1];
+      const text = textOf(file, onDisk);
+      if (text !== undefined) files.push({ file, text });
+    }
+    if (kind === "part" && !code.length) {
+      if (getState().shinyCheck) setState({ shinyCheck: null });
+      return;
+    }
+    context = code.filter((item) => !mainPaths.some((file) => same(item.path, file))).map((item) => ({ file: item.path, text: textOf(item.path, item.text) ?? item.text }));
   }
   if (check !== checkCount) return;
-  const findings: ShinyFinding[] = checkShinyApp(files);
+  const findings: ShinyFinding[] = checkShinyApp(files, context);
   // The map of how the app's parts connect is read from the same files.
-  setState({ shinyCheck: { file: path, findings, graph: shinyGraph(files) } });
+  setState({ shinyCheck: { file: path, kind, findings, graph: shinyGraph(files) } });
   for (const { file } of files) {
     editor.setLintMarks(
       file,

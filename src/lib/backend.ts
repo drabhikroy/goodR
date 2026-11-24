@@ -184,6 +184,9 @@ export interface Backend {
   /** Opens the running app in the system's browser. */
   appOpen(): Promise<void>;
   /** Shows the running app in a window of its own, or loads it again there. */
+  /** The .R and .js files of the app a script belongs to, read for the
+   * Shiny check. Empty for a script outside an app's folder. */
+  appCode(file: string): Promise<{ path: string; text: string }[]>;
   appWindow(title: string, mode: string): Promise<void>;
   appWindowClose(): Promise<void>;
   onApp(listener: (event: AppEvent) => void): Promise<() => void>;
@@ -315,6 +318,7 @@ async function tauriBackend(): Promise<Backend> {
     appStart: (id, file) => invoke("app_start", { id, file }),
     appStop: () => invoke("app_stop"),
     appOpen: () => invoke("app_open"),
+    appCode: (file) => invoke("app_code", { file }),
     appWindow: (title, mode) => invoke("app_window", { title, mode }),
     appWindowClose: () => invoke("app_window_close"),
     onApp: (listener) => listen<AppEvent>("app-event", (message) => listener(message.payload)),

@@ -28,7 +28,7 @@ export function AppPane() {
   // run it is all the sheet shows, beside a way to run it.
   const graph = check && (!run || check.file === run.file || check.file === active) ? check.graph : null;
   if (!run) {
-    if (!check) return null;
+    if (!check || check.kind !== "app") return null;
     return (
       <section className="report-pane app-pane" aria-label="App">
         <div className="pane-toolbar">

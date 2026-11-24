@@ -8210,3 +8210,107 @@ legend {
   margin: 0 0 0.8rem;
   line-height: 1.55;
 }
+
+/* A narrow script column. The column is measured as a container, so the
+   bar above the script follows its own width, whatever the window and the
+   canvas beside it do. The words on the run buttons go first, leaving
+   their pictures, whose names stay for screen readers and in tooltips,
+   then the word above the project's name. The column keeps enough room
+   for what remains, and the canvas gives way rather than covering it. */
+.center {
+  container: center / inline-size;
+  min-width: 24rem;
+}
+
+.canvas {
+  flex-shrink: 1;
+  min-width: 22.5rem;
+}
+
+.project-mark.is-small {
+  width: 1.6rem;
+  height: 1.6rem;
+  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+}
+
+/* First the word on Run goes, since its picture and tooltip say Run and
+   the menu beside it names each way to run. */
+@container center (max-width: 44rem) {
+  .file-actions .run-button .action-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .file-actions .run-button {
+    min-width: 0;
+    padding-inline: 0.75rem;
+  }
+
+  .run-elapsed {
+    display: none;
+  }
+
+  /* The script on show keeps its tab in view, even when the others are
+     scrolled out of it. */
+  .title-bar .tab-strip {
+    flex: 1 1 6rem;
+    min-width: 5rem;
+  }
+}
+
+/* Then the words on the other buttons and the section's name, which the
+   menu of sections still lists. */
+@container center (max-width: 36rem) {
+  .file-actions .action-label,
+  .title-bar .section-bar {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .file-actions .button:not(.split-arrow) {
+    min-width: 0;
+    padding-inline: 0.75rem;
+  }
+}
+
+/* Last, the project's name beside its tile, and the buttons for a new
+   script and closing a tab, which stay on Command N and Command W and in
+   the File menu, so the room is the open script's name's. */
+@container center (max-width: 30rem) {
+  .project-switcher .project-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .title-bar {
+    gap: 0.4rem;
+  }
+
+  /* The window still drags by the bar's empty edges, but the room in the
+     middle goes to the tab of the script on show. */
+  .title-bar .title-bar-spacer {
+    flex: 0 1 0.5rem;
+  }
+
+  .title-bar .new-tab,
+  .title-bar .tab-close {
+    display: none;
+  }
+
+  .title-bar .tab-button {
+    padding-inline: 0.6rem;
+  }
+}

@@ -165,13 +165,38 @@ test("sharing without shinylive explains it and offers to install it", async ({ 
 test("likely mistakes in an app are found as it is written, at their line, with a fix", async ({ page }) => {
   await openApp(page);
   await replaceScript(page, 'library(shiny)\nui <- fluidPage(\n  sliderInput("bins", "Bins", 5, 50, 20),\n  plotOutput("mass")\n)\nserver <- function(input, output) {\n  output$mas <- renderPlot(hist(penguins$body_mass, breaks = input$bins))\n}\nshinyApp(ui, server)\n');
-  const banner = page.getByRole("region", { name: "Likely problems in this app" });
-  await expect(banner).toContainText("1 likely problem in this app");
+  const banner = page.getByRole("region", { name: "Likely mistakes in this app" });
+  await expect(banner).toContainText("1 likely mistake in this app");
+  // It starts folded to one line, so it never pushes the script down far.
+  await expect(banner).not.toContainText("has no place in the UI");
+  await banner.getByRole("button", { name: /1 likely mistake/ }).click();
   await expect(banner).toContainText("Line 7 output$mas has no place in the UI");
   await expect(page.locator(".editor-host .cm-lint")).toHaveText("mas");
   await banner.getByRole("button", { name: "Change to mass" }).click();
   await expect(page.locator(".editor-host .cm-content")).toContainText("output$mass <- renderPlot");
   await expect(banner).toHaveCount(0);
+});
+
+test("Hide puts the likely mistakes away until a new kind turns up, and the setting turns the check off", async ({ page }) => {
+  await openApp(page);
+  const app = 'library(shiny)\nui <- fluidPage(\n  sliderInput("bins", "Bins", 5, 50, 20),\n  plotOutput("mass")\n)\nserver <- function(input, output) {\n  output$mas <- renderPlot(hist(penguins$body_mass, breaks = input$bins))\n}\nshinyApp(ui, server)\n';
+  await replaceScript(page, app);
+  const banner = page.getByRole("region", { name: "Likely mistakes in this app" });
+  await banner.getByRole("button", { name: "Hide" }).click();
+  await expect(banner).toHaveCount(0);
+  // The underline stays, as a quiet reminder.
+  await expect(page.locator(".editor-host .cm-lint")).toHaveText("mas");
+  // A mistake of a new kind brings the list back.
+  await replaceScript(page, app.replace("input$bins", "input$bin"));
+  await expect(banner).toContainText("2 likely mistakes in this app");
+  // Turned off in Settings, nothing is listed or underlined.
+  await page.keyboard.press("Control+,");
+  const settings = page.getByRole("dialog", { name: "Settings" });
+  await settings.getByRole("navigation", { name: "Settings sections" }).getByRole("button", { name: "Results" }).click();
+  await settings.getByRole("checkbox", { name: /Point out likely mistakes/ }).uncheck();
+  await page.keyboard.press("Escape");
+  await expect(banner).toHaveCount(0);
+  await expect(page.locator(".editor-host .cm-lint")).toHaveCount(0);
 });
 
 test("a running app opens in its own window by default, as in RStudio, and can move back to the sheet", async ({ page }) => {

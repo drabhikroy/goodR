@@ -8,7 +8,7 @@ import * as editor from "../lib/editor";
 import { applyShinyFix, goToAppLine } from "../lib/shiny";
 import { checkFromScratch, dismissCheck, goToCheckLine, stopCheck } from "../lib/resultsTools";
 import { isStudentCopy, readExercises } from "../lib/exercises";
-import { getState, useStore } from "../lib/store";
+import { getState, setState, useStore } from "../lib/store";
 import { AlertIcon, CheckIcon, ChevronIcon, TriangleIcon, WarnIcon } from "./Icons";
 import { OutputCard } from "./OutputCard";
 
@@ -163,23 +163,26 @@ function RStatusBanner() {
 /**
  * Likely mistakes in the Shiny app in front, read from its code as it is
  * written: each one at its line, in a sentence, with Go to line and a fix
- * where one is clear. It folds to its count, and opens by itself when a
- * new kind of problem appears.
+ * where one is clear. It starts folded to one line, so it never pushes
+ * the script far down. Hide puts it away until a mistake of a new kind
+ * appears, and the underlines in the script stay.
  */
 function ShinyBanner() {
   const check = useStore((state) => state.shinyCheck);
   const active = useStore((state) => state.active);
-  const [open, setOpen] = useState(true);
+  const hidden = useStore((state) => (check ? state.shinyCheckHidden[check.file] : undefined));
+  const [open, setOpen] = useState(false);
   const findings = check && active && (check.file === active || check.findings.some((item) => item.file === active)) ? check.findings : [];
-  if (!findings.length) return null;
+  if (!check || !findings.length || findings.every((item) => hidden?.includes(item.title))) return null;
   const several = new Set(findings.map((item) => item.file)).size > 1;
+  const hide = () => setState((state) => ({ shinyCheckHidden: { ...state.shinyCheckHidden, [check.file]: findings.map((item) => item.title) } }));
   return (
-    <div className="banner tone-warn shiny-check" role="region" aria-label="Likely problems in this app">
+    <div className="banner tone-warn shiny-check" role="region" aria-label="Likely mistakes in this app">
       <AlertIcon size={16} />
       <div className="banner-text">
         <button type="button" className="shiny-check-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
-          <strong>{findings.length === 1 ? "1 likely problem in this app" : `${findings.length} likely problems in this app`}</strong>
-          <span className="muted"> found by reading the code, before it runs</span>
+          <strong>{findings.length === 1 ? "1 likely mistake in this app" : `${findings.length} likely mistakes in this app`}</strong>
+          <span className="muted"> {open ? "found by reading its code" : "Show"}</span>
           <ChevronIcon size={12} open={open} />
         </button>
         {open && (
@@ -208,6 +211,9 @@ function ShinyBanner() {
           </ul>
         )}
       </div>
+      <button type="button" className="button quiet" onClick={hide} title="Hidden until a new kind of mistake turns up. Settings, Shiny apps turns the check off.">
+        Hide
+      </button>
     </div>
   );
 }
