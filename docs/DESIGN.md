@@ -915,7 +915,12 @@ people the app is for read red as an error and green as Git. Three designs
 were mocked up and compared with the person the app is for: a deck of cards, a
 map of changes like a branch graph, and the whole file then and now with a
 slider. The deck was confusing and the map too much like Git; then and now
-was the clearest. Working out what changed in code is something people do
+was the clearest. Then and now as first built swapped the old text in place
+when the slider moved, which lost the sense of moving back through time that
+the person asked for at the start: flipping back through changes like
+snapshots, one card each. So the earlier side became a deck, with older
+versions stacked behind the front card and each flip moving one card, while
+now stays still, so only the past moves. Working out what changed in code is something people do
 often, and they report that the usual tools leave gaps (Tao et al. 2012),
 so the view keeps every change in place in the file, beside its neighbors.
 

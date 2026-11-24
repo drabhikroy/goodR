@@ -176,3 +176,37 @@ test("a line that worked before offers itself back when it fails, as one edit Un
   await page.keyboard.press("Control+z");
   await expect(page.locator(".editor-host .cm-line").nth(1)).toHaveText("valeu");
 });
+test("History's earlier versions stack behind the front card and flip one at a time", async ({ page }) => {
+  await openExample(page);
+  const content = editor(page);
+  for (const line of ["one <- 1", "two <- 2", "three <- 3"]) {
+    await content.click();
+    await page.keyboard.press("Control+End");
+    await page.keyboard.insertText(`\n${line}`);
+    await page.keyboard.press("Control+s");
+    await expect(page.getByRole("tab", { name: /analysis\.R/ })).not.toContainText("edited");
+  }
+  await page.getByRole("navigation", { name: "Tools" }).getByRole("button", { name: "History", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "History of analysis.R" });
+  const slider = dialog.getByRole("slider", { name: "Compare now with" });
+  const front = dialog.locator(".tn-card:not(.tn-card-leaving)");
+  // The newest earlier version is in front, with older ones behind it.
+  const start = Number(await slider.inputValue());
+  await expect(dialog.locator(".tn-card-behind")).not.toHaveCount(0);
+  const behind = await dialog.locator(".tn-card-behind").count();
+  // Left goes back one card; the stack behind gets shorter.
+  await dialog.locator(".tn-pane-scroll").first().focus();
+  await page.keyboard.press("ArrowLeft");
+  await expect(slider).toHaveValue(String(start - 1));
+  await expect(dialog.locator(".tn-card-behind")).toHaveCount(behind - 1);
+  await expect(front).toHaveCount(1);
+  // The card that lifted away is gone once its motion ends.
+  await expect(dialog.locator(".tn-card-leaving")).toHaveCount(0);
+  // Right comes forward again, and the script now never moves.
+  await page.keyboard.press("ArrowRight");
+  await expect(slider).toHaveValue(String(start));
+  await expect(dialog.getByRole("region", { name: "The script now" })).toContainText("three <- 3");
+  // A card behind is a shortcut back to it.
+  await dialog.locator(".tn-card-behind").first().click({ position: { x: 6, y: 120 } });
+  await expect(slider).toHaveValue(String(start - 1));
+});

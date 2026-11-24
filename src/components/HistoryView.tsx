@@ -1,14 +1,17 @@
 // History: a script then and now, side by side, over the whole window.
 //
-// The earlier version is on the left in History's "then" color with a
-// dashed edge, and the script now on the right in its "now" color with a
-// solid edge, so the two never rest on color alone. Lines that match fold
-// away, each change is named for its section, and a thin ruler down the
-// right shows where every change sits in the whole file. A slider along
-// the foot walks back through the kept versions, marking the ones where a
-// line failed. The second tab holds the commands typed at the console.
+// Each kept version is a card. The one being compared sits in front on the
+// left, in History's "then" color with a dashed edge, and older versions
+// stack behind it, so how far back history goes shows at a glance. Moving
+// the slider, or pressing the left and right arrows, flips one card at a
+// time: the front card lifts away and the next one slides forward. The
+// script now stays still on the right, in its "now" color with a solid
+// edge, so only the past moves and the two never rest on color alone.
+// Lines that match fold away, each change is named for its section, and a
+// thin ruler down the right shows where every change sits in the whole
+// file. The second tab holds the commands typed at the console.
 
-import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { announce, baseName, openDialog } from "../lib/app";
 import * as editor from "../lib/editor";
 import { clockTime, copyLines, currentVersions, openingTab, putBack, restoreVersion, savedWhen, sectionsOf, whenWords, type HistoryTab, type Versions } from "../lib/fileHistory";
@@ -98,10 +101,60 @@ function Comparison({ found }: { found: Versions }) {
   const changes = comparison.segments.filter((segment): segment is Extract<Segment, { kind: "change" }> => segment.kind === "change");
   const ran = lastRan(versions, now);
   const scroller = useRef<HTMLDivElement>(null);
+  const nowScroller = useRef<HTMLDivElement>(null);
+  const deck = useRef<HTMLDivElement>(null);
+  const front = useRef<HTMLElement>(null);
+  // Which way the last flip went, so the new front card arrives from the
+  // right place: from the stack when going back, from the front when not.
+  const [arriving, setArriving] = useState<"older" | "newer" | null>(null);
   const at = Math.min(current, Math.max(0, changes.length - 1));
 
-  // A new version to compare with starts at its first change.
+  // A new version to compare with starts at its first change, and its card
+  // opens where the script now is scrolled to, so the eye stays in place.
   useEffect(() => setCurrent(0), [chosen]);
+  // Focus that was on the card that flipped away moves to the new one, so
+  // the arrows keep flipping.
+  const refocus = useRef(false);
+  useLayoutEffect(() => {
+    if (scroller.current && nowScroller.current) scroller.current.scrollTop = nowScroller.current.scrollTop;
+    if (refocus.current) scroller.current?.focus({ preventScroll: true });
+    refocus.current = false;
+  }, [chosen]);
+
+  // The two panes scroll as one. Each follows the other only when they
+  // differ, so they never chase each other.
+  const follow = (from: HTMLDivElement | null, to: HTMLDivElement | null) => {
+    if (from && to && Math.abs(to.scrollTop - from.scrollTop) > 1) to.scrollTop = from.scrollTop;
+  };
+
+  // Flipping to another version. Unless motion is reduced, a copy of the
+  // card in front stays behind for a moment and lifts away, forward when
+  // going back in time and into the stack when coming forward, while the
+  // new card slides into place.
+  const choose = (index: number) => {
+    if (index === chosen || index < 0 || index >= versions.length) return;
+    const older = index > chosen;
+    const still = document.documentElement.dataset.motion === "reduce";
+    const card = front.current;
+    refocus.current = Boolean(card?.contains(document.activeElement));
+    if (!still && card && deck.current) {
+      const ghost = card.cloneNode(true) as HTMLElement;
+      ghost.classList.remove("is-arriving-older", "is-arriving-newer");
+      ghost.classList.add("tn-card-leaving", older ? "is-leaving-older" : "is-leaving-newer");
+      ghost.setAttribute("aria-hidden", "true");
+      ghost.setAttribute("inert", "");
+      ghost.removeAttribute("aria-label");
+      const top = card.querySelector<HTMLElement>(".tn-pane-scroll")?.scrollTop ?? 0;
+      deck.current.appendChild(ghost);
+      const pane = ghost.querySelector<HTMLElement>(".tn-pane-scroll");
+      if (pane) pane.scrollTop = top;
+      const done = () => ghost.remove();
+      ghost.addEventListener("animationend", done, { once: true });
+      window.setTimeout(done, 700);
+    }
+    setArriving(still ? null : older ? "older" : "newer");
+    setChosen(index);
+  };
 
   const go = (index: number) => {
     if (!changes.length) return;
@@ -119,8 +172,22 @@ function Comparison({ found }: { found: Versions }) {
   step.current = go;
   const where = useRef(at);
   where.current = at;
+  const flip = useRef(choose);
+  flip.current = choose;
+  const picked = useRef(chosen);
+  picked.current = chosen;
   useEffect(() => {
     const onKey = (event: globalThis.KeyboardEvent) => {
+      // Left goes back in time and right comes forward, unless the arrows
+      // already mean something where focus is, as in a text field, the
+      // slider, or the tabs.
+      const target = event.target as HTMLElement | null;
+      const taken = target?.closest("input, textarea, select, [role=tab], [contenteditable=true]");
+      if (!event.altKey && !event.metaKey && !event.ctrlKey && !taken && target?.closest(".then-now") && (event.key === "ArrowLeft" || event.key === "ArrowRight")) {
+        event.preventDefault();
+        flip.current(picked.current + (event.key === "ArrowLeft" ? 1 : -1));
+        return;
+      }
       const forward = (event.key === "F7" && !event.shiftKey) || (event.altKey && event.key === "ArrowDown");
       const back = (event.key === "F7" && event.shiftKey) || (event.altKey && event.key === "ArrowUp");
       if (!forward && !back) return;
@@ -150,6 +217,40 @@ function Comparison({ found }: { found: Versions }) {
   const outcomeWords = (index: number) => (marks[index] === "ran" ? "ran without problems" : marks[index] === "failed" ? "a line did not run" : "");
   const thenLabel = `${whenWords(version.savedAt)}${outcomeWords(chosen) ? `, ${outcomeWords(chosen)}` : ""}`;
 
+  // Up to three older versions show behind the front card.
+  const behind = Array.from({ length: Math.min(3, versions.length - 1 - chosen) }, (_, depth) => chosen + 1 + depth);
+
+  // The rows of one side. Both sides are made from the same pieces, so a
+  // line, a fold, or a change sits at the same height in each and the two
+  // panes line up as they scroll together.
+  const rowsFor = (side: "then" | "now"): ReactNode =>
+    comparison.segments.map((segment) => {
+      if (segment.kind === "same") return <SameRows key={segment.key} lines={segment.lines} side={side} />;
+      if (segment.kind === "fold") {
+        const shown = open.has(segment.key);
+        const first = segment.lines[0].now + 1;
+        const last = segment.lines[segment.lines.length - 1].now + 1;
+        const words = shown ? `Fold these ${segment.lines.length} lines again` : `${segment.lines.length} unchanged ${segment.lines.length === 1 ? "line" : "lines"}, ${first} to ${last}`;
+        return (
+          <Fragment key={segment.key}>
+            {side === "then" ? (
+              <button type="button" className="fold-button" aria-expanded={shown} onClick={() => toggle(segment.key)}>
+                {words}
+              </button>
+            ) : (
+              // The same fold on the right, for the pointer; the button on
+              // the left is the one the keyboard and screen readers meet.
+              <div className="fold-button" aria-hidden="true" onClick={() => toggle(segment.key)}>
+                {words}
+              </div>
+            )}
+            {shown && <SameRows lines={segment.lines} side={side} />}
+          </Fragment>
+        );
+      }
+      return <ChangeRows key={segment.key} segment={segment} side={side} count={changes.length} current={segment.index === at} onPutBack={() => undoChange(segment.piece)} />;
+    });
+
   return (
     <div className="then-now">
       <div className="then-now-bar">
@@ -169,50 +270,59 @@ function Comparison({ found }: { found: Versions }) {
         )}
       </div>
 
-      {changes.length === 0 ? (
-        <div className="then-now-same">
-          <p>The script now is the same as the version from {whenWords(version.savedAt)}. Move the slider to compare with another.</p>
-        </div>
-      ) : (
-        <div className="then-now-frame">
-          <div className="then-now-scroll" ref={scroller} tabIndex={0} aria-label="Then and now, line by line">
-            <div className="then-now-head" aria-hidden="true">
-              <span className="then-now-col is-then">
-                <span className="history-key is-then" />
-                Then, {thenLabel}
-              </span>
-              <span />
-              <span className="then-now-col is-now">
-                <span className="history-key is-now" />
-                Now
-              </span>
+      <div className="then-now-frame">
+        <div className="tn-deck" ref={deck} style={{ ["--stack" as string]: `${behind.length * 1.4}rem` }}>
+          {behind.map((index, depth) => (
+            <div
+              key={versions[index].id}
+              className={`tn-card-behind depth-${depth + 1} ${marks[index] === "failed" ? "is-failed" : ""}`}
+              aria-hidden="true"
+              title={`Go back to ${whenWords(versions[index].savedAt)}`}
+              onClick={() => choose(index)}
+            >
+              <span className="tn-behind-mark">{marks[index] === "failed" ? "✕" : marks[index] === "ran" ? "✓" : ""}</span>
             </div>
-            {comparison.segments.map((segment) => {
-              if (segment.kind === "same") return <SameRows key={segment.key} lines={segment.lines} />;
-              if (segment.kind === "fold") {
-                const shown = open.has(segment.key);
-                const first = segment.lines[0].now + 1;
-                const last = segment.lines[segment.lines.length - 1].now + 1;
-                return (
-                  <Fragment key={segment.key}>
-                    <button type="button" className="fold-button" aria-expanded={shown} onClick={() => toggle(segment.key)}>
-                      {shown ? `Fold these ${segment.lines.length} lines again` : `${segment.lines.length} unchanged ${segment.lines.length === 1 ? "line" : "lines"}, ${first} to ${last}`}
-                    </button>
-                    {shown && <SameRows lines={segment.lines} />}
-                  </Fragment>
-                );
-              }
-              return <ChangeRows key={segment.key} segment={segment} count={changes.length} current={segment.index === at} onPutBack={() => undoChange(segment.piece)} />;
-            })}
-          </div>
-          <Ruler changes={changes} lines={comparison.lines} current={at} onPick={go} />
+          ))}
+          <section
+            key={version.id}
+            ref={front}
+            className={`tn-card ${arriving ? `is-arriving-${arriving}` : ""}`}
+            aria-label={`Then, ${thenLabel}`}
+            onAnimationEnd={() => setArriving(null)}
+          >
+            <header className="tn-card-head">
+              <span className="history-key is-then" aria-hidden="true" />
+              <span className="tn-card-when">Then, {whenWords(version.savedAt)}</span>
+              {marks[chosen] && (
+                <span className={`tn-card-outcome ${marks[chosen] === "failed" ? "is-failed" : ""}`}>
+                  <span aria-hidden="true">{marks[chosen] === "failed" ? "✕ " : "✓ "}</span>
+                  {marks[chosen] === "failed" ? "a line did not run" : "ran without problems"}
+                </span>
+              )}
+              <span className="tn-card-count">{changes.length === 0 ? "the same as now" : `${changes.length} ${changes.length === 1 ? "change" : "changes"} from now`}</span>
+            </header>
+            <div className="tn-pane-scroll" ref={scroller} tabIndex={0} aria-label="The script then, line by line" onScroll={() => follow(scroller.current, nowScroller.current)}>
+              {rowsFor("then")}
+            </div>
+          </section>
         </div>
-      )}
+        <section className="tn-now" aria-label="The script now">
+          <header className="tn-card-head">
+            <span className="history-key is-now" aria-hidden="true" />
+            <span className="tn-card-when">Now</span>
+            <span className="tn-card-count">what you have open</span>
+          </header>
+          <div className="tn-pane-scroll" ref={nowScroller} tabIndex={0} aria-label="The script now, line by line" onScroll={() => follow(nowScroller.current, scroller.current)}>
+            {rowsFor("now")}
+          </div>
+        </section>
+        {changes.length > 0 && <Ruler changes={changes} lines={comparison.lines} current={at} onPick={go} />}
+      </div>
 
       <div className="then-now-foot">
-        <VersionSlider versions={versions} chosen={chosen} marks={marks} onChoose={setChosen} />
+        <VersionSlider versions={versions} chosen={chosen} marks={marks} onChoose={choose} />
         <div className="button-row then-now-actions">
-          <button type="button" className="button quiet" disabled={ran < 0 || ran === chosen} onClick={() => setChosen(ran)}>
+          <button type="button" className="button quiet" disabled={ran < 0 || ran === chosen} onClick={() => choose(ran)}>
             Last version that ran
           </button>
           <button type="button" className="button quiet" onClick={() => copyLines(version.text)}>
@@ -227,16 +337,12 @@ function Comparison({ found }: { found: Versions }) {
   );
 }
 
-/** Lines that match, shown once on each side. */
-function SameRows({ lines }: { lines: { then: number; now: number; text: string }[] }) {
+/** Lines that match, on one side. */
+function SameRows({ lines, side }: { lines: { then: number; now: number; text: string }[]; side: "then" | "now" }) {
   return (
     <>
       {lines.map((line) => (
-        <div key={`${line.then}-${line.now}`} className="tn-row">
-          <Code line={{ n: line.then, text: line.text }} />
-          <span />
-          <Code line={{ n: line.now, text: line.text }} />
-        </div>
+        <Code key={`${line.then}-${line.now}`} line={{ n: side === "then" ? line.then : line.now, text: line.text }} />
       ))}
     </>
   );
@@ -255,38 +361,40 @@ function Code({ line, kind }: { line: Line | null; kind?: "then" | "now" }) {
   );
 }
 
-/** A change: then on the left, now on the right, and between them the
- * ways to take it back. */
-function ChangeRows({ segment, count, current, onPutBack }: { segment: Extract<Segment, { kind: "change" }>; count: number; current: boolean; onPutBack: () => void }) {
+/** One side of a change. The left side is named for the change and holds
+ * the ways to take it back; the right side shows the same change as it is
+ * now, padded so the two stay level. */
+function ChangeRows({ segment, side, count, current, onPutBack }: { segment: Extract<Segment, { kind: "change" }>; side: "then" | "now"; count: number; current: boolean; onPutBack: () => void }) {
   const { piece, then, now, index, section } = segment;
   const rows = Math.max(then.length, now.length);
   const kind = piece.kind === "added" ? "lines added" : piece.kind === "removed" ? "lines taken out" : "";
   const title = `Change ${index + 1} of ${count}${section ? `, in ${section}` : ""}${kind ? `, ${kind}` : ""}`;
+  const lines = side === "then" ? then : now;
+  const body = Array.from({ length: rows }, (_, row) => <Code key={row} line={lines[row] ?? null} kind={side} />);
+  if (side === "now") {
+    return (
+      <div className={`tn-change ${current ? "is-current" : ""}`} role="group" aria-label={`${title}, now`}>
+        <p className="tn-change-title" aria-hidden="true">
+          {section ? `In ${section}` : `Change ${index + 1}`}
+        </p>
+        {body}
+      </div>
+    );
+  }
   return (
     <section className={`tn-change ${current ? "is-current" : ""}`} data-change={index} aria-label={title}>
-      <p className="tn-change-title">{title}</p>
-      <div className="tn-change-body">
-        <div className="tn-side" role="group" aria-label="Then">
-          {Array.from({ length: rows }, (_, row) => (
-            <Code key={row} line={then[row] ?? null} kind="then" />
-          ))}
-        </div>
-        <div className="tn-gutter">
-          <button type="button" className="button small primary" aria-label={`${piece.kind === "added" ? "Take out" : "Put back"} change ${index + 1}`} onClick={onPutBack}>
-            {piece.kind === "added" ? "Take out" : "← Put back"}
+      <div className="tn-change-title">
+        <span className="tn-change-name">{title}</span>
+        <button type="button" className="button small primary" aria-label={`${piece.kind === "added" ? "Take out" : "Put back"} change ${index + 1}`} onClick={onPutBack}>
+          {piece.kind === "added" ? "Take out" : "Put back"}
+        </button>
+        {piece.before.length > 0 && (
+          <button type="button" className="button small quiet" aria-label={`Copy then, change ${index + 1}`} onClick={() => copyLines(piece.before.join("\n"))}>
+            Copy
           </button>
-          {piece.before.length > 0 && (
-            <button type="button" className="button small quiet" aria-label={`Copy then, change ${index + 1}`} onClick={() => copyLines(piece.before.join("\n"))}>
-              Copy then
-            </button>
-          )}
-        </div>
-        <div className="tn-side" role="group" aria-label="Now">
-          {Array.from({ length: rows }, (_, row) => (
-            <Code key={row} line={now[row] ?? null} kind="now" />
-          ))}
-        </div>
+        )}
       </div>
+      {body}
     </section>
   );
 }

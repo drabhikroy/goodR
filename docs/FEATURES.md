@@ -362,7 +362,16 @@ strip down the right marks where every change sits in the whole file. A
 slider along the foot moves to any earlier version, with a ✕ under those
 where a line did not run, and Last version that ran jumps to the newest one
 that worked. Put one change back, copy its old lines, or use the whole
-version, as an edit that Undo takes back. The two colors can be changed in
+version, as an edit that Undo takes back.
+
+Each earlier version is a card. The one being compared is in front, older
+ones stack behind it to the left with a ✓ or ✕ on their edge, and the script
+now stays still on the right. Moving the slider, pressing the left and right
+arrows, or clicking the edge of a card behind flips one card at a time: going
+back, the front card lifts away and the next older one slides forward; coming
+forward, the front card sinks back into the stack. With Reduce motion on, the
+cards change at once. Each card's header says when it is from, whether it
+ran, and how many changes it is from now. The two colors can be changed in
 Settings, under Accessibility, by typing a hex or RGB color or picking one.
 
 When a line fails that worked before, its result shows the line as it last

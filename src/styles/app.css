@@ -7386,54 +7386,154 @@ legend {
   font-size: 0.92rem;
 }
 
-.then-now-same {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  border-radius: var(--radius-lg);
-  background: var(--code-bg);
-}
-
 .then-now-frame {
   flex: 1;
   min-height: 0;
   display: flex;
-  gap: 0.5rem;
+  gap: 0.9rem;
 }
 
-.then-now-scroll {
-  flex: 1;
+/* The deck: the version being compared in front, older ones stacked
+   behind it to the left, each a little smaller and dimmer. */
+.tn-deck {
+  position: relative;
+  flex: 1.08 1 0;
   min-width: 0;
-  overflow: auto;
+}
+
+.tn-card,
+.tn-now {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
   border-radius: var(--radius-lg);
   background: var(--code-bg);
   border: 1px solid var(--border);
 }
 
-.then-now-head,
-.tn-row,
-.tn-change-body {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 9.5rem minmax(0, 1fr);
+.tn-card {
+  position: absolute;
+  inset: 0 0 0 var(--stack, 0);
+  z-index: 5;
+  box-shadow: 0 1rem 2.4rem rgb(0 0 0 / 0.28);
+  transform-origin: left center;
 }
 
-.then-now-head {
-  position: sticky;
+.tn-now {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.tn-card-behind {
+  position: absolute;
   top: 0;
-  z-index: 1;
-  background: var(--raised);
+  bottom: 0;
+  right: 0;
+  border-radius: var(--radius-lg);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transform-origin: left center;
+  transition: filter 0.15s ease;
+}
+
+.tn-card-behind:hover {
+  filter: brightness(1.12);
+}
+
+.tn-card-behind.depth-1 { left: calc(var(--stack) - 1.4rem); z-index: 4; transform: scale(0.97); filter: brightness(0.95); opacity: 0.9; }
+.tn-card-behind.depth-2 { left: calc(var(--stack) - 2.8rem); z-index: 3; transform: scale(0.94); filter: brightness(0.9); opacity: 0.75; }
+.tn-card-behind.depth-3 { left: calc(var(--stack) - 4.2rem); z-index: 2; transform: scale(0.91); filter: brightness(0.85); opacity: 0.6; }
+
+.tn-behind-mark {
+  position: absolute;
+  top: 0.7rem;
+  left: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.tn-card-behind.is-failed .tn-behind-mark {
+  color: var(--danger);
+}
+
+/* Flipping. Going back in time, the front card lifts toward the viewer and
+   fades while the next one slides forward out of the stack; coming
+   forward, the front card sinks back into the stack while the newer one
+   settles in from in front. With Reduce motion on, cards change at once. */
+.tn-card-leaving {
+  z-index: 6;
+  pointer-events: none;
+}
+
+.tn-card-leaving.is-leaving-older {
+  animation: tn-lift 0.32s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.tn-card-leaving.is-leaving-newer {
+  z-index: 4;
+  animation: tn-sink 0.32s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.tn-card.is-arriving-older {
+  animation: tn-from-stack 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tn-card.is-arriving-newer {
+  animation: tn-from-front 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes tn-lift {
+  to { transform: translateX(2.5rem) scale(1.04); opacity: 0; }
+}
+
+@keyframes tn-sink {
+  to { transform: translateX(-1.4rem) scale(0.97); opacity: 0; }
+}
+
+@keyframes tn-from-stack {
+  from { transform: translateX(-1.4rem) scale(0.97); filter: brightness(0.95); }
+}
+
+@keyframes tn-from-front {
+  from { transform: translateX(2.5rem) scale(1.04); opacity: 0; }
+}
+
+.tn-card-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 0.9rem;
   border-bottom: 1px solid var(--border);
-  font-size: 0.88rem;
+  background: var(--raised);
+  font-size: 0.9rem;
+}
+
+.tn-card-when {
   font-weight: 600;
 }
 
-.then-now-col {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 0.9rem;
+.tn-card-outcome {
+  color: var(--text-muted);
+}
+
+.tn-card-outcome.is-failed > span {
+  color: var(--danger);
+}
+
+.tn-card-count {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+
+.tn-pane-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.3rem 0;
 }
 
 .history-key {
@@ -7504,28 +7604,32 @@ legend {
 
 .tn-change-title {
   margin: 0;
-  padding: 0.35rem 0.9rem 0.15rem;
+  min-height: calc(var(--target) + 0.4rem);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.6rem 0.2rem 0.9rem;
   font-size: 0.82rem;
   color: var(--text-muted);
 }
 
-.tn-side {
+.tn-change-name {
+  margin-right: auto;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.tn-gutter {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.35rem;
-  padding: 0.3rem 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .fold-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
   width: 100%;
   min-height: var(--target);
+  cursor: pointer;
   border: none;
   border-top: 1px dashed var(--border);
   border-bottom: 1px dashed var(--border);
@@ -7629,14 +7733,6 @@ legend {
 .version-fail {
   color: var(--danger);
   font-weight: 700;
-}
-
-@media (max-width: 820px) {
-  .then-now-head,
-  .tn-row,
-  .tn-change-body {
-    grid-template-columns: minmax(0, 1fr) 7rem minmax(0, 1fr);
-  }
 }
 
 /* Error rescue: on a line that failed, the way it last worked, then and

@@ -568,8 +568,9 @@ const TOPICS: Topic[] = [
           or as History of this file in the project menu and the File menu, shows the script then and now side by side. The earlier version is on the left, in apricot with a dashed edge, and the
           script now on the right, in orchid with a solid edge. Lines that match fold away, so a long script with a few changes fits on one screen, and each change is named for the section it is in.
           Step through the changes with the arrows at the top, or <kbd>F7</kbd> and <kbd>⇧F7</kbd>, or click a mark on the thin strip down the right, which shows where every change sits in the
-          whole file. Put one change back, copy the old lines, or use the whole version. The slider at the foot moves to an earlier version, with a ✕ under any where a line did not run, and Last
-          version that ran jumps to the newest one that worked. Nothing is saved until you save, and Undo takes it back. The colors can be changed in Settings, under Accessibility.
+          whole file. Put one change back, copy the old lines, or use the whole version. Each earlier version is a card, with older ones stacked behind it. Flip back a card with the left arrow and
+          forward with the right arrow, click the edge of a card behind, or move the slider at the foot, which marks with a ✕ any version where a line did not run. Last version that ran jumps to
+          the newest one that worked. Nothing is saved until you save, and Undo takes it back. The colors can be changed in Settings, under Accessibility.
         </p>
         <p>
           When a line fails that worked before, its result shows the line as it last worked beside the line now. Put back the version that worked changes just those lines, as one edit Undo takes
