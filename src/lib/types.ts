@@ -58,8 +58,8 @@ export type Settings = {
   /** Whether the tools down the right edge show their names under their
    * icons. Without them, a name shows after the pointer rests a while. */
   toolNames: boolean;
-  /** Which layout this settings file has been moved to. Version 2 is the
-   * calmer layout: no sidebar or strip of earlier results unless chosen. */
+  /** Which layout this settings file has been moved to. Version 2 has no
+   * sidebar or strip of earlier results unless chosen. */
   layoutVersion: number;
   paneSplit: number;
   appearance: Appearance;

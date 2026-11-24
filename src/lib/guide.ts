@@ -6,7 +6,7 @@
 
 import { getState, setState } from "./store";
 
-export type GuideTarget = "run" | "results" | "stage" | "timeline" | "prompt" | "objects" | "sheets" | "search" | "session" | "home" | "sidebar" | "canvasToggle";
+export type GuideTarget = "run" | "results" | "stage" | "timeline" | "prompt" | "objects" | "sheets" | "search" | "session" | "guide" | "home" | "sidebar" | "canvasToggle";
 
 /** Each part: what to call it, and how to find it on screen. */
 export const TARGETS: Record<GuideTarget, { label: string; selector: string }> = {
@@ -19,6 +19,7 @@ export const TARGETS: Record<GuideTarget, { label: string; selector: string }> =
   sheets: { label: "Tools", selector: ".tool-strip" },
   search: { label: "Search", selector: ".search-field" },
   session: { label: "What is open", selector: ".project-switch" },
+  guide: { label: "Help", selector: ".tool-button[data-sheet='guide']" },
   home: { label: "Home", selector: ".tool-button[data-sheet='home']" },
   sidebar: { label: "Project sidebar", selector: ".sidebar" },
   canvasToggle: { label: "Show or hide the canvas", selector: ".tool-button[data-sheet='canvas']" },

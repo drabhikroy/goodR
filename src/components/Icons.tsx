@@ -311,6 +311,14 @@ export const EyeIcon = ({ closed = false, ...props }: IconProps & { closed?: boo
   </Svg>
 );
 
+/** An open book, for R's own help pages. */
+export const BookIcon = (props: IconProps) => (
+  <Svg {...props}>
+    <path d="M8 4.2C6.6 3.2 4.6 2.9 2 3.1v9c2.6-.2 4.6.1 6 1.1 1.4-1 3.4-1.3 6-1.1v-9c-2.6-.2-4.6.1-6 1.1ZM8 4.2v9" />
+  </Svg>
+);
+
+/** A question mark in a circle, for this app's own Help. */
 export const HelpIcon = (props: IconProps) => (
   <Svg {...props}>
     <circle cx="8" cy="8" r="6.5" />

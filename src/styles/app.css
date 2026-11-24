@@ -254,7 +254,7 @@ kbd.on-accent {
   gap: 0.25rem;
 }
 
-/* One calm column: the name, a row of ways to start, the newcomer links,
+/* One quiet column: the name, a row of ways to start, the newcomer links,
    and everything opened before as one list. */
 .opening-main {
   flex: 1;
@@ -5997,13 +5997,18 @@ legend {
 
 /* Show me: the iris. Everything but the oval is dimmed by its own wide
    outline, which follows the oval's curve. The oval glides in from beyond
-   the window's edges, then gives a small settle and holds still. */
+   the window's edges and settles. Then a gold ring draws itself around the
+   part and glows twice before holding still. The gold is the same
+   in every theme, since it always sits against the dimmed page. */
+.beacon {
+  --iris-gold: #f2b84b;
+  --iris-ink: #1c1406;
+}
+
 .iris {
   position: fixed;
   border-radius: 50%;
-  border: 3px solid var(--accent);
   outline: 300vmax solid rgb(6 9 15 / 0.58);
-  box-shadow: 0 0 1.4rem 0.3rem var(--accent-soft);
   transition: left 0.74s cubic-bezier(0.2, 0.8, 0.2, 1), top 0.74s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.74s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.74s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -6016,13 +6021,69 @@ legend {
   100% { transform: scale(1); }
 }
 
+.iris-ring {
+  position: absolute;
+  inset: -4px;
+  width: calc(100% + 8px);
+  height: calc(100% + 8px);
+  overflow: visible;
+}
+
+.iris-ring ellipse {
+  fill: none;
+  stroke: var(--iris-gold);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 0;
+  filter: drop-shadow(0 0 6px rgb(242 184 75 / 0.45));
+}
+
+.iris:not(.is-closed) .iris-ring {
+  visibility: hidden;
+}
+
+.iris.is-closed .iris-ring ellipse {
+  animation:
+    iris-draw 0.7s cubic-bezier(0.3, 0.7, 0.3, 1) 0.8s both,
+    iris-glow 1.3s ease-in-out 1.5s 2;
+}
+
+.iris::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  border: 2px solid rgb(242 184 75 / 0.5);
+  opacity: 0;
+}
+
+.iris.is-closed::after {
+  animation: iris-halo 1.3s ease-out 1.5s 2;
+}
+
+@keyframes iris-draw {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes iris-glow {
+  0%, 100% { stroke-width: 3.5; }
+  50% { stroke-width: 6; }
+}
+
+@keyframes iris-halo {
+  0% { opacity: 0.9; transform: scale(0.96); }
+  100% { opacity: 0; transform: scale(1.12); }
+}
+
 .beacon-label {
   position: fixed;
   width: 11rem;
   padding: 0.4rem 0.7rem;
   border-radius: var(--radius-md);
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--iris-gold);
+  color: var(--iris-ink);
   font-size: 0.88rem;
   font-weight: 600;
   text-align: center;
@@ -7707,7 +7768,7 @@ legend {
 .version-slider-track {
   flex: 1;
   position: relative;
-  padding-bottom: 1.4rem;
+  padding-bottom: 1.9rem;
 }
 
 .version-slider-track input {
@@ -7716,10 +7777,41 @@ legend {
   accent-color: var(--accent);
 }
 
+.version-dots,
 .version-ticks {
   position: absolute;
   left: 0.5rem;
   right: 0.5rem;
+}
+
+.version-dots {
+  bottom: 1.45rem;
+  height: 0.5rem;
+}
+
+.version-dot {
+  position: absolute;
+  top: 0;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: var(--text-muted);
+}
+
+.version-dot.is-chosen {
+  background: var(--accent);
+}
+
+.version-dot.is-failed {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 0;
+  background: var(--danger);
+  clip-path: polygon(20% 0, 50% 30%, 80% 0, 100% 20%, 70% 50%, 100% 80%, 80% 100%, 50% 70%, 20% 100%, 0 80%, 30% 50%, 0 20%);
+}
+
+.version-ticks {
   bottom: 0;
   height: 1.3rem;
 }
@@ -7735,11 +7827,6 @@ legend {
 .version-tick.is-chosen {
   color: var(--text);
   font-weight: 600;
-}
-
-.version-fail {
-  color: var(--danger);
-  font-weight: 700;
 }
 
 /* Error rescue: on a line that failed, the way it last worked, then and
@@ -8002,7 +8089,7 @@ legend {
   flex-wrap: wrap;
 }
 
-/* The script now has no foot, so its lines get the same room below them
+/* The script has no foot, so its lines get the same room below them
    as the card's foot takes; the two panes then scroll exactly as far. */
 .tn-now .tn-pane-scroll {
   padding-bottom: calc(var(--target) + 1.55rem);

@@ -325,10 +325,10 @@ export function Tour() {
 
 /**
  * Show me: an iris. The page dims, and a clear oval closes in on the part
- * being pointed at from the edges of the window, then settles and holds
- * still around it, ringed in the accent color, with a label naming it. The
- * same pointing the app's other Help pages use. Any click or key clears it
- * early. With motion reduced, the oval is simply there.
+ * from the edges of the window and settles around it. A gold ring then
+ * draws itself around the oval and glows briefly, and a label names the
+ * part. Any click or key clears it early. With motion reduced, the oval
+ * and ring are simply there.
  */
 export function Beacon() {
   const target = useStore((state) => state.ui.beacon);
@@ -367,7 +367,11 @@ export function Beacon() {
   const below = cy + height / 2 + 56 < window.innerHeight;
   return (
     <div className="beacon" role="status" aria-live="polite">
-      <div className={`iris ${closed ? "is-closed" : ""}`} style={{ left: cx - size.width / 2, top: cy - size.height / 2, width: size.width, height: size.height }} />
+      <div className={`iris ${closed ? "is-closed" : ""}`} style={{ left: cx - size.width / 2, top: cy - size.height / 2, width: size.width, height: size.height }}>
+        <svg className="iris-ring" viewBox={`0 0 ${width + 8} ${height + 8}`} aria-hidden="true">
+          <ellipse cx={(width + 8) / 2} cy={(height + 8) / 2} rx={width / 2 + 2} ry={height / 2 + 2} pathLength={100} />
+        </svg>
+      </div>
       <span className="beacon-label" style={{ left: Math.min(Math.max(12, cx - 90), window.innerWidth - 192), top: below ? cy + height / 2 + 12 : cy - height / 2 - 46 }}>
         {TARGETS[target].label}
       </span>

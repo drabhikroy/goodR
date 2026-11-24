@@ -54,7 +54,7 @@ redraws that plot in place.
 
 The tools run down the right edge of the window as one column of icons:
 Results, Objects, then App or Report when there is one, R help, Assistant,
-Packages, and History, with Home and Settings at the foot. History opens over
+Packages, and History, with Help, Home, and Settings at the foot. History opens over
 the whole window, since then and now need two columns of code. The one on show is marked,
 and pressing Results while it is on show hides the canvas, giving the script
 the whole width. Resting the pointer on an icon for a moment shows its name.
@@ -362,9 +362,11 @@ script with a few changes spread through it fits on one screen. Each change
 is named for the section it is in, such as "Change 3 of 4, in Plots". The
 arrows at the top, or F7 and Shift F7, step through the changes, and a thin
 strip down the right marks where every change sits in the whole file. A
-slider along the foot moves to any earlier version, with a ✕ under those
-where a line did not run, and Last version that ran jumps to the newest one
-that worked. Put one change back, copy its old lines, or use the whole
+slider along the foot moves to any earlier version. It has a dot for each
+version and a ✕ for any where a line did not run, with the times written
+underneath. Saves made in the same minute share one time, and a time that
+would crowd another is left out. Last version that ran jumps to the
+newest one that worked. Put one change back, copy its old lines, or use the whole
 version, as an edit that Undo takes back. Clicking a change makes it the one
 in hand, marked by a bar in the margin, and the buttons at the foot of the
 card act on it: Put back this change (or Take out this change, for lines that
@@ -480,9 +482,9 @@ search box above them, and the one you pick fills the right. It opens on
 Start here, which has the tour, the examples, common questions, and a small
 map of the window where pressing any part points it out in the app. Each
 topic has a Show me button that takes you straight to the part of the app it
-names: the rest of the window dims, and a clear oval closes in on the part
-from the edges of the window, settles, and holds still with its name beside
-it, as in the other apps' Help.
+names: the rest of the window dims, a clear oval closes in on the part from
+the edges of the window and settles, and a gold ring draws itself around it
+and glows briefly, with the part's name beside it.
 
 The tour opens by itself the first time. It walks through the workspace in
 nine steps, each with a small animated picture, and its own Show me points at

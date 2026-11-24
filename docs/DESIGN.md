@@ -496,6 +496,12 @@ enough that resting on an icon answers the question. A settings file
 from before the change moves to the new layout once, on its first launch;
 anything the person turns back on afterward stays as they set it.
 
+Help sits at the foot of the strip, a question mark above Home and
+Settings, so the app's own guide is one press away from anywhere and never
+has to be found through the opening screen. R's own help pages are a
+different thing, so their tool is an open book rather than a second
+question mark.
+
 The opening screen went the same way: the start and open buttons in one row,
 the ways in for newcomers in one line that can be put away, and projects and
 scripts in one recent list with filters, each naming its folder so two files
@@ -660,15 +666,17 @@ Describing a part of the window still leaves people looking for it, so
 each step that names a part has Show me, and so does every Help topic.
 Show me sets the tour or Help aside, opens the examples first when
 nothing is open, and marks the part with an iris, as the Help in the
-person's other apps does: the rest of the window dims, and a clear oval
-closes in from beyond the window's edges onto the part, settles, and
-holds still, with its name in a label. Movement in the periphery is
+person's other apps does: the rest of the window dims, a clear oval
+closes in from beyond the window's edges onto the part and settles, and
+a gold ring draws itself around it and glows twice before holding still,
+with the part's name in a label. Movement in the periphery is
 noticed faster than any change of color or size (Bartram, Ware, and
 Calvert 2003), so the closing motion draws the eye to wherever the part
 sits, and dimming the rest removes the competition for attention once it
 gets there. It clears on its own after a few seconds, or at the next
-click or key, so it never gets in the way. With motion reduced, the oval
-is simply there. An earlier design used widening rings without dimming;
+click or key, so it never gets in the way. The gold is the same in every
+theme, since it always sits against the dimmed page. With motion reduced,
+the oval and ring are simply there. An earlier design used widening rings without dimming;
 it was replaced so goodR points at things the way the person's other
 apps do.
 
@@ -945,6 +953,14 @@ the two differ in shape. The contrast audit checks the pair under each
 palette's simulation, the edges at 3 to 1, and every syntax color on both
 soft grounds at 4.5 to 1. People who want other colors type or pick them in
 Settings; the soft grounds are worked out again so code still reads.
+
+The times under the slider come from the saves themselves. Several saves
+in one minute would print the same time side by side, and a busy afternoon
+would print more times than the slider has room for. So saves in the same
+minute share one label. Labels go down in order of importance, the version
+being compared first, then the oldest and newest, then the rest, and any
+that would overlap one already on the slider is left out. Every version
+keeps its own dot on the slider, so none goes unseen.
 
 The same versions power error rescue. Every run is kept with its code, so
 when a line fails that worked before, its result shows the line as it last

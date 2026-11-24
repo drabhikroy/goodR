@@ -317,7 +317,7 @@ const TOPICS: Topic[] = [
         </p>
         <p>To see only your script and the result, press <kbd>{keyLabel("⌥⌘F")}</kbd> for focus mode. Leave focus, at the top right, brings everything back.</p>
         <p>
-          The tools run down the right edge of the window as icons: Results, Objects, then App or Report when there is one, then R help, Assistant, Packages, and History, with Settings at the foot. The one on
+          The tools run down the right edge of the window as icons: Results, Objects, then App or Report when there is one, then R help, Assistant, Packages, and History, with Help, Home, and Settings at the foot. The one on
           show is marked. Rest the pointer on an icon for a moment and its name appears. To see every name all the time, with larger icons, right-click the tools, choose View, Show or Hide Names Under the Tools, or turn on Show names under the tool icons in Settings, under Appearance. Objects
           lists what you have made, with a few words about each; press a data frame to look through it.
         </p>
@@ -355,7 +355,7 @@ const TOPICS: Topic[] = [
   {
     id: "sessions",
     group: "Writing and running",
-    show: ["session", "home", "sidebar"],
+    show: ["session", "guide", "home", "sidebar"],
     label: "Projects and sessions",
     summary: "Why each project has its own copy of R, and how to switch between them.",
     words: "project rproj restart version working directory folder",
@@ -372,7 +372,8 @@ const TOPICS: Topic[] = [
         </p>
         <p>
           The files are not shown down the left unless you ask: choose Keep the files open on the left in the same menu. Start screen, also in that menu, takes you back to the opening screen without closing
-          anything. Continue working, or Escape, brings you right back.
+          anything, and so does Home, near the foot of the tools. Continue working, or Escape, brings you right back. Help, the question mark just above Home, opens these pages
+          from anywhere in the same way.
         </p>
       </>
     ),
@@ -569,7 +570,7 @@ const TOPICS: Topic[] = [
           script now on the right, in orchid with a solid edge. Lines that match fold away, so a long script with a few changes fits on one screen, and each change is named for the section it is in.
           Step through the changes with the arrows at the top, or <kbd>F7</kbd> and <kbd>⇧F7</kbd>, or click a mark on the thin strip down the right, which shows where every change sits in the
           whole file. Click a change to pick it, and the buttons at the foot of the card act on it: Put back this change, Copy, or Use this whole version. Each earlier version is a card, with older ones stacked behind it. Flip back a card with the left arrow and
-          forward with the right arrow, click the edge of a card behind, or move the slider at the foot, which marks with a ✕ any version where a line did not run. Last version that ran jumps to
+          forward with the right arrow, click the edge of a card behind, or move the slider at the foot. It has a dot for each version and a ✕ for any where a line did not run, with the times written underneath. Saves made in the same minute share one time. Last version that ran jumps to
           the newest one that worked. Nothing is saved until you save, and Undo takes it back. The colors can be changed in Settings, under Accessibility.
         </p>
         <p>

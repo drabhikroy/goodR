@@ -148,12 +148,14 @@ export async function init() {
   // person has chosen to show them under each line. Any other saved layout
   // value is read as the canvas.
   if (settings.outputLayout !== "inline" || !settings.layoutChosen) settings.outputLayout = "canvas";
-  // Earlier results are in lanes now, which need more height than the strip
-  // had. Anyone still on the old default, 184, gets the new one; a height
-  // that was dragged to something else is kept.
+  // Earlier results sit in lanes, which need more room than 184, a height
+  // older settings files hold by default. That value gets the current
+  // default, and any height a person dragged to is kept.
   if (loaded.timelineHeight === 184) settings.timelineHeight = defaultSettings.timelineHeight;
-  // The calmer layout, once: the files move into the project menu and
-  // earlier results behind All results. Either comes back in Settings.
+  // A settings file below layout version 2 still has the sidebar and the
+  // strip of earlier results on. Both are turned off once, so the files sit
+  // in the project menu and earlier results behind All results, and either
+  // comes back in Settings.
   const moved = (loaded.layoutVersion ?? 0) < 2;
   if (moved) Object.assign(settings, { showSidebar: false, showTimeline: false, layoutVersion: 2, ...(settings.consoleInputHeight === 96 ? { consoleInputHeight: defaultSettings.consoleInputHeight } : {}) });
   setState((state) => ({ info, settings, installs, loaded: true, ui: { ...state.ui, sidebar: settings.showSidebar, inspector: settings.showCanvas } }));
@@ -598,7 +600,7 @@ export function isDefaultLayout(settings = getState().settings) {
 }
 
 /** Puts every part of the window back, at its first size. It asks no
- * question, since nothing is lost and the old layout is one drag away. */
+ * question, since nothing is lost and any size is one drag away. */
 export function resetLayout() {
   const patch = Object.fromEntries(SETTINGS_SECTIONS.layout.map((key) => [key, defaultSettings[key]])) as Partial<Settings>;
   updateSettings(patch);

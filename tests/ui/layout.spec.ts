@@ -1,10 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 import { appState, expectReady, newFileWith, openProjectMenu, showObjects, showTool } from "./helpers";
 
-// The calmer layout: the script and one result, the tools down the right
+// The workspace: the script and one result, the tools down the right
 // edge, and the files, earlier results, and actions one press away.
 
-/** Starts from a settings file written before the calmer layout, with the
+/** Starts from a settings file below layout version 2, with the
  * sidebar and the strip of earlier results both on. */
 async function openFromOlderSettings(page: Page) {
   await page.addInitScript(() => {
@@ -21,7 +21,7 @@ function stage(page: Page) {
   return page.getByRole("region", { name: "Stage" });
 }
 
-test("a settings file from before moves to the calmer layout once, and the files are in the project menu", async ({ page }) => {
+test("an older settings file moves to layout 2 once, and the files are in the project menu", async ({ page }) => {
   await openFromOlderSettings(page);
   // No sidebar and no strip of earlier results, and a one-line prompt.
   await expect(page.getByRole("navigation", { name: "Project" })).toHaveCount(0);
@@ -89,7 +89,7 @@ test("everything done with a result is in its menu, and the code above it is sho
 test("the tools name themselves after the pointer rests, or always when Settings says so", async ({ page }) => {
   await openFromOlderSettings(page);
   const tools = page.getByRole("navigation", { name: "Tools" });
-  for (const name of ["Results", "Objects", "R help", "Assistant", "Packages", "History", "Home", "Settings"]) {
+  for (const name of ["Results", "Objects", "R help", "Assistant", "Packages", "History", "Help", "Home", "Settings"]) {
     await expect(tools.getByRole("button", { name, exact: true })).toBeVisible();
   }
   // A name shows a moment after the pointer rests, not as it sweeps past.
@@ -101,14 +101,20 @@ test("the tools name themselves after the pointer rests, or always when Settings
   // A right-click on the strip shows every name under a larger icon, and
   // another hides them again.
   await tools.click({ button: "right", position: { x: 20, y: 400 } });
-  await expect(tools.locator(".tool-name")).toHaveCount(8);
+  await expect(tools.locator(".tool-name")).toHaveCount(9);
   await tools.click({ button: "right", position: { x: 20, y: 400 } });
   await expect(tools.locator(".tool-name")).toHaveCount(0);
   // With names on, each is written under its icon and none pops up.
   await tools.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("checkbox", { name: /Show names under the tool icons/ }).check();
   await page.keyboard.press("Escape");
-  await expect(tools.locator(".tool-name")).toHaveText(["Results", "Objects", "R help", "Assistant", "Packages", "History", "Home", "Settings"]);
+  await expect(tools.locator(".tool-name")).toHaveText(["Results", "Objects", "R help", "Assistant", "Packages", "History", "Help", "Home", "Settings"]);
+  // Help, above Home, opens the app's own Help over the work, and Escape
+  // comes back to it.
+  await tools.getByRole("button", { name: "Help", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Help" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("heading", { level: 1, name: "Help" })).toHaveCount(0);
   // Home, at the foot, goes back to the start screen without closing anything.
   await tools.getByRole("button", { name: "Home", exact: true }).click();
   await expect(page.getByRole("button", { name: "Continue working" })).toBeVisible();

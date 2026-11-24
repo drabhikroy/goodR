@@ -171,7 +171,7 @@ declare global {
   interface Window {
     goodforPick?: string[];
     /** Settings a test starts from in place of the stand-in's own, such as
-     * a first run's calmer layout. */
+     * the layout a first run gets. */
     goodforSettings?: Record<string, unknown>;
   }
 }
@@ -277,8 +277,8 @@ export function createMockBackend(): Backend {
     consoleInputHeight: 96,
     timelineHeight: 232,
     // Most tests reach files through the sidebar and earlier results
-    // through the strip, so the stand-in keeps both on show. The calmer
-    // first-run layout has tests of its own.
+    // through the strip, so the stand-in keeps both on show. The layout a
+    // first run gets has tests of its own.
     showSidebar: true,
     showCanvas: true,
     showPrompt: true,

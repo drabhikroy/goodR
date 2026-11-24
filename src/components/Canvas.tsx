@@ -28,6 +28,7 @@ import {
   undoLastRun,
   updateAllPackages,
   isBatchPending,
+  showHelpScreen,
   showStartScreen,
   togglePane,
   togglePart,
@@ -47,7 +48,7 @@ import type { RObject } from "../lib/types";
 import { useViewportSize } from "../lib/viewport";
 import { firstWarningTitle } from "../lib/warnings";
 import { packageProgress } from "../lib/packages";
-import { AppWindowIcon, ArrowIcon, BroomIcon, ChartIcon, CodeIcon, CopyIcon, EyeIcon, GearIcon, GridIcon, HomeIcon, ObjectsIcon, PlayIcon, CloseIcon, FunctionIcon, HelpIcon, HistoryIcon, ImportIcon, ModelIcon, MoreIcon, PackageIcon, PinIcon, PlusIcon, ReportIcon, SaveIcon, SearchIcon, SparkIcon, StopIcon, TableIcon, TriangleIcon, UndoIcon, ValueIcon } from "./Icons";
+import { AppWindowIcon, ArrowIcon, BookIcon, BroomIcon, ChartIcon, CodeIcon, CopyIcon, EyeIcon, GearIcon, GridIcon, HomeIcon, ObjectsIcon, PlayIcon, CloseIcon, FunctionIcon, HelpIcon, HistoryIcon, ImportIcon, ModelIcon, MoreIcon, PackageIcon, PinIcon, PlusIcon, ReportIcon, SaveIcon, SearchIcon, SparkIcon, StopIcon, TableIcon, TriangleIcon, UndoIcon, ValueIcon } from "./Icons";
 import { AssistantPane } from "./AssistantPane";
 import { AppPane } from "./AppPane";
 import { DataViewer } from "./DataViewer";
@@ -63,7 +64,7 @@ type Sheet = { id: Exclude<Panel, "canvas">; name: string; Icon: typeof TableIco
 // after Objects, when there is something to show.
 const OBJECTS: Sheet = { id: "objects", name: "Objects", Icon: ObjectsIcon };
 const SHEETS: Sheet[] = [
-  { id: "help", name: "R help", Icon: HelpIcon },
+  { id: "help", name: "R help", Icon: BookIcon },
   { id: "assistant", name: "Assistant", Icon: SparkIcon },
   { id: "packages", name: "Packages", Icon: PackageIcon },
 ];
@@ -121,7 +122,7 @@ const NAME_DELAY = 600;
 /**
  * The tools, as one strip of icons down the right edge of the window:
  * Results first, then Objects, the app or report when there is one, and
- * the sheets, with Settings at the foot. The one on show is marked.
+ * the sheets, with Help, Home, and Settings at the foot. The one on show is marked.
  * Pressing it again hides the canvas, so the script can take the width.
  */
 export function ToolStrip() {
@@ -150,6 +151,7 @@ export function ToolStrip() {
           the width of two columns of code. */}
       <ToolButton sheet={{ id: "history" as Sheet["id"], name: "History", Icon: HistoryIcon }} on={false} names={names} onPress={() => void openHistory()} />
       <span className="tool-strip-gap" />
+      <ToolButton sheet={{ id: "guide" as Sheet["id"], name: "Help", Icon: HelpIcon }} on={false} names={names} onPress={showHelpScreen} />
       <ToolButton sheet={{ id: "home" as Sheet["id"], name: "Home", Icon: HomeIcon }} on={false} names={names} onPress={showStartScreen} />
       <ToolButton sheet={{ id: "settings" as Sheet["id"], name: "Settings", Icon: GearIcon }} on={false} names={names} onPress={() => openDialog("settings")} />
     </nav>

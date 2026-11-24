@@ -139,7 +139,7 @@ async fn a_knit_line_in_the_header_renders_the_document_its_own_way() {
     assert_eq!(names, vec!["notes-printed.txt"], "{}", outcome.lines.join("\n"));
     assert!(!dir.path().join("notes.html").exists());
 
-    // Asking for a format by name still renders with rmarkdown, as before.
+    // Asking for a format by name renders with rmarkdown, whatever the header says.
     let (outcome, _) = render(&source, Target::Html, &tools).await;
     assert_eq!(outcome.finished, Finished::Done, "{}", outcome.lines.join("\n"));
     assert!(dir.path().join("notes.html").is_file());

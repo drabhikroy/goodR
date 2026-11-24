@@ -16,6 +16,7 @@ import { announce, baseName, openDialog } from "../lib/app";
 import * as editor from "../lib/editor";
 import { clockTime, copyLines, currentVersions, openingTab, putBack, restoreVersion, savedWhen, sectionsOf, whenWords, type HistoryTab, type Versions } from "../lib/fileHistory";
 import { compare, describe, firstChoice, lastRan, outcomes, type Change, type Line, type Segment } from "../lib/thenNow";
+import { sliderLabels } from "../lib/sliderMarks";
 import { useStore } from "../lib/store";
 import { HistoryList } from "./Composer";
 import { Modal } from "./Dialogs";
@@ -423,24 +424,36 @@ function Ruler({ changes, lines, current, onPick }: { changes: Extract<Segment, 
   );
 }
 
-/** The kept versions, oldest on the left and newest on the right, with a
- * mark under each that ran with a problem. */
+/** The kept versions, oldest on the left and newest on the right. Each
+ * version has a dot on the slider, a cross where a line did not run, and
+ * the times are written underneath wherever they fit. */
 function VersionSlider({ versions, chosen, marks, onChoose }: { versions: Versions["versions"]; chosen: number; marks: ("ran" | "failed" | null)[]; onChoose: (index: number) => void }) {
   const count = versions.length;
+  const track = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(600);
+  useLayoutEffect(() => {
+    const element = track.current;
+    if (!element) return;
+    const measure = () => setWidth(element.clientWidth || 600);
+    measure();
+    const watcher = new ResizeObserver(measure);
+    watcher.observe(element);
+    return () => watcher.disconnect();
+  }, [count]);
   // The slider runs oldest to newest; the versions are newest first.
   const position = count - 1 - chosen;
   const indexAt = (value: number) => count - 1 - value;
   const describeAt = (index: number) => `${savedWhen(versions[index].savedAt)}${marks[index] === "ran" ? ", ran without problems" : marks[index] === "failed" ? ", a line did not run" : ""}`;
+  const oldestFirst = useMemo(() => [...versions].reverse(), [versions]);
+  const labels = useMemo(() => sliderLabels(oldestFirst.map((version) => version.savedAt), clockTime, position, width, 72), [oldestFirst, position, width]);
   if (count < 2) return <p className="then-now-only">One version kept so far: {describeAt(0)}.</p>;
-  // Labels for every version would crowd, so only some are written: the
-  // ends, the one chosen, and the failures, which are marked anyway.
-  const labeled = (index: number) => count <= 6 || index === 0 || index === count - 1 || index === chosen;
+  const along = (at: number) => `${at * 100}%`;
   return (
     <div className="version-slider">
       <label className="version-slider-label" htmlFor="history-slider">
         Compare now with
       </label>
-      <div className="version-slider-track">
+      <div className="version-slider-track" ref={track}>
         <input
           id="history-slider"
           type="range"
@@ -451,18 +464,18 @@ function VersionSlider({ versions, chosen, marks, onChoose }: { versions: Versio
           aria-valuetext={describeAt(chosen)}
           onChange={(event) => onChoose(indexAt(Number(event.target.value)))}
         />
-        <div className="version-ticks" aria-hidden="true">
-          {versions.map((version, index) => {
-            const left = `${((count - 1 - index) / (count - 1)) * 100}%`;
-            const failed = marks[index] === "failed";
-            if (!labeled(index) && !failed) return null;
-            return (
-              <span key={version.id} className={`version-tick ${index === chosen ? "is-chosen" : ""} ${failed ? "is-failed" : ""}`} style={{ left }}>
-                {failed && <span className="version-fail">✕ </span>}
-                {labeled(index) ? clockTime(version.savedAt) : ""}
-              </span>
-            );
+        <div className="version-dots" aria-hidden="true">
+          {oldestFirst.map((version, place) => {
+            const failed = marks[count - 1 - place] === "failed";
+            return <span key={version.id} className={`version-dot ${place === position ? "is-chosen" : ""} ${failed ? "is-failed" : ""}`} style={{ left: along(place / (count - 1)) }} />;
           })}
+        </div>
+        <div className="version-ticks" aria-hidden="true">
+          {labels.map((label) => (
+            <span key={`${label.at}-${label.text}`} className={`version-tick ${label.chosen ? "is-chosen" : ""}`} style={{ left: along(label.at) }}>
+              {label.text}
+            </span>
+          ))}
         </div>
       </div>
     </div>

@@ -40,8 +40,8 @@ pub struct Settings {
     pub inspector_width: u32,
     /// Whether the tools down the right edge show their names.
     pub tool_names: bool,
-    /// Which layout the file has been moved to. A file from before 1.2 has
-    /// none, read as 0, and the interface moves it to the calmer layout once.
+    /// Which layout the file has been moved to. A file without one reads as
+    /// 0, and the interface moves it to layout 2 once.
     pub layout_version: u32,
     /// Share of the right column given to its top pane, in percent.
     pub pane_split: u32,
