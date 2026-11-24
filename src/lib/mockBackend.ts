@@ -671,7 +671,7 @@ export function createMockBackend(): Backend {
       return () => updateListeners.delete(listener);
     },
     restartApp: async () => {},
-    outdated: async () => ({ reached: true, packages: [{ name: "dplyr", installed: "1.1.3", available: "1.1.4" }, { name: "ggplot2", installed: "3.5.0", available: "3.5.2" }] }),
+    outdated: async () => ({ reached: true, packages: [{ name: "dplyr", installed: "1.1.3", available: "1.1.4" }, { name: "ggplot2", installed: "3.5.0", available: "3.5.2" }], sourceOnly: [{ name: "covr", installed: "3.6.5", available: "4.0.0" }] }),
     resetApp: async (recent, history) => {
       if (recent) {
         settings.recentFiles = [];

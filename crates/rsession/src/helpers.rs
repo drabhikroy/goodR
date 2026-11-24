@@ -553,20 +553,34 @@ local({
   # The installed packages with a newer version on CRAN, for the Updates
   # page, or why CRAN could not be asked. The CRAN mirror RStudio uses is
   # set only when R has none, as for Update all.
+  #
+  # On a Mac or Windows, Update all installs CRAN's ready-built copies, which
+  # trail a new release by a few days. So the updates it can make are read
+  # from those, and a version out only as source code so far is listed on
+  # its own: counted with the rest, Update all would seem to do nothing.
   gf$.gf_outdated <- function() {
     if (identical(unname(getOption("repos")["CRAN"]), "@CRAN@")) options(repos = c(CRAN = "https://cloud.r-project.org"))
-    available <- suppressWarnings(tryCatch(utils::available.packages(), error = function(e) NULL))
+    built <- .Platform$pkgType != "source"
+    ask <- function(type) suppressWarnings(tryCatch(utils::available.packages(type = type), error = function(e) NULL))
+    source <- ask("source")
+    available <- if (built) ask(.Platform$pkgType) else source
     if (is.null(available) || nrow(available) == 0) {
-      cat("{\"reached\":false,\"packages\":[]}", "\n")
+      cat("{\"reached\":false,\"packages\":[],\"sourceOnly\":[]}", "\n")
       return(invisible(NULL))
     }
-    old <- tryCatch(utils::old.packages(available = available), error = function(e) NULL)
-    # A package installed in two libraries is listed once.
-    if (!is.null(old)) old <- old[!duplicated(old[, "Package"]), , drop = FALSE]
-    rows <- if (is.null(old)) character(0) else vapply(seq_len(nrow(old)), function(i) {
+    newer <- function(available) {
+      old <- tryCatch(utils::old.packages(available = available), error = function(e) NULL)
+      # A package installed in two libraries is listed once.
+      if (!is.null(old)) old <- old[!duplicated(old[, "Package"]), , drop = FALSE]
+      old
+    }
+    rows <- function(old) if (is.null(old)) character(0) else vapply(seq_len(nrow(old)), function(i) {
       paste0("{\"name\":", .gf_str(old[i, "Package"]), ",\"installed\":", .gf_str(old[i, "Installed"]), ",\"available\":", .gf_str(old[i, "ReposVer"]), "}")
     }, "")
-    cat(paste0("{\"reached\":true,\"packages\":", .gf_array(rows), "}"), "\n")
+    old <- newer(available)
+    later <- if (built && !is.null(source) && nrow(source) > 0) newer(source) else NULL
+    if (!is.null(later) && !is.null(old)) later <- later[!later[, "Package"] %in% old[, "Package"], , drop = FALSE]
+    cat(paste0("{\"reached\":true,\"packages\":", .gf_array(rows(old)), ",\"sourceOnly\":", .gf_array(rows(later)), "}"), "\n")
   }
 
   gf$.gf_info <- function() {

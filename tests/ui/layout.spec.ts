@@ -89,7 +89,7 @@ test("everything done with a result is in its menu, and the code above it is sho
 test("the tools name themselves after the pointer rests, or always when Settings says so", async ({ page }) => {
   await openFromOlderSettings(page);
   const tools = page.getByRole("navigation", { name: "Tools" });
-  for (const name of ["Results", "Objects", "R help", "Assistant", "Packages", "History", "Settings"]) {
+  for (const name of ["Results", "Objects", "R help", "Assistant", "Packages", "History", "Home", "Settings"]) {
     await expect(tools.getByRole("button", { name, exact: true })).toBeVisible();
   }
   await tools.getByRole("button", { name: "Packages", exact: true }).hover();
@@ -102,7 +102,11 @@ test("the tools name themselves after the pointer rests, or always when Settings
   await tools.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("checkbox", { name: /Show names under the tool icons/ }).check();
   await page.keyboard.press("Escape");
-  await expect(tools.locator(".tool-name")).toHaveText(["Results", "Objects", "R help", "Assistant", "Packages", "History", "Settings"]);
+  await expect(tools.locator(".tool-name")).toHaveText(["Results", "Objects", "R help", "Assistant", "Packages", "History", "Home", "Settings"]);
+  // Home, at the foot, goes back to the start screen without closing anything.
+  await tools.getByRole("button", { name: "Home", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Continue working" })).toBeVisible();
+  await page.getByRole("button", { name: "Continue working" }).click();
   // Objects lists what R holds, with what each is.
   await expect((await showObjects(page)).getByRole("button", { name: /^penguins data frame/ })).toHaveCount(0);
   await showTool(page, "Results");

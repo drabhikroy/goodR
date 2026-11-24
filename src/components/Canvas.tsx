@@ -28,6 +28,7 @@ import {
   undoLastRun,
   updateAllPackages,
   isBatchPending,
+  showStartScreen,
   togglePane,
   togglePart,
   updateSettings,
@@ -44,7 +45,7 @@ import type { RObject } from "../lib/types";
 import { useViewportSize } from "../lib/viewport";
 import { firstWarningTitle } from "../lib/warnings";
 import { packageProgress } from "../lib/packages";
-import { AppWindowIcon, ArrowIcon, BroomIcon, ChartIcon, CodeIcon, CopyIcon, EyeIcon, GearIcon, GridIcon, ObjectsIcon, PlayIcon, CloseIcon, FunctionIcon, HelpIcon, HistoryIcon, ImportIcon, ModelIcon, MoreIcon, PackageIcon, PinIcon, PlusIcon, ReportIcon, SaveIcon, SearchIcon, SparkIcon, StopIcon, TableIcon, TriangleIcon, UndoIcon, ValueIcon } from "./Icons";
+import { AppWindowIcon, ArrowIcon, BroomIcon, ChartIcon, CodeIcon, CopyIcon, EyeIcon, GearIcon, GridIcon, HomeIcon, ObjectsIcon, PlayIcon, CloseIcon, FunctionIcon, HelpIcon, HistoryIcon, ImportIcon, ModelIcon, MoreIcon, PackageIcon, PinIcon, PlusIcon, ReportIcon, SaveIcon, SearchIcon, SparkIcon, StopIcon, TableIcon, TriangleIcon, UndoIcon, ValueIcon } from "./Icons";
 import { AssistantPane } from "./AssistantPane";
 import { AppPane } from "./AppPane";
 import { HistoryList } from "./Composer";
@@ -135,6 +136,7 @@ export function ToolStrip() {
         <ToolButton key={item.id} sheet={item} on={current === item.id} names={names} />
       ))}
       <span className="tool-strip-gap" />
+      <ToolButton sheet={{ id: "home" as Sheet["id"], name: "Home", Icon: HomeIcon }} on={false} names={names} onPress={showStartScreen} />
       <ToolButton sheet={{ id: "settings" as Sheet["id"], name: "Settings", Icon: GearIcon }} on={false} names={names} onPress={() => openDialog("settings")} />
     </nav>
   );

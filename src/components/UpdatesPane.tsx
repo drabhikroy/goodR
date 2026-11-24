@@ -131,6 +131,12 @@ export function UpdatesPane() {
               </ul>
             </li>
           )}
+          {packages && (packages.sourceOnly?.length ?? 0) > 0 && (
+            <li className="update-note hint">
+              {packages.sourceOnly!.length === 1 ? "1 more package has" : `${packages.sourceOnly!.length} more packages have`} a newer version out only as source code so far:{" "}
+              {packages.sourceOnly!.map((item) => `${item.name} ${item.available}`).join(", ")}. CRAN usually builds the ready-to-install copy within a few days, and it will be listed above then.
+            </li>
+          )}
           <Row name="Ollama" now={!assistant?.connected ? "Not set up. It runs the optional assistant." : assistant.connected === "private" ? `Version ${assistant.version}, the app's own copy` : `Version ${assistant.version}`} newest={ollamaNewer ? latest!.ollama : undefined}>
             {ollamaNewer ? (
               <button type="button" className="button" onClick={() => openDownload("ollama")}>

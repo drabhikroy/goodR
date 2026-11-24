@@ -19,7 +19,7 @@ export const TARGETS: Record<GuideTarget, { label: string; selector: string }> =
   sheets: { label: "Tools", selector: ".tool-strip" },
   search: { label: "Search", selector: ".search-field" },
   session: { label: "What is open", selector: ".project-switch" },
-  home: { label: "Start screen, in the project menu", selector: ".project-switch" },
+  home: { label: "Home", selector: ".tool-button[data-sheet='home']" },
   sidebar: { label: "Project sidebar", selector: ".sidebar" },
   canvasToggle: { label: "Show or hide the canvas", selector: ".tool-button[data-sheet='canvas']" },
 };

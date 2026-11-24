@@ -232,7 +232,14 @@ export type Reprex = { data: Record<string, string>; r: string; platform: string
 export type LatestVersions = { app: string; appInPlace: boolean; appPage: string; r: string; ollama: string };
 
 /** Installed packages with a newer version on CRAN. */
-export type OutdatedPackages = { reached: boolean; packages: { name: string; installed: string; available: string }[] };
+export type OutdatedPackages = {
+  reached: boolean;
+  /** Newer versions Update all can install now. */
+  packages: { name: string; installed: string; available: string }[];
+  /** Newer versions out only as source code so far, on a system that
+   * installs ready-built copies, which follow in a few days. */
+  sourceOnly?: { name: string; installed: string; available: string }[];
+};
 
 /** One saved version of a file, by the time it was saved. */
 export type FileVersion = { id: string; savedAt: number };

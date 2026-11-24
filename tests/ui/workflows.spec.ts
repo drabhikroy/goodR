@@ -956,6 +956,9 @@ test("everything that can be updated is listed on one page, and the app updates 
   await expect(dialog.getByRole("navigation", { name: "Settings sections" }).getByRole("button", { name: "Updates", exact: true })).toHaveAttribute("aria-current", "page");
   const list = dialog.locator(".update-list");
   await expect(list).toContainText("2 with newer versions");
+  // A version out only as source code is named apart, since Update all
+  // installs the ready-built copies that follow it.
+  await expect(list).toContainText("1 more package has a newer version out only as source code so far: covr 4.0.0.");
   await expect(list).toContainText("ggplot2 3.5.0 to 3.5.2");
   await expect(list.getByRole("button", { name: "Get R 4.5.2" })).toBeVisible();
   // The stand-in offers the version after this one, whatever this one is.
