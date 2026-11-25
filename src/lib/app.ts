@@ -447,7 +447,7 @@ export const SETTINGS_SECTIONS: Record<string, (keyof Settings)[]> = {
   appearance: ["appearance", "textSize", "compact", "readingWidth", "toolNames"],
   code: ["codeFont", "codeSize", "lineSpacing", "ligatures", "scriptItalics"],
   editor: ["lineNumbers", "highlightLine", "wrapLines", "closeBrackets", "rainbowBrackets", "autosave", "hints", "formatOnType", "tabWidth"],
-  results: ["outputLayout", "resultStyle", "copyResults", "keepResults", "plotStyle", "appWindow"],
+  results: ["outputLayout", "resultStyle", "copyResults", "keepResults", "plotStyle", "shinyCheck"],
   reports: ["pdfEngine", "latexDir", "renderOnSave"],
   accessibility: ["palette", "reduceMotion", "historyThen", "historyNow"],
   r: ["missingPackages", "undoRuns", "showPackageLog"],

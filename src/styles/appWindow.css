@@ -1,4 +1,5 @@
-/* The app's own window: a slim bar like a browser's, then the app. */
+/* The bar along the top of an app's window, like a browser's. The app is
+   a separate view below it, and this page is exactly the bar's height. */
 html,
 body {
   height: 100%;
@@ -12,14 +13,16 @@ body {
   color: var(--text);
   font-family: "DM Sans Variable", system-ui, sans-serif;
   font-size: 13px;
+  overflow: hidden;
 }
 
 .viewer-bar {
-  flex: none;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  min-height: 52px;
+  flex: 1;
+  box-sizing: border-box;
+  min-height: 0;
   padding: 0 0.5rem 0 0.9rem;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
@@ -59,9 +62,3 @@ body {
   outline-offset: 2px;
 }
 
-iframe {
-  flex: 1;
-  width: 100%;
-  border: 0;
-  background: #ffffff;
-}

@@ -198,8 +198,6 @@ export type ShinyAppState = {
   /** Errors inside the running app, newest last. The app keeps running. */
   problems: AppProblem[];
   failure: AppFailure | null;
-  /** Changes when the user asks for a fresh load of the page. */
-  reloads: number;
   /** The exported folder on show, when this is a preview of the web
    * version rather than the app's own R. */
   preview: string | null;
@@ -408,7 +406,6 @@ export const defaultSettings: Settings = {
   lastUpdateCheck: 0,
   autosave: false,
   renderOnSave: true,
-  appWindow: true,
   shinyCheck: true,
   pdfEngine: "auto",
   latexDir: "",

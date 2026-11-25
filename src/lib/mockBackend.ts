@@ -325,9 +325,6 @@ export function createMockBackend(): Backend {
     lastUpdateCheck: Date.now(),
     autosave: false,
     renderOnSave: true,
-    // The interface tests look at the app in its sheet. Its own window has
-    // tests of its own.
-    appWindow: false,
     shinyCheck: true,
     pdfEngine: "auto",
     latexDir: "",

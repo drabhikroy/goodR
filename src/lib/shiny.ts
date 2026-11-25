@@ -1,4 +1,5 @@
-// Running Shiny apps, shown in the App pane beside the code.
+// Running Shiny apps, each in a window of its own, with the App sheet
+// beside the code explaining errors inside it.
 //
 // An app runs in its own R, started fresh each time, as a report renders.
 // The console stays free while the app is open, and the app sees only what
@@ -73,10 +74,8 @@ function onEvent(event: AppEvent) {
   switch (event.kind) {
     case "ready":
       patch(event.id, () => ({ status: "running", url: event.url }));
-      if (getState().settings.appWindow) {
-        showAppWindow();
-        announce(`${baseName(run.file)} is running in its own window.`);
-      } else announce(`${baseName(run.file)} is running in the App pane.`);
+      showAppWindow();
+      announce(`${baseName(run.file)} is running in its own window.`);
       break;
     case "problem":
       patch(event.id, (current) => ({ problems: [...current.problems, { message: event.message, frames: [], complete: false }].slice(-PROBLEM_LIMIT) }));
@@ -141,7 +140,7 @@ export async function runApp(file: string | null = getState().active) {
   }
   for (const tab of getState().tabs) if (folderOf(tab.path) === folder) editor.clearProblems(tab.path);
   const id = crypto.randomUUID();
-  setState({ shinyApp: { id, file, status: "starting", url: null, log: [], problems: [], failure: null, reloads: 0, preview: null } });
+  setState({ shinyApp: { id, file, status: "starting", url: null, log: [], problems: [], failure: null, preview: null } });
   if (!getState().ui.inspector) togglePane("inspector");
   showPanel("app");
   announce(`Starting ${baseName(file)}.`);
@@ -175,13 +174,10 @@ export function stopAppClosedWith(path: string) {
   }
 }
 
-/** Loads the app's page again, as the browser's own Reload would, in its
- * own window when it has one. */
+/** Loads the app's page again in its window, as the browser's own Reload
+ * would. */
 export function reloadApp() {
-  const run = getState().shinyApp;
-  if (!run) return;
-  if (getState().settings.appWindow) showAppWindow();
-  else patch(run.id, (current) => ({ reloads: current.reloads + 1 }));
+  showAppWindow();
 }
 
 /**
@@ -197,19 +193,11 @@ export function showAppWindow() {
   api.appWindow(name, mode).catch((error) => notify(String(error).replace(/^Error: /, ""), "error"));
 }
 
-/** Chooses where a running app shows, its own window or the App sheet,
- * and moves the app on show there at once. */
 /** Turns the check of an app's code on or off, and checks the file in
  * front again so the list and underlines follow at once. */
 export function setShinyCheck(on: boolean) {
   updateSettings({ shinyCheck: on });
   checkShinyFile(getState().active);
-}
-
-export function setAppWindow(own: boolean) {
-  updateSettings({ appWindow: own });
-  if (own) showAppWindow();
-  else api.appWindowClose().catch(() => {});
 }
 
 /** The spot on a line that an error names, as columns, when the error's
@@ -484,13 +472,14 @@ export function stopExport() {
   api.appExportStop().catch(() => {});
 }
 
-/** Shows the web version in the App pane, as whoever opens it will see it. */
+/** Shows the web version in the app's window, as whoever opens it will
+ * see it. */
 export async function previewExport() {
   const share = getState().share;
   if (!share?.folder) return;
   openDialog(null);
   const id = crypto.randomUUID();
-  setState({ shinyApp: { id, file: share.file, status: "starting", url: null, log: [], problems: [], failure: null, reloads: 0, preview: share.folder } });
+  setState({ shinyApp: { id, file: share.file, status: "starting", url: null, log: [], problems: [], failure: null, preview: share.folder } });
   showPanel("app");
   try {
     await api.appPreview(id, share.folder);

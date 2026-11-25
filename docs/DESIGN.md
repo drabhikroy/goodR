@@ -130,13 +130,19 @@ already had. The person this app is for found the word Project above the
 name easy to miss, and a banner saying so would cost a row of the script
 for something that rarely changes.
 
-The bar above the script measures its own column rather than the
-window. When the column is narrow, the words on Run app, Run, and Render
-give way to their pictures, whose names stay for screen readers and in
-tooltips, and the tab of the script on show scrolls into view. The
-column also keeps a minimum width that the canvas gives way to, so no
-control can end up under the canvas, as one did when the script was
-dragged narrow.
+The bar above the script measures what it holds against the width of
+its column, and tightens a step at a time until everything fits: first
+the word on Run, then the words on the other buttons and the section's
+name, then the project's name and the buttons for a new script and
+closing a tab. Words that go stay in the tooltips and for screen
+readers, and the tab of the script on show scrolls into view. The bar is
+measured rather than given fixed widths, because the room it needs
+changes with the macOS window buttons, the text size, the project's
+name, and which buttons the file in front has. Fixed widths, tuned
+without the window buttons, still let the Run buttons slide under the
+canvas on a Mac. The column also keeps the width of the bar at its
+tightest, and the canvas gives way below that, so no control can end
+up under it.
 
 ### Labels instead of bare icons
 
@@ -886,8 +892,22 @@ asked for this after using it beside the code, since an app laid out for
 a full browser window is cramped in a sheet. The window carries only the
 app's address, Open in browser, and Reload, and closing it stops the
 app, as in RStudio. The App sheet stays behind as the place that
-explains errors inside the app and maps how it connects, and it can hold
-the app itself for anyone who prefers it there. Shiny watches the app's folder and reloads the app when a file in
+explains errors inside the app and maps how it connects.
+
+The app cannot be held in a frame inside one of goodR's own pages, in the
+window or in the sheet. On macOS and Linux, WebKit shows goodR's pages.
+It treats them as secure and blocks a plain http page inside them, even
+one on this computer, leaving an empty frame with no error (WebKit bug
+171934). So the app's window holds two views, one
+above the other: a thin page of goodR's own with the address and the two
+buttons, and the app loaded straight from its address, as a browser tab
+would load it. The app's view has no access to goodR. It stays at its own
+address, links to other sites open in the browser, and a file it offers
+for download goes to Downloads. An earlier version also offered to show
+the app in the sheet, but that hit the same block, so it was taken out
+rather than left to show a blank page.
+
+Shiny watches the app's folder and reloads the app when a file in
 it is saved, so the loop is: change a line, save, look, without pressing
 anything else. Running the app saves its files first, including ui.R and
 server.R beside the app.R that was run, since the app reads them from
@@ -930,8 +950,8 @@ what could be disclosed, and hiding what actually is.
 
 The page runs only from a web address, not from a file opened by double
 clicking, which is the one thing about it that surprises people, so the
-dialog says so, and its Preview serves the page the way a host would, in
-the App pane, before it goes anywhere.
+dialog says so, and Preview it serves the page the way a host would, in
+the app's window, before it goes anywhere.
 
 ### Text size and code settings
 

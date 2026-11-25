@@ -276,10 +276,10 @@ As you write an app, its code is read for mistakes Shiny never points out:
 
 A running app opens in a window of its own, as in RStudio, titled with its
 folder, with its address, Open in browser, and Reload along the top. Closing
-the window stops the app, and saving one of its files reloads it. The App
-sheet says where the app is and explains any error inside it. To keep the
-app beside the code instead, choose Show it here instead in the App sheet,
-or turn off Open a running app in its own window in Settings, under Results.
+the window stops the app, and saving one of its files reloads it. Links in
+the app to other sites open in the browser, and files it offers go to
+Downloads. The App sheet says where the app is and explains any error
+inside it.
 
 Each is underlined at its line. A single line above the script counts them,
 and pressing it lists each one with Go to line and a one press fix where the

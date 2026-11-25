@@ -23,15 +23,14 @@ function opened(page: Page) {
   return page.evaluate(() => (globalThis as unknown as { goodforApps: { opened: string[] } }).goodforApps.opened);
 }
 
-test("Run app shows only for Shiny apps, and the app runs beside the code", async ({ page }) => {
+test("Run app shows only for Shiny apps, and the app runs in its own window", async ({ page }) => {
   await openApp(page);
   // The App sheet is there for any Shiny app in front, with the map of how
   // its parts connect, and running the app brings it forward.
   await expect(page.getByRole("button", { name: "App", exact: true })).toHaveAttribute("aria-pressed", "false");
   await page.getByRole("button", { name: "Run app" }).click();
   await expect(page.getByRole("button", { name: "App", exact: true })).toHaveAttribute("aria-pressed", "true");
-  const app = page.frameLocator('iframe[title="The running app, app.R"]');
-  await expect(app.getByRole("heading", { name: "Penguin explorer" })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.goodforAppWindow)).toBe("penguins, Shiny app");
   // While it runs, the title bar offers Stop app, and Run line still works.
   await expect(page.getByRole("button", { name: "Stop app" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Run line" })).toBeEnabled();
@@ -104,7 +103,7 @@ test("an error inside the running app is shown without stopping it", async ({ pa
   await expect(problems).toContainText("Where: line 4 of app.R, in renderPlot, while drawing output$p");
   await problems.getByRole("button", { name: "Go to line 4" }).click();
   await expect(page.locator(".editor-host .cm-activeLine")).toContainText("output$p <- renderPlot");
-  await expect(page.frameLocator('iframe[title="The running app, app.R"]').getByRole("heading", { name: "Penguins" })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.goodforAppWindow)).toBe("penguins, Shiny app");
   await problems.getByRole("button", { name: "Dismiss" }).click();
   await expect(problems).toHaveCount(0);
 });
@@ -124,7 +123,7 @@ test("a script that ends with shinyApp() runs as an app too", async ({ page }) =
   await expect(page.getByRole("button", { name: "Run app" })).toBeVisible();
 });
 
-test("an app is shared as a web page, after listing what goes in it, and previews here", async ({ page }) => {
+test("an app is shared as a web page, after listing what goes in it, and previews in its own window", async ({ page }) => {
   await openApp(page);
   await page.getByRole("button", { name: "More for this app" }).click();
   await page.getByRole("menuitem", { name: /Share as a web page/ }).click();
@@ -139,11 +138,11 @@ test("an app is shared as a web page, after listing what goes in it, and preview
   await expect
     .poll(() => page.evaluate(() => (globalThis as unknown as { goodforApps: { revealed: string[] } }).goodforApps.revealed))
     .toEqual(["/Users/demo/Documents/penguins-web"]);
-  await dialog.getByRole("button", { name: "Preview here" }).click();
+  await dialog.getByRole("button", { name: "Preview it" }).click();
   await expect(dialog).toBeHidden();
   const pane = page.getByRole("region", { name: "App" });
   await expect(pane).toContainText("Web version of app.R");
-  await expect(page.frameLocator('iframe[title="The web version of app.R"]').getByRole("heading", { name: "Penguin explorer, in the browser" })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.goodforAppWindow)).toBe("Web version of app.R");
   await pane.getByRole("button", { name: "Stop", exact: true }).click();
   await expect(pane).toContainText("The app stopped");
 });
@@ -199,23 +198,18 @@ test("Hide puts the likely mistakes away until a new kind turns up, and the sett
   await expect(page.locator(".editor-host .cm-lint")).toHaveCount(0);
 });
 
-test("a running app opens in its own window by default, as in RStudio, and can move back to the sheet", async ({ page }) => {
-  await page.addInitScript(() => {
-    window.goodforSettings = { appWindow: true };
-  });
+test("a running app opens in its own window, as in RStudio, and the sheet brings it forward", async ({ page }) => {
   await openApp(page);
   await page.getByRole("button", { name: "Run app" }).click();
   const sheet = page.getByRole("region", { name: "App" });
   await expect(sheet).toContainText("is open in its own window");
   await expect.poll(() => page.evaluate(() => window.goodforAppWindow)).toBe("penguins, Shiny app");
+  // Nothing in the sheet tries to hold the app itself.
   await expect(sheet.locator("iframe")).toHaveCount(0);
-  // Show it here instead closes the window and puts the app in the sheet.
-  await sheet.getByRole("button", { name: "Show it here instead" }).click();
-  await expect(sheet.locator("iframe")).toHaveCount(1);
-  expect(await page.evaluate(() => window.goodforAppWindow)).toBeUndefined();
-  // And back again, from the sheet's own button.
-  await sheet.getByRole("button", { name: "Open in its own window" }).click();
-  await expect(sheet).toContainText("is open in its own window");
+  await page.evaluate(() => {
+    window.goodforAppWindow = undefined;
+  });
+  await sheet.getByRole("button", { name: "Bring its window forward" }).click();
   await expect.poll(() => page.evaluate(() => window.goodforAppWindow)).toBe("penguins, Shiny app");
   // Stopping the app closes its window.
   await sheet.getByRole("button", { name: "Stop", exact: true }).click();

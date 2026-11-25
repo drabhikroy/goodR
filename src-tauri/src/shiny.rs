@@ -9,7 +9,7 @@
 //!
 //! An app can also be exported as a web page that runs without R, with
 //! shinylive, into a folder the user chooses in the system dialog. A
-//! preview of that page takes the running app's place in the App pane,
+//! preview of that page takes the running app's place in its window,
 //! served on a loopback port. Only folders an export made in this session
 //! can be previewed or shown in Finder.
 
@@ -21,11 +21,11 @@ use serde::Serialize;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex as StdMutex};
-use tauri::{AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, State, WebviewUrl};
 use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_opener::OpenerExt;
 
-/// What is on show in the App pane: an app's own R, or a preview of an
+/// What is on show in the app's window: an app's own R, or a preview of an
 /// exported web page served from its folder.
 enum Runner {
     Process(Arc<Stopper>),
@@ -356,40 +356,136 @@ pub fn app_open(app: AppHandle, apps: State<'_, ShinyState>) -> CommandResult<()
 
 /// The label of the window a running app opens in.
 pub const APP_WINDOW: &str = "app";
+/// The bar along the top of that window, a small page of this app's own
+/// with the address, Open in browser, and Reload.
+const APP_BAR: &str = "app-bar";
+/// The app itself, below the bar.
+const APP_PAGE: &str = "app-page";
+/// The bar's height, in points.
+const BAR_HEIGHT: f64 = 52.0;
+
+/// The running app's address, checked to be one on this computer.
+fn running_url(apps: &ShinyState) -> Result<tauri::Url, String> {
+    let url = apps.running.lock().unwrap().as_ref().and_then(|running| running.url.clone()).ok_or("No app is running.")?;
+    let parsed: tauri::Url = url.parse().map_err(|_| "The app's address could not be read.".to_string())?;
+    if parsed.scheme() != "http" || parsed.host_str() != Some("127.0.0.1") {
+        return Err("The app's address is not on this computer.".into());
+    }
+    Ok(parsed)
+}
 
 /// Shows the running app in a window of its own, as RStudio does, or brings
-/// that window forward and loads the app again. The window holds a small
-/// page of this app's own, with the address, Reload, and Open in browser
-/// above the app. The address comes from the app's own R, never from the
-/// interface, so the window can show nothing else.
+/// that window forward and loads the app again.
+///
+/// The window holds two views. Along the top is a small page of this app's
+/// own with the address, Reload, and Open in browser. Below it is the app,
+/// loaded straight from its address. The app cannot sit in a frame on a
+/// page of this app's own, because WebKit, which draws the window on macOS
+/// and Linux, blocks a plain http page inside a page from a secure origin,
+/// even one on this computer, and shows nothing instead. The app's view has
+/// no access to this app at all, and it can go only to its own address.
+/// Links elsewhere open in the browser. The address comes from the app's
+/// own R, never from the interface, so the window can show nothing else.
 #[tauri::command]
-pub fn app_window(app: AppHandle, apps: State<'_, ShinyState>, title: String, mode: String) -> CommandResult<()> {
-    let url = apps.running.lock().unwrap().as_ref().and_then(|running| running.url.clone()).ok_or("No app is running.")?;
-    if let Some(window) = app.get_webview_window(APP_WINDOW) {
-        let quoted = serde_json::to_string(&url).map_err(|error| error.to_string())?;
-        window.eval(format!("window.showApp && window.showApp({quoted})")).map_err(|error| error.to_string())?;
+pub async fn app_window(app: AppHandle, title: String, mode: String) -> CommandResult<()> {
+    let url = running_url(&app.state::<ShinyState>())?;
+    if let Some(window) = app.get_window(APP_WINDOW) {
+        if let Some(page) = app.get_webview(APP_PAGE) {
+            page.navigate(url.clone()).map_err(|error| error.to_string())?;
+        }
+        if let Some(bar) = app.get_webview(APP_BAR) {
+            let quoted = serde_json::to_string(url.as_str()).map_err(|error| error.to_string())?;
+            let _ = bar.eval(format!("window.showAddress && window.showAddress({quoted})"));
+        }
         let _ = window.set_title(&title);
         let _ = window.unminimize();
         let _ = window.set_focus();
         return Ok(());
     }
-    // The address and the appearance ride in the fragment, which the page
-    // reads and checks.
+    // The address and the appearance ride in the bar's fragment, which its
+    // page reads and checks.
     let mode = if ["light", "dark", "paper"].contains(&mode.as_str()) { mode } else { "light".into() };
-    let escaped = url.replace('%', "%25").replace('&', "%26").replace('#', "%23").replace('+', "%2B");
-    WebviewWindowBuilder::new(&app, APP_WINDOW, WebviewUrl::App(format!("app-window.html#mode={mode}&url={escaped}").into()))
+    let escaped = url.as_str().replace('%', "%25").replace('&', "%26").replace('#', "%23").replace('+', "%2B");
+    let (width, height) = (1100.0, 820.0);
+    let window = tauri::window::WindowBuilder::new(&app, APP_WINDOW)
         .title(title)
-        .inner_size(1100.0, 820.0)
+        .inner_size(width, height)
         .min_inner_size(480.0, 360.0)
         .build()
         .map_err(|error| error.to_string())?;
+    let bar = tauri::webview::WebviewBuilder::new(APP_BAR, WebviewUrl::App(format!("app-window.html#mode={mode}&url={escaped}").into()));
+    window.add_child(bar, LogicalPosition::new(0.0, 0.0), LogicalSize::new(width, BAR_HEIGHT)).map_err(|error| error.to_string())?;
+    let origin = url.origin();
+    let handle = app.clone();
+    let page = tauri::webview::WebviewBuilder::new(APP_PAGE, WebviewUrl::External(url))
+        // The app stays at its own address. A link elsewhere opens in the
+        // browser, as it would from an app open there.
+        .on_navigation(move |next| {
+            if next.origin() == origin || next.scheme() == "about" {
+                return true;
+            }
+            if matches!(next.scheme(), "http" | "https") {
+                let _ = handle.opener().open_url(next.as_str(), None::<&str>);
+            }
+            false
+        })
+        .on_new_window({
+            let handle = app.clone();
+            move |next, _| {
+                if matches!(next.scheme(), "http" | "https") {
+                    let _ = handle.opener().open_url(next.as_str(), None::<&str>);
+                }
+                tauri::webview::NewWindowResponse::Deny
+            }
+        })
+        // A file the app offers for download goes to Downloads, as it would
+        // from the browser.
+        .on_download({
+            let downloads = app.path().download_dir().ok();
+            move |_, event| match event {
+                tauri::webview::DownloadEvent::Requested { destination, .. } => match (&downloads, destination.file_name().map(|name| name.to_owned())) {
+                    (Some(folder), Some(name)) => {
+                        *destination = folder.join(name);
+                        true
+                    }
+                    _ => false,
+                },
+                _ => true,
+            }
+        });
+    window
+        .add_child(page, LogicalPosition::new(0.0, BAR_HEIGHT), LogicalSize::new(width, height - BAR_HEIGHT))
+        .map_err(|error| error.to_string())?;
     Ok(())
+}
+
+/// Keeps the bar along the top of the app's window and the app below it
+/// as the window changes size.
+pub fn app_window_resized(window: &tauri::Window) {
+    let Ok(size) = window.inner_size() else { return };
+    let Ok(scale) = window.scale_factor() else { return };
+    let size = size.to_logical::<f64>(scale);
+    if let Some(bar) = window.app_handle().get_webview(APP_BAR) {
+        let _ = bar.set_size(LogicalSize::new(size.width, BAR_HEIGHT));
+    }
+    if let Some(page) = window.app_handle().get_webview(APP_PAGE) {
+        let _ = page.set_position(LogicalPosition::new(0.0, BAR_HEIGHT));
+        let _ = page.set_size(LogicalSize::new(size.width, (size.height - BAR_HEIGHT).max(0.0)));
+    }
+}
+
+/// Loads the app again in its window, from the bar's Reload.
+#[tauri::command]
+pub fn app_reload(app: AppHandle, apps: State<'_, ShinyState>) -> CommandResult<()> {
+    let url = running_url(&apps)?;
+    let page = app.get_webview(APP_PAGE).ok_or("The app's window is not open.")?;
+    page.navigate(url).map_err(|error| error.to_string())
 }
 
 /// Closes the app's window, once the app has ended.
 #[tauri::command]
 pub fn app_window_close(app: AppHandle) {
-    if let Some(window) = app.get_webview_window(APP_WINDOW) {
+    if let Some(window) = app.get_window(APP_WINDOW) {
         let _ = window.destroy();
     }
 }

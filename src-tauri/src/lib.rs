@@ -1058,8 +1058,10 @@ pub fn run() {
             // The app's own window: closing it stops the app, as in
             // RStudio. Nothing else that happens to it concerns the rest.
             if window.label() == shiny::APP_WINDOW {
-                if let tauri::WindowEvent::Destroyed = event {
-                    shiny::app_window_closed(window.app_handle());
+                match event {
+                    tauri::WindowEvent::Destroyed => shiny::app_window_closed(window.app_handle()),
+                    tauri::WindowEvent::Resized(_) | tauri::WindowEvent::ScaleFactorChanged { .. } => shiny::app_window_resized(window),
+                    _ => {}
                 }
                 return;
             }
@@ -1198,6 +1200,7 @@ pub fn run() {
             shiny::app_reveal,
             shiny::app_code,
             shiny::app_window,
+            shiny::app_reload,
             shiny::app_window_close,
         ])
         .build(tauri::generate_context!())

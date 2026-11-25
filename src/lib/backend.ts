@@ -196,7 +196,8 @@ export interface Backend {
    * chooses in the system dialog. Null when the dialog is canceled. */
   appExport(id: string, file: string): Promise<ExportResult | null>;
   appExportStop(): Promise<void>;
-  /** Shows an exported web page in the App pane, in place of the app. */
+  /** Serves an exported web page in place of the running app, to show in
+   * the app's window. */
   appPreview(id: string, folder: string): Promise<void>;
   /** Shows an exported folder in Finder. */
   appReveal(folder: string): Promise<void>;

@@ -485,7 +485,7 @@ const TOPICS: Topic[] = [
     body: () => (
       <>
         <p>
-          Open a Shiny app and Run app appears above the script. The app runs in its own R, so the prompt stays free, and opens in a window of its own, as in RStudio, with its address, Open in browser, and Reload along the top. Closing that window stops the app, and saving one of its files reloads it. To keep the app beside your code instead, choose Show it here instead in the App sheet, or turn off Open a running app in its own window in Settings, under Results. Share makes a web page that runs the app right
+          Open a Shiny app and Run app appears above the script. The app runs in its own R, so the prompt stays free, and opens in a window of its own, as in RStudio, with its address, Open in browser, and Reload along the top. Closing that window stops the app, and saving one of its files reloads it. Links in the app to other sites open in your browser, and files it offers go to Downloads. Share makes a web page that runs the app right
           in the browser, so anyone can open it without installing R.
         </p>
         <p>

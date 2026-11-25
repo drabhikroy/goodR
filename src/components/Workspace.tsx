@@ -9,7 +9,7 @@ import * as editor from "../lib/editor";
 import { isReport, renderReport, stopRender } from "../lib/report";
 import { isShinyApp, openShare, runApp, stopApp } from "../lib/shiny";
 import { useStore } from "../lib/store";
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import type { OutputLayout, ResultStyle, RunScope } from "../lib/types";
 import { Canvas, elapsedWords, PlotViewer, ToolStrip, useElapsed } from "./Canvas";
 import { Composer } from "./Composer";
@@ -80,18 +80,68 @@ function ProblemsButton() {
   if (!count) return null;
   return (
     <button type="button" className="button quiet problems-button" title={`Go to the next problem, ${keyLabel("F8")}`} aria-keyshortcuts="F8" onClick={() => goToProblem(1)}>
-      <TriangleIcon size={13} /> {count === 1 ? "1 problem" : `${count} problems`}
+      <TriangleIcon size={13} /> {count} <span className="action-label">{count === 1 ? "problem" : "problems"}</span>
     </button>
   );
 }
 
+/** How many steps of tightening the title bar has, from words on every
+ * button to the bare minimum. */
+const FIT_STEPS = 4;
+
+/**
+ * Tightens the title bar one step at a time until everything in it fits
+ * across the script's column, and loosens it again when there is room.
+ * Each step is an attribute, data-fit-1 to data-fit-4, and each keeps the
+ * ones before it. The bar is measured rather than given fixed widths,
+ * because the room it needs changes with the window buttons, the text
+ * size, the project's name, and which buttons the file in front has.
+ */
+function useFitTitleBar() {
+  const bar = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const header = bar.current;
+    if (!header) return;
+    const column = header.parentElement;
+    const fit = () => {
+      // The script's column never gets narrower than the bar at its
+      // tightest, so the canvas beside it gives way instead of covering
+      // the buttons at the bar's end.
+      for (let level = 1; level <= FIT_STEPS; level += 1) header.toggleAttribute(`data-fit-${level}`, true);
+      // Squeezed to nothing, everything in the bar sits at its smallest
+      // and runs over, and how far it runs is the room the bar needs.
+      header.style.width = "0px";
+      const tightest = header.scrollWidth;
+      header.style.width = "";
+      if (column) column.style.minWidth = `max(24rem, ${Math.ceil(tightest)}px)`;
+      for (let step = 0; step <= FIT_STEPS; step += 1) {
+        for (let level = 1; level <= FIT_STEPS; level += 1) header.toggleAttribute(`data-fit-${level}`, level <= step);
+        if (header.scrollWidth <= header.clientWidth + 1) break;
+      }
+    };
+    fit();
+    const sizes = new ResizeObserver(fit);
+    sizes.observe(header);
+    // A new tab, a longer project name, or a Run app button appearing
+    // changes what the bar holds without changing its width.
+    const contents = new MutationObserver(fit);
+    contents.observe(header, { childList: true, subtree: true, characterData: true });
+    return () => {
+      sizes.disconnect();
+      contents.disconnect();
+    };
+  }, []);
+  return bar;
+}
+
 function TitleBar({ besideSidebar }: { besideSidebar: boolean }) {
   const platform = useStore((state) => state.info?.platform);
+  const bar = useFitTitleBar();
   return (
     // The bar doubles as the window's title bar on macOS, so its empty
     // space drags the window, as in Safari and Xcode. Beside the sidebar,
     // the window buttons sit in the sidebar instead.
-    <header className={`title-bar ${platform === "macos" && !besideSidebar ? "has-traffic-lights" : ""}`} data-tauri-drag-region>
+    <header ref={bar} className={`title-bar ${platform === "macos" && !besideSidebar ? "has-traffic-lights" : ""}`} data-tauri-drag-region>
       <ProjectSwitcher />
       <Tabs />
       <SectionBar />
@@ -140,7 +190,14 @@ function Tabs() {
   // so the name of the script being edited is never out of sight.
   const list = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    list.current?.querySelector<HTMLElement>(".tab.is-active")?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    const tabsList = list.current;
+    if (!tabsList) return;
+    const show = () => tabsList.querySelector<HTMLElement>(".tab.is-active")?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    show();
+    // The strip also narrows as the window or the canvas changes size.
+    const sizes = new ResizeObserver(show);
+    sizes.observe(tabsList);
+    return () => sizes.disconnect();
   }, [active, tabs.length]);
   return (
     <div className="tab-strip" data-tauri-drag-region>

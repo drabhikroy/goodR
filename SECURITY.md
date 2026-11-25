@@ -94,16 +94,22 @@ one of the chosen files, and its name and port reach R as command line
 arguments, never inside the R code.
 
 The app listens on the loopback address, 127.0.0.1, on a free port the
-system picks, so it cannot be reached from another computer. The App pane
-shows the app only once that loopback address answers. From what R prints,
-the pane accepts only the address on 127.0.0.1 at the port the app was
-given, so a line printed by the app's own code cannot point the pane at
-another site or at another program on the computer.
+system picks, so it cannot be reached from another computer. The app's
+window opens only once that loopback address answers. From what R prints,
+goodR accepts only the address on 127.0.0.1 at the port the app was given,
+so a line printed by the app's own code cannot point the window at another
+site or at another program on the computer.
 
-The app is shown in a sandboxed frame with its own origin, the loopback
-address. Its scripts, forms, and connection back to its R work, but it
-cannot reach the app around it or that app's commands. The app's Content
-Security Policy allows frames from the loopback address for this purpose.
+The app's window holds two views. Along the top is a page of goodR's own
+with the address, Reload, and Open in browser, which may ask only for those
+two actions. Below it, the app is loaded straight from its loopback
+address, with its own origin. Its scripts, forms, and connection back to
+its R work, but it has no access to goodR's commands, since goodR grants
+nothing to pages from other origins. It stays at its own address: a link
+to another site opens in the system's browser instead, a request for a new
+window does the same, and a file the app offers for download is saved to
+the Downloads folder. goodR's own pages allow no frames from the loopback
+address.
 
 Open in browser hands the system's browser the running app's address. The
 Rust side holds that address, and the interface cannot pass it a different

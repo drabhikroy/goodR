@@ -109,9 +109,6 @@ pub struct Settings {
     pub autosave: bool,
     /// Whether a report rendered once renders again each time it is saved.
     pub render_on_save: bool,
-    /// Whether a running Shiny app opens in a window of its own, as in
-    /// RStudio, rather than in the App sheet beside the script.
-    pub app_window: bool,
     /// Whether a Shiny app's code is read for likely mistakes, which are
     /// listed above the script and underlined.
     pub shiny_check: bool,
@@ -240,7 +237,6 @@ impl Default for Settings {
             last_update_check: 0,
             autosave: false,
             render_on_save: true,
-            app_window: true,
             shiny_check: true,
             run_mode: RunMode::default(),
             pdf_engine: "auto".into(),

@@ -5153,12 +5153,6 @@ legend {
   font-weight: 600;
 }
 
-/* An app may not set its own background, so it gets the white page a
-   browser would give it. */
-.app-frame {
-  background: #ffffff;
-}
-
 /* The name of the session on show sits beside R's status, so it is always
    clear whose R the next line runs in. */
 /* The project menu: the name of what is on show, how many are open when
@@ -8211,20 +8205,21 @@ legend {
   line-height: 1.55;
 }
 
-/* A narrow script column. The column is measured as a container, so the
-   bar above the script follows its own width, whatever the window and the
-   canvas beside it do. The words on the run buttons go first, leaving
-   their pictures, whose names stay for screen readers and in tooltips,
-   then the word above the project's name. The column keeps enough room
-   for what remains, and the canvas gives way rather than covering it. */
+/* A narrow script column keeps enough room for the bar above it at its
+   tightest, and the canvas gives way rather than covering it. */
 .center {
-  container: center / inline-size;
   min-width: 24rem;
+}
+
+/* The tabs keep enough room to read the open script's name, so the bar
+   tightens its buttons before it squeezes the tab away. */
+.title-bar .tab-strip {
+  min-width: 6rem;
 }
 
 .canvas {
   flex-shrink: 1;
-  min-width: 22.5rem;
+  min-width: 18rem;
 }
 
 .project-mark.is-small {
@@ -8234,83 +8229,90 @@ legend {
   border-radius: var(--radius-sm);
 }
 
-/* First the word on Run goes, since its picture and tooltip say Run and
-   the menu beside it names each way to run. */
-@container center (max-width: 44rem) {
-  .file-actions .run-button .action-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
+/* The title bar tightens a step at a time until it fits across the
+   script's column, measured as it changes (see useFitTitleBar). Each step
+   keeps the ones before it. Words that go stay in the tooltips and for
+   screen readers. */
 
-  .file-actions .run-button {
-    min-width: 0;
-    padding-inline: 0.75rem;
-  }
-
-  .run-elapsed {
-    display: none;
-  }
-
-  /* The script on show keeps its tab in view, even when the others are
-     scrolled out of it. */
-  .title-bar .tab-strip {
-    flex: 1 1 6rem;
-    min-width: 5rem;
-  }
+/* First the word on Run, since its picture and tooltip say Run and the
+   menu beside it names each way to run. The open script's tab keeps its
+   name in view, even when the others are scrolled out of it. */
+.title-bar[data-fit-1] .run-button .action-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
-/* Then the words on the other buttons and the section's name, which the
-   menu of sections still lists. */
-@container center (max-width: 36rem) {
-  .file-actions .action-label,
-  .title-bar .section-bar {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
-
-  .file-actions .button:not(.split-arrow) {
-    min-width: 0;
-    padding-inline: 0.75rem;
-  }
+.title-bar[data-fit-1] .run-button {
+  min-width: 0;
+  padding-inline: 0.75rem;
 }
 
-/* Last, the project's name beside its tile, and the buttons for a new
+.title-bar[data-fit-1] .run-elapsed {
+  display: none;
+}
+
+.title-bar[data-fit-1] .tab-strip {
+  flex: 1 1 6rem;
+  min-width: 5rem;
+}
+
+/* Then the words on the other buttons, the word after the count of
+   problems, and the section's name, which the menu of sections still
+   lists. */
+.title-bar[data-fit-2] .action-label,
+.title-bar[data-fit-2] .section-bar {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.title-bar[data-fit-2] .file-actions .button:not(.split-arrow) {
+  min-width: 0;
+  padding-inline: 0.75rem;
+}
+
+/* Then the project's name beside its tile, and the buttons for a new
    script and closing a tab, which stay on Command N and Command W and in
-   the File menu, so the room is the open script's name's. */
-@container center (max-width: 30rem) {
-  .project-switcher .project-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
+   the File menu. The window still drags by the bar's empty edges. */
+.title-bar[data-fit-3] .project-switcher .project-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
 
-  .title-bar {
-    gap: 0.4rem;
-  }
+.title-bar[data-fit-3] {
+  gap: 0.4rem;
+}
 
-  /* The window still drags by the bar's empty edges, but the room in the
-     middle goes to the tab of the script on show. */
-  .title-bar .title-bar-spacer {
-    flex: 0 1 0.5rem;
-  }
+.title-bar[data-fit-3] .title-bar-spacer {
+  flex: 0 1 0.5rem;
+}
 
-  .title-bar .new-tab,
-  .title-bar .tab-close {
-    display: none;
-  }
+.title-bar[data-fit-3] .new-tab,
+.title-bar[data-fit-3] .tab-close {
+  display: none;
+}
 
-  .title-bar .tab-button {
-    padding-inline: 0.6rem;
-  }
+.title-bar[data-fit-3] .tab-button {
+  padding-inline: 0.6rem;
+}
+
+/* Last, in the narrowest column, the open script's tab gives up some of
+   its name, which its tooltip still gives in full. */
+.title-bar[data-fit-4] .tab-strip {
+  min-width: 3rem;
+}
+
+.title-bar[data-fit-4] .title-bar-end {
+  gap: 0.2rem;
 }

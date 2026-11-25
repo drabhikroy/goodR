@@ -1,16 +1,15 @@
-// The window a running Shiny app opens in, as RStudio opens one: the app's
-// address, Open in browser, and Reload above the app itself. The app is a
-// page from its own R on this computer, held in a frame at its own address,
-// so its scripts and forms work but it cannot reach this window or the app
-// around it. The address comes from the app's R by way of the window's
-// fragment, and only an address on this computer is shown.
+// The bar along the top of the window a running Shiny app opens in, as
+// RStudio's: the app's address, Open in browser, and Reload. The app itself
+// is a separate view below this one, loaded straight from its address (see
+// app_window in src-tauri/src/shiny.rs), so this page never holds it. The
+// address comes from the app's R by way of the fragment, and only an
+// address on this computer is shown.
 
 import "@fontsource-variable/dm-sans/opsz.css";
 import { invoke } from "@tauri-apps/api/core";
 import tokens from "./theme/tokens.json";
 import "./styles/appWindow.css";
 
-const frame = document.getElementById("app") as HTMLIFrameElement;
 const address = document.getElementById("address") as HTMLElement;
 
 /** Only an app served from this computer, by the app's own R. */
@@ -36,31 +35,25 @@ function applyMode(mode: string) {
   root.style.colorScheme = mode === "dark" ? "dark" : "light";
 }
 
-/** Shows an app, or loads the one on show again. */
-function showApp(url: string) {
+/** Shows the address of the app on show. */
+function showAddress(url: string) {
   const local = localAddress(url);
-  if (!local) return;
-  address.textContent = local;
-  // Setting the same address again loads the page afresh.
-  frame.src = "about:blank";
-  requestAnimationFrame(() => {
-    frame.src = local;
-  });
+  if (local) address.textContent = local;
 }
 
 declare global {
   interface Window {
-    showApp?: (url: string) => void;
+    showAddress?: (url: string) => void;
   }
 }
 
-if (typeof document !== "undefined" && frame) {
+if (typeof document !== "undefined" && address) {
   const start = fromFragment();
   applyMode(start.mode);
-  window.showApp = showApp;
-  if (start.url) showApp(start.url);
+  window.showAddress = showAddress;
+  if (start.url) showAddress(start.url);
   document.getElementById("reload")?.addEventListener("click", () => {
-    if (address.textContent) showApp(address.textContent);
+    invoke("app_reload").catch(() => {});
   });
   document.getElementById("open")?.addEventListener("click", () => {
     invoke("app_open").catch(() => {});
