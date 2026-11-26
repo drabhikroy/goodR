@@ -259,8 +259,19 @@ const MOCK_ARGS: Record<string, string[]> = { mean: ["x", "trim", "na.rm"], lm: 
 // Listeners for the app update's download progress.
 const updateListeners = new Set<(progress: { done: number; total: number | null }) => void>();
 
-// Saved versions of each file, newest first, for the history dialog.
-const VERSIONS: Record<string, { id: string; savedAt: number; text: string; ran?: boolean }[]> = {};
+// Saved versions of each file, newest first, for the history dialog. A
+// screenshot or test can start a file with versions of its own by setting
+// window.goodforVersions, keyed by path, before the file is first saved or
+// its history is read.
+type Saved = { id: string; savedAt: number; text: string; ran?: boolean };
+const VERSIONS: Record<string, Saved[]> = {};
+function versionsOf(path: string): Saved[] {
+  if (!VERSIONS[path]) {
+    const given = (window as unknown as { goodforVersions?: Record<string, Omit<Saved, "id">[]> }).goodforVersions?.[path];
+    VERSIONS[path] = (given ?? []).map((version, index) => ({ ...version, id: `seed-${index}` }));
+  }
+  return VERSIONS[path];
+}
 
 export function createMockBackend(): Backend {
   // Settings start with recent files so the opening screen has something
@@ -659,7 +670,7 @@ export function createMockBackend(): Backend {
     // app does, with a pretend time an hour apart so they do not fold.
     writeText: async (path, contents) => {
       check(path);
-      const kept = (VERSIONS[path] ??= []);
+      const kept = versionsOf(path);
       if (!kept.length && FILES[path] !== undefined && FILES[path] !== contents) kept.unshift({ id: String(Date.now() - 7_200_000), savedAt: Date.now() - 7_200_000, text: FILES[path] });
       if (kept[0]?.text !== contents) kept.unshift({ id: String(Date.now() - 3_600_000 + kept.length), savedAt: Date.now() - 3_600_000 + kept.length, text: contents });
       FILES[path] = contents;
@@ -690,15 +701,15 @@ export function createMockBackend(): Backend {
       }
       if (history) for (const path of Object.keys(VERSIONS)) delete VERSIONS[path];
     },
-    fileHistory: async (path) => (VERSIONS[path] ?? []).map(({ id, savedAt, ran }) => ({ id, savedAt, ran: Boolean(ran) })),
+    fileHistory: async (path) => versionsOf(path).map(({ id, savedAt, ran }) => ({ id, savedAt, ran: Boolean(ran) })),
     // As the real store does: text that ran marks the latest version when
     // it is the same, and is kept as a new one when it is not.
     keepRunVersion: async (path, contents) => {
-      const kept = (VERSIONS[path] ??= []);
+      const kept = versionsOf(path);
       if (kept[0]?.text === contents) kept[0].ran = true;
       else kept.unshift({ id: `${Date.now()}-ran`, savedAt: Date.now(), text: contents, ran: true });
     },
-    fileVersion: async (path, id) => VERSIONS[path]?.find((version) => version.id === id)?.text ?? "",
+    fileVersion: async (path, id) => versionsOf(path).find((version) => version.id === id)?.text ?? "",
     savePlot: async (_data, suggested) => `/Users/demo/Pictures/${suggested}`,
     // The browser preview has no R to draw with, so it reports the file
     // that the desktop app would have written.

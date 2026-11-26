@@ -402,6 +402,11 @@ cards change at once. Each card's header says when it is from, whether it
 ran, and how many changes it is from now. The two colors can be changed in
 Settings, under Accessibility, by typing a hex or RGB color or picking one.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/history-dark.png">
+  <img alt="History of analysis.R. The earlier version from 10:34 AM, which ran without problems, is the card in front on the left, with three changes from now marked in apricot. The script now is on the right with the same changes in orchid. Three older cards stack behind the front one, with a check mark on two and a cross on the one from 10:29 AM. The slider along the foot has a dot for each save at 9:12, 9:43, 10:29, 10:34, and 11:11 AM, a cross at 10:29, and the 10:34 dot chosen." src="images/history-light.png">
+</picture>
+
 When a line fails that worked before, its result shows the line as it last
 ran without a problem beside the line now, and Put back the version that
 worked changes just those lines, as one edit that Undo takes back.

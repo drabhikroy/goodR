@@ -140,6 +140,108 @@ test("likely mistakes in a Shiny app", async ({ page }, info) => {
   await save(page, info, "shiny-check");
 });
 
+test("History, the earlier versions as cards with the script now beside them", async ({ page }, info) => {
+  // The page's clock starts at a fixed morning and the file starts with five
+  // saved versions of its own, so the times under the slider and the marks on
+  // the cards are the same each time the screenshots are taken.
+  const base = [
+    "# Penguin measurements, first look",
+    "library(ggplot2)",
+    "",
+    "data(penguins)",
+    "",
+    "# Body mass by species ----",
+    "mass_by_species <- aggregate(body_mass ~ species,",
+    "                             data = penguins, FUN = mean)",
+    "mass_by_species",
+    "",
+    "# Flipper length model ----",
+    "fit <- lm(body_mass ~ flipper_len, data = penguins)",
+    "confint(fit)",
+    "",
+    "ggplot(mass_by_species, aes(species, body_mass)) +",
+    "  geom_col(fill = \"#1F5F8B\")",
+    "",
+    "# Publication table",
+    "gt::gt(mass_by_species)",
+    "",
+  ].join("\n");
+  // How the script began the morning, before its heading and model changed.
+  const early = base.replace("# Penguin measurements, first look", "# Penguin measurements").replace("lm(body_mass ~ flipper_len,", "lm(body_mass ~ flipper_len + species,");
+  const summary = "summary(penguins$body_mass)\n";
+  const spread = "sd(penguins$body_mass)\n";
+  const slip = "lm(flipper_length_mm ~ species)\n";
+  const compare = "t.test(body_mass ~ sex, data = penguins)\n";
+  const counts = "table(penguins$species)\n";
+  await page.addInitScript(
+    ({ base, early, summary, spread, slip, compare }) => {
+      const Real = Date;
+      const start = new Real(2026, 10, 24, 9, 4).getTime();
+      const began = Real.now();
+      const w = window as unknown as { goodforLater: number; goodforVersions: Record<string, unknown[]> };
+      w.goodforLater = 0;
+      class Morning extends Real {
+        constructor(...args: unknown[]) {
+          if (args.length) super(...(args as [number]));
+          else super(Morning.now());
+        }
+        static now() {
+          return start + (Real.now() - began) + w.goodforLater * 60_000;
+        }
+      }
+      window.Date = Morning as unknown as DateConstructor;
+      const at = (hour: number, minute: number) => new Real(2026, 10, 24, hour, minute).getTime();
+      // Newest first. The slip at 10:29 stopped the script when it ran at 10:30.
+      w.goodforVersions = {
+        "/Users/demo/Documents/penguins/analysis.R": [
+          { savedAt: at(11, 11), text: base + summary + spread + compare, ran: true },
+          { savedAt: at(10, 34), text: early + summary + spread + compare, ran: true },
+          { savedAt: at(10, 29), text: early + summary + spread + slip, ran: false },
+          { savedAt: at(9, 43), text: early + summary + spread, ran: true },
+          { savedAt: at(9, 12), text: early + summary, ran: true },
+        ],
+      };
+    },
+    { base, early, summary, spread, slip, compare },
+  );
+  await openProject(page, info);
+  const content = page.locator(".editor-host .cm-content");
+  const later = (minutes: number) => page.evaluate((add) => ((window as unknown as { goodforLater: number }).goodforLater += add), minutes);
+  // The run that failed, half past ten.
+  await later(86);
+  await content.click();
+  await page.keyboard.press("Control+a");
+  await page.keyboard.insertText(base + summary + spread + slip);
+  await expect(content).toContainText("flipper_length_mm ~ species");
+  await expectReady(page);
+  await expect(page.getByRole("tab", { name: /analysis\.R/ })).toContainText("edited");
+  // The run starts from the keyboard; a press that lands before the editor
+  // has taken the new text is tried again.
+  await expect(async () => {
+    await page.keyboard.press("Control+Shift+Enter");
+    await expect(page.locator(".output-card.status-error").first()).toBeVisible({ timeout: 4_000 });
+  }).toPass({ timeout: 30_000 });
+  // Then the script as it stands now, a little after eleven.
+  await later(44);
+  await page.keyboard.press("Control+a");
+  await page.keyboard.insertText(base + summary + spread + compare + counts);
+  await page.getByRole("navigation", { name: "Tools" }).getByRole("button", { name: "History", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "History of analysis.R" });
+  const slider = dialog.getByRole("slider", { name: "Compare now with" });
+  await expect(slider).toBeVisible();
+  await slider.focus();
+  // The slider runs oldest to newest: three steps along from the oldest is
+  // the half past ten save, with the slip and two earlier saves behind it.
+  await page.keyboard.press("Home");
+  for (let step = 0; step < 3; step++) await page.keyboard.press("ArrowRight");
+  await expect(dialog.locator(".tn-card-behind")).toHaveCount(3);
+  // The card that was in front lifts away for a moment; the picture is taken after.
+  await expect(dialog.locator(".tn-card-leaving")).toHaveCount(0);
+  await expect(dialog.locator(".tn-card .tn-card-when")).toHaveText(/10:34 AM/);
+  await slider.blur();
+  await save(page, info, "history");
+});
+
 /** Sets up the assistant with the private Ollama, up to its list of models. */
 async function setUpAssistant(page: Page) {
   await page.getByRole("button", { name: "Assistant", exact: true }).click();
