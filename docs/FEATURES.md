@@ -306,7 +306,7 @@ nothing.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/shiny-check-dark.png">
-  <img alt="A Shiny app with a likely problem found by reading the code before it runs. A band above the script says output$mas on line 9 has no place in the UI, which has mass, with Go to line 9 and Change to mass buttons. mas is underlined in the script." src="images/shiny-check-light.png">
+  <img alt="A Shiny app with a likely problem found by reading the code before it runs. A band above the script says 1 likely mistake in this app, opened to say output$mas on line 9 has no place in the UI, which has mass, with Go to line 9 and Change to mass buttons and Hide at the right. mas is underlined in the script." src="images/shiny-check-light.png">
 </picture>
 
 ## When something goes wrong

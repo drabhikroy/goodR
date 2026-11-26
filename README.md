@@ -23,7 +23,7 @@ Your script is on the left side of the window and your results are on the right.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/workspace-dark.png">
-  <img alt="The workspace with the penguins project. The script is on the left, with Run at the right of the bar above it. On the right, the canvas shows a bar chart made by lines 15 and 16, with arrows to step through earlier results, All results, and a menu above it. The tools run down the right edge as icons. A band above the script offers to install gt, a package that line 19 needs." src="docs/images/workspace-light.png">
+  <img alt="The workspace with the penguins project, shown by a lettered tile and its name at the top left. The script is on the left, with Run at the right of the bar above it. On the right, the canvas shows a bar chart made by lines 15 and 16, with arrows to step through earlier results, All results, and a menu above it. The tools run down the right edge as icons. A band above the script offers to install gt, a package that line 19 needs." src="docs/images/workspace-light.png">
 </picture>
 
 ### Writing and running R
@@ -99,7 +99,7 @@ Every installer is on the [latest release](https://github.com/drabhikroy/goodR/r
 
 ### macOS
 
-1. Download `goodR-1.1.0.pkg`.
+1. Download `goodR-1.2.0.pkg`.
 2. Open it and follow the steps. macOS asks for an administrator password because the installer puts the app in your Applications folder.
 3. Open goodR from the Applications folder.
 
@@ -109,17 +109,17 @@ The installer is signed and notarized by Apple, so macOS opens it without a warn
 
 Each Linux installer comes in two kinds, one for Intel and AMD processors and one for ARM processors. To see which you have, run `dpkg --print-architecture` or `uname -m`. A result of `amd64` or `x86_64` means Intel or AMD, and `arm64` or `aarch64` means ARM. A Linux virtual machine on an Apple silicon Mac is ARM.
 
-On Ubuntu, Debian, and other systems that use `.deb` packages, download `goodR-1.1.0-amd64.deb` for Intel or AMD, or `goodR-1.1.0-arm64.deb` for ARM, and install it with this command, run in the folder you downloaded it to. The example is for Intel or AMD.
+On Ubuntu, Debian, and other systems that use `.deb` packages, download `goodR-1.2.0-amd64.deb` for Intel or AMD, or `goodR-1.2.0-arm64.deb` for ARM, and install it with this command, run in the folder you downloaded it to. The example is for Intel or AMD.
 
 ```bash
-sudo apt install ./goodR-1.1.0-amd64.deb
+sudo apt install ./goodR-1.2.0-amd64.deb
 ```
 
-On any other distribution, download `goodR-1.1.0-x86_64.AppImage` for Intel or AMD, or `goodR-1.1.0-aarch64.AppImage` for ARM, make it runnable, and open it. The example is for Intel or AMD.
+On any other distribution, download `goodR-1.2.0-x86_64.AppImage` for Intel or AMD, or `goodR-1.2.0-aarch64.AppImage` for ARM, make it runnable, and open it. The example is for Intel or AMD.
 
 ```bash
-chmod +x goodR-1.1.0-x86_64.AppImage
-./goodR-1.1.0-x86_64.AppImage
+chmod +x goodR-1.2.0-x86_64.AppImage
+./goodR-1.2.0-x86_64.AppImage
 ```
 
 After installing, open goodR from your applications menu or run `goodr` in a terminal. It draws its window without the graphics card's help on Linux, because with it the window comes up blank in virtual machines and with some drivers. On a computer where the card works well, start goodR with `GOODR_GPU=1` to turn the card's help back on.
@@ -130,7 +130,7 @@ If the AppImage does not open, your system may need FUSE 2, which AppImages use.
 
 ### Windows (preview)
 
-1. Download `goodR-1.1.0-x64-setup.exe` and open it.
+1. Download `goodR-1.2.0-x64-setup.exe` and open it.
 2. The installer is not yet signed, so Windows shows "Windows protected your PC" the first time. Choose More info, then Run anyway.
 3. Follow the steps. It installs for your account alone, so it needs no administrator password, and it adds goodR to the Start menu.
 
@@ -147,7 +147,7 @@ sha256sum -c --ignore-missing SHA256SUMS-linux-x64.txt
 
 ```powershell
 # Windows, in PowerShell
-(Get-FileHash goodR-1.1.0-x64-setup.exe).Hash -eq (Get-Content SHA256SUMS-windows.txt).Split(" ")[0]
+(Get-FileHash goodR-1.2.0-x64-setup.exe).Hash -eq (Get-Content SHA256SUMS-windows.txt).Split(" ")[0]
 ```
 
 ### Removing the app
@@ -183,7 +183,7 @@ The app keeps its own files in a folder named `app.goodfor.ide`, and where that 
 | What the app keeps | Where, inside that folder | How long it stays |
 | --- | --- | --- |
 | Settings and recent files | `settings.json` | Until you reset the app or delete the file |
-| Earlier versions of each script | `history` | The latest 100 versions of each script |
+| Earlier versions of each script | `history` | The latest 200 versions of each script |
 | Unsaved changes | The app's private storage | Until the file is saved or closed |
 | Recent results | The app's private storage | The latest 60, until you clear them |
 | The assistant's own copy of Ollama, on a Mac, and its models | `assistant` | Until you remove them from the assistant's setup |

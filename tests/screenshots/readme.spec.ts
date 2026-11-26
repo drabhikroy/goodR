@@ -132,7 +132,11 @@ test("likely mistakes in a Shiny app", async ({ page }, info) => {
   await page.locator(".editor-host .cm-content").click();
   await page.keyboard.press("Control+a");
   await page.keyboard.insertText('library(shiny)\n\nui <- fluidPage(\n  sliderInput("bins", "Bins", 5, 50, 20),\n  plotOutput("mass")\n)\n\nserver <- function(input, output) {\n  output$mas <- renderPlot(hist(penguins$body_mass, breaks = input$bins))\n}\n\nshinyApp(ui, server)\n');
-  await expect(page.getByRole("region", { name: "Likely problems in this app" })).toContainText("output$mas has no place in the UI");
+  // The list starts folded to one line. It is shown open here, since what it says is the point.
+  const list = page.getByRole("region", { name: "Likely mistakes in this app" });
+  await expect(list).toContainText("1 likely mistake in this app");
+  await list.getByRole("button", { name: "Show" }).click();
+  await expect(list).toContainText("output$mas has no place in the UI");
   await save(page, info, "shiny-check");
 });
 
