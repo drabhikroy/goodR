@@ -907,6 +907,19 @@ for download goes to Downloads. An earlier version also offered to show
 the app in the sheet, but that hit the same block, so it was taken out
 rather than left to show a blank page.
 
+Closing the app's window stops the app, and that has to mean everything
+the app started. Ending the app's process group covers R and most of what
+it starts, but callr and processx start every background worker in a
+group and session of its own, so a worker like that outlived the app it
+belonged to, still running and holding memory with nothing left to show
+it. Each run now carries a random token in its environment, which a
+program passes on to whatever it starts, wherever that sits in the
+process tree, and when the run ends anything that still carries the token
+is ended too. The token is new for each run, so nothing else is ever
+named. The check is tested on Linux with a real Shiny app that starts
+callr, future, and parallel workers: five R processes carried the token
+while it ran and none remained after Stop.
+
 Shiny watches the app's folder and reloads the app when a file in
 it is saved, so the loop is: change a line, save, look, without pressing
 anything else. Running the app saves its files first, including ui.R and

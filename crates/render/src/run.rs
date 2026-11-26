@@ -4,15 +4,21 @@
 //! may start more programs, so stopping only Quarto would leave the rest
 //! running. Stopping the group ends all of them at once. On Windows the
 //! program itself is stopped.
+//!
+//! A program that makes a group of its own, as callr's background workers
+//! do, is outside that. Each run carries a token in its environment, and
+//! when the run ends, whatever still carries it is ended too (see
+//! `sweep`).
 
 use crate::parse::{self, Failure, Line, OUTPUT_MARKER};
 use crate::plan::Plan;
+use crate::sweep;
 use crate::windowless::Windowless;
 use std::collections::VecDeque;
 use std::path::PathBuf;
 use std::process::Stdio;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::io::{AsyncBufReadExt, AsyncRead, BufReader};
 use tokio::sync::{mpsc, Notify};
@@ -38,12 +44,25 @@ pub struct Outcome {
 pub struct Stopper {
     pressed: AtomicBool,
     notify: Notify,
+    /// The token the run carries, once it has started.
+    token: Mutex<Option<String>>,
 }
 
 impl Stopper {
     pub fn stop(&self) {
         self.pressed.store(true, Ordering::SeqCst);
         self.notify.notify_one();
+    }
+
+    /// Stops the run and ends everything it started before returning, for
+    /// when the app is quitting and nothing would be left running to
+    /// finish the job afterward.
+    pub fn end_now(&self) {
+        self.stop();
+        let token = self.token.lock().unwrap().clone();
+        if let Some(token) = token {
+            sweep::end(&token, SWEEP_GRACE);
+        }
     }
 
     fn pressed(&self) -> bool {
@@ -98,11 +117,14 @@ const KEEP_LINES: usize = 5000;
 /// prints, until it ends or `stopper` is pressed. Reports and Shiny apps
 /// both run this way and differ only in how they read the lines.
 pub async fn follow(plan: &Plan, stopper: Arc<Stopper>, mut on_text: impl FnMut(&str) + Send) -> std::io::Result<Followed> {
+    let token = sweep::token();
+    *stopper.token.lock().unwrap() = Some(token.clone());
     let mut command = tokio::process::Command::new(&plan.program);
     command
         .windowless()
         .args(&plan.args)
         .envs(plan.env.iter().map(|(name, value)| (name.as_str(), value.as_os_str())))
+        .env(sweep::TOKEN_NAME, &token)
         .current_dir(&plan.dir)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -153,6 +175,9 @@ pub async fn follow(plan: &Plan, stopper: Arc<Stopper>, mut on_text: impl FnMut(
         }
     }
     let status = wait_briefly(&mut child, stopped).await?;
+    // Whatever the run started and left running goes with it, such as a
+    // background worker in a group of its own.
+    let _ = tokio::task::spawn_blocking(move || sweep::end(&token, SWEEP_GRACE)).await;
     Ok(Followed { status, stopped, lines })
 }
 
@@ -178,6 +203,10 @@ async fn forward(stream: impl AsyncRead + Unpin, tx: mpsc::UnboundedSender<Strin
 /// How long a stopped program gets to end by itself before it is ended
 /// without waiting further.
 const STOP_GRACE: Duration = Duration::from_secs(2);
+
+/// How long what a run left behind gets to end by itself, which is short
+/// because the run itself has already ended.
+const SWEEP_GRACE: Duration = Duration::from_secs(1);
 
 /// Asks every process in the render's group to end. On Windows, where a
 /// program cannot be asked, everything it started is ended at once.
@@ -254,5 +283,32 @@ mod tests {
         let followed = follow(&plan, stopper, move |_| pressed.stop()).await.unwrap();
         assert!(followed.stopped);
         assert!(begun.elapsed() < Duration::from_secs(20), "Stop took {:?}", begun.elapsed());
+    }
+    /// A worker that started a group of its own, as callr does, does not
+    /// outlive the run that Stop ended.
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn stop_ends_a_worker_that_made_its_own_group() {
+        let plan = Plan {
+            program: PathBuf::from("sh"),
+            args: vec!["-c".into(), "perl -MPOSIX -e 'POSIX::setsid(); exec q(sleep), q(6173)' & sleep 1; echo started; sleep 60".into()],
+            env: Vec::new(),
+            dir: std::env::temp_dir(),
+        };
+        let listed = || String::from_utf8_lossy(&std::process::Command::new("pgrep").args(["-f", "sleep 6173"]).output().unwrap().stdout).trim().to_string();
+        let stopper = Arc::new(Stopper::default());
+        let pressed = stopper.clone();
+        let seen = Arc::new(AtomicBool::new(false));
+        let noted = seen.clone();
+        follow(&plan, stopper, move |line| {
+            if line == "started" {
+                noted.store(!listed().is_empty(), Ordering::SeqCst);
+                pressed.stop();
+            }
+        })
+        .await
+        .unwrap();
+        assert!(seen.load(Ordering::SeqCst), "the worker should have been running when Stop was pressed");
+        assert!(listed().is_empty(), "the worker should be gone after Stop");
     }
 }

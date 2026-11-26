@@ -16,6 +16,9 @@
 //! - `shiny` plans a Shiny app's R and reads what it prints: when it is
 //!   ready, errors inside the running app, and why it ended. It also
 //!   plans exporting an app as a web page that runs without R.
+//! - `sweep` ends what a run left behind, such as a worker that started
+//!   its own process group, by a token every run carries in its
+//!   environment.
 //! - `serve` previews an exported web page on a loopback port.
 //! - `fresh` runs a script in a new R, one statement at a time, to check
 //!   that it works from a clean start.
@@ -34,6 +37,7 @@ pub mod plan;
 pub mod run;
 pub mod serve;
 pub mod shiny;
+pub mod sweep;
 pub mod windowless;
 
 pub use find::Tools;

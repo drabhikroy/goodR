@@ -49,6 +49,15 @@ impl Running {
             Runner::Preview(server) => server.stop(),
         }
     }
+
+    /// Ends the app and everything it started before returning, for when
+    /// this app is quitting and nothing would be left to finish the job.
+    fn end_now(&self) {
+        match &self.runner {
+            Runner::Process(stopper) => stopper.end_now(),
+            Runner::Preview(server) => server.stop(),
+        }
+    }
 }
 
 #[derive(Default)]
@@ -64,10 +73,10 @@ impl ShinyState {
     /// Stops the app and any export, as when the window closes.
     pub fn shutdown(&self) {
         if let Some(running) = self.running.lock().unwrap().take() {
-            running.stop();
+            running.end_now();
         }
         if let Some(stopper) = self.exporting.lock().unwrap().take() {
-            stopper.stop();
+            stopper.end_now();
         }
     }
 

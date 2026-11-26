@@ -43,7 +43,10 @@ Reports render in `crates/render`. A Quarto document runs `quarto render`
 and an R Markdown document runs `rmarkdown::render()` in a new Rscript,
 both with the R chosen in the app, in the report's own folder. The program
 starts in a process group of its own, so Stop ends it along with every R
-it started. knitr's progress lines drive the progress bar, and when a chunk
+it started. A program that makes a group of its own, as callr's background
+workers do, is outside that, so each run also carries a random token in its
+environment (GOODR_RUN_TOKEN), and when the run ends, anything that still
+carries it is ended too (crates/render/src/sweep.rs). knitr's progress lines drive the progress bar, and when a chunk
 fails, knitr's "Quitting from lines" note names the chunk, so the
 interface can find the exact line within it. The preview loads the report
 through Tauri's asset protocol, which is opened only for the folder of a

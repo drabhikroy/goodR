@@ -29,7 +29,7 @@ impl RenderState {
     /// Stops any render, as when the window closes.
     pub fn shutdown(&self) {
         if let Some(stopper) = self.running.lock().unwrap().take() {
-            stopper.stop();
+            stopper.end_now();
         }
     }
 }

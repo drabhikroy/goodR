@@ -117,7 +117,11 @@ one.
 
 One app runs at a time. It is stopped, along with every process it started,
 when you stop it from the pane, when another app runs, and when the window
-closes. If this app crashes or is forced to quit, the app's R notices
+closes. Every run carries a random token in its environment, and when it
+ends, anything that still has that token is ended too, such as a callr
+background worker, which starts a process group of its own. The token is
+new for each run, so no other program is ever touched, and the check sees
+only your own processes. If this app crashes or is forced to quit, the app's R notices
 within a few seconds that this app is gone and ends by itself, so it does
 not keep running the app's code or holding its port.
 
