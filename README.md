@@ -43,8 +43,13 @@ Your script is on the left side of the window and your results are on the right.
 ### Keeping track of your work
 
 - **One R for each project.** Objects from one project never turn up in another.
-- **Mistakes are easy to undo.** Undo the last run. Get unsaved work back after a crash. Compare a script with any of its earlier versions.
+- **Mistakes are easy to undo.** Undo the last run. Get unsaved work back after a crash. History shows each earlier version of a script as a card, and a slider moves back through them like a time machine. Each version is marked with whether it ran or a line failed, so you can find the last one that worked.
 - **Every result traces back to its code.** Trace any object back through the lines that made it.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/history-dark.png">
+  <img alt="History of analysis.R. The earlier version from 10:34 AM, which ran without problems, is the card in front on the left, with three changes from now marked. The script now is on the right with the same changes marked. Three older cards stack behind the front one, one of them marked with a cross for a save where a line failed. A slider along the foot has a dot for each save, from 9:12 to 11:11 AM." src="docs/images/history-light.png">
+</picture>
 
 ### Learning and teaching
 
